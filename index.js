@@ -403,17 +403,26 @@ function showDebugModal(mesid) {
     callGenericPopup(html, POPUP_TYPE.TEXT, '', { okButton: 'Close' });
 }
 
-function refreshDebugButtons() {
+function injectDebugButtonOnMessage(mesid) {
+    const mesEl = document.querySelector(`.mes[mesid="${mesid}"]`);
+    if (!mesEl) return;
+    if (mesEl.querySelector('.comfy-imagine-debug-btn')) return;
+    const container = mesEl.querySelector('.extraMesButtons') ?? mesEl.querySelector('.mes_buttons');
+    if (!container) return;
+    const btn = document.createElement('div');
+    btn.className = 'mes_button comfy-imagine-debug-btn interactable';
+    btn.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+    btn.title = 'View LLM context & prompt';
+    btn.tabIndex = 0;
+    container.prepend(btn);
+}
+
+function injectAllDebugButtons() {
     const { chat } = SillyTavern.getContext();
-    document.querySelectorAll('.mes').forEach(mesEl => {
-        const mesid = parseInt(mesEl.getAttribute('mesid'));
-        if (isNaN(mesid)) return;
-        const msg = chat[mesid];
-        const btn = mesEl.querySelector('.comfy-imagine-debug-btn');
-        if (!btn) return;
-        const hasData = msg?.extra?.title === 'comfy-imagine'
-            && (msg.extra.debugContext || msg.extra.debugPrompt);
-        btn.style.display = hasData ? '' : 'none';
+    chat.forEach((msg, i) => {
+        if (msg?.extra?.title === 'comfy-imagine' && (msg.extra.debugContext || msg.extra.debugPrompt)) {
+            injectDebugButtonOnMessage(i);
+        }
     });
 }
 
@@ -514,6 +523,7 @@ async function runImagine(args) {
         };
         chat.push(imageMessage);
         await addOneMessage(imageMessage, { scroll: true, save: true });
+        injectDebugButtonOnMessage(chat.length - 1);
     }
 
     } finally {
@@ -540,31 +550,16 @@ async function runImagine(args) {
     loadSettingsIntoUI();
     bindSettingsEvents();
 
-    // Inject debug button into the message template (cloned for every new message, hidden by default)
-    const tmplButtons = document.querySelector('#message_template .mes_buttons .extraMesButtons');
-    if (tmplButtons && !tmplButtons.querySelector('.comfy-imagine-debug-btn')) {
-        const debugBtn = document.createElement('div');
-        debugBtn.className = 'mes_button comfy-imagine-debug-btn interactable';
-        debugBtn.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
-        debugBtn.title = 'View LLM context & prompt';
-        debugBtn.tabIndex = 0;
-        debugBtn.style.display = 'none';
-        tmplButtons.prepend(debugBtn);
-    }
-
-    // Delegated click handler
+    // Delegated click handler for debug buttons (works for buttons injected at any time)
     $(document).on('click', '.comfy-imagine-debug-btn', e => {
         const mesid = parseInt($(e.currentTarget).closest('.mes').attr('mesid'));
         if (!isNaN(mesid)) showDebugModal(mesid);
     });
 
-    // Show button on comfy-imagine messages when they render or chat changes
+    // Inject debug buttons on chat load/switch and at startup
     const { eventSource, event_types } = SillyTavern.getContext();
-    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, () => refreshDebugButtons());
-    eventSource.on(event_types.CHAT_CHANGED, () => refreshDebugButtons());
-
-    // Show on any messages already in the DOM at load time
-    refreshDebugButtons();
+    eventSource.on(event_types.CHAT_CHANGED, () => injectAllDebugButtons());
+    injectAllDebugButtons();
 
     // Register /imagine slash command
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
