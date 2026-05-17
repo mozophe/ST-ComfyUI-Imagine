@@ -43,6 +43,14 @@
                     <label for="comfy-imagine-llm-model">Model</label>
                     <input id="comfy-imagine-llm-model" type="text" class="text_pole" placeholder="gpt-4o-mini" />
                 </div>
+                <div class="comfy-imagine-row">
+                    <label for="comfy-imagine-max-tokens">Max Tokens</label>
+                    <input id="comfy-imagine-max-tokens" type="number" class="text_pole" min="1" max="4096" />
+                </div>
+                <div class="comfy-imagine-row">
+                    <label for="comfy-imagine-temperature">Temperature</label>
+                    <input id="comfy-imagine-temperature" type="number" class="text_pole" min="0" max="2" step="0.1" />
+                </div>
                 <div class="comfy-imagine-row--inline">
                     <button id="comfy-imagine-test-llm" class="menu_button">Test LLM API</button>
                     <span id="comfy-imagine-llm-status" class="comfy-imagine-status"></span>

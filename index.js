@@ -39,6 +39,8 @@ const defaultSettings = {
     activeWorkflow: '',
     imageCount: 1,
     senderName: 'Camera',
+    maxTokens: 350,
+    temperature: 0.7,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -96,6 +98,8 @@ function loadSettingsIntoUI() {
     set('comfy-imagine-negative-prompt', s.negativePrompt);
     set('comfy-imagine-image-count', s.imageCount);
     set('comfy-imagine-sender-name', s.senderName);
+    set('comfy-imagine-max-tokens', s.maxTokens);
+    set('comfy-imagine-temperature', s.temperature);
 
     populateWorkflowDropdown();
 }
@@ -120,6 +124,8 @@ function bindSettingsEvents() {
     bind('comfy-imagine-negative-prompt', 'negativePrompt');
     bind('comfy-imagine-sender-name', 'senderName');
     bind('comfy-imagine-image-count', 'imageCount', v => Math.min(8, Math.max(1, parseInt(v, 10) || 1)));
+    bind('comfy-imagine-max-tokens', 'maxTokens', v => Math.min(4096, Math.max(1, parseInt(v, 10) || 350)));
+    bind('comfy-imagine-temperature', 'temperature', v => Math.min(2, Math.max(0, parseFloat(v) || 0.7)));
 
     document.getElementById('comfy-imagine-active-workflow')?.addEventListener('change', e => {
         getSettings().activeWorkflow = e.target.value;
@@ -274,8 +280,8 @@ async function generatePromptViaLLM(contextString, signal) {
             { role: 'system', content: s.systemPrompt },
             { role: 'user', content: contextString },
         ],
-        max_tokens: 300,
-        temperature: 0.7,
+        max_tokens: s.maxTokens,
+        temperature: s.temperature,
     };
 
     const resp = await fetch(`${baseUrl}/chat/completions`, {
