@@ -44,6 +44,15 @@
     white-space: nowrap;
 }
 
+#comfy-imagine-settings .menu_button {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+#comfy-imagine-settings .comfy-imagine-label-spacer {
+    flex: 0 0 9em;
+}
+
 #comfy-imagine-settings label {
     font-size: 0.85em;
     opacity: 0.85;
