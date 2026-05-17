@@ -460,7 +460,7 @@ function injectDebugButtonOnMessage(mesid) {
     btn.className = 'mes_button comfy-imagine-debug-btn fa-solid fa-circle-info interactable';
     btn.title = 'View LLM context & prompt';
     btn.tabIndex = 0;
-    container.append(btn);
+    container.prepend(btn);
 }
 
 function injectAllDebugButtons() {
