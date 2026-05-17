@@ -251,6 +251,15 @@ function assembleContext() {
         lines.push(`${speaker}: ${msg.mes}`);
     }
 
+    const lastTrackerMsg = [...(ctx.chat ?? [])].reverse().find(
+        msg => msg.extra?.WTracker?.value != null
+    );
+    if (lastTrackerMsg) {
+        lines.push('');
+        lines.push('[TRACKER STATE]');
+        lines.push(JSON.stringify(lastTrackerMsg.extra.WTracker.value, null, 2));
+    }
+
     return lines.join('\n');
 }
 
