@@ -2,9 +2,12 @@ import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.j
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 
 const MODULE_NAME = 'comfy_imagine';
-// Derive the actual folder name from this script's URL so renderExtensionTemplateAsync
-// resolves settings.html correctly regardless of what the repo was cloned as.
-const EXTENSION_FOLDER = new URL(import.meta.url).pathname.split('/').slice(-2, -1)[0];
+// Capture everything after scripts/extensions/ up to index.js — this preserves
+// the third-party/ prefix that ST uses for externally installed extensions.
+const EXTENSION_FOLDER = (() => {
+    const m = new URL(import.meta.url).pathname.match(/scripts\/extensions\/(.+)\/index\.js$/);
+    return m ? m[1] : new URL(import.meta.url).pathname.split('/').slice(-2, -1)[0];
+})();
 const POLL_INTERVAL_MS = 1500;
 const GENERATION_TIMEOUT_MS = 120_000;
 
