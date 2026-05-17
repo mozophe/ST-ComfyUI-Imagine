@@ -1,5 +1,6 @@
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
+import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 
 const MODULE_NAME = 'comfy_imagine';
 // Capture everything after scripts/extensions/ up to index.js — this preserves
@@ -92,7 +93,8 @@ function loadSettingsIntoUI() {
     set('comfy-imagine-llm-url', s.llmBaseUrl);
     set('comfy-imagine-llm-key', s.llmApiKey);
     set('comfy-imagine-llm-model', s.llmModel);
-    set('comfy-imagine-system-prompt', s.systemPrompt);
+    const preview = document.getElementById('comfy-imagine-system-prompt-preview');
+    if (preview) preview.textContent = s.systemPrompt ?? '';
     set('comfy-imagine-prompt-prefix', s.promptPrefix);
     set('comfy-imagine-prompt-suffix', s.promptSuffix);
     set('comfy-imagine-negative-prompt', s.negativePrompt);
@@ -118,7 +120,31 @@ function bindSettingsEvents() {
     bind('comfy-imagine-llm-url', 'llmBaseUrl');
     bind('comfy-imagine-llm-key', 'llmApiKey');
     bind('comfy-imagine-llm-model', 'llmModel');
-    bind('comfy-imagine-system-prompt', 'systemPrompt');
+    const openPromptEditor = async () => {
+        const current = getSettings().systemPrompt ?? '';
+        const popup = new Popup(
+            '<h3>System Prompt</h3>',
+            POPUP_TYPE.TEXT,
+            '',
+            {
+                large: true,
+                allowVerticalScrolling: true,
+                customInputs: [{ id: 'sp', label: '', type: 'textarea', rows: 25, defaultState: current }],
+                okButton: 'Save',
+                cancelButton: 'Cancel',
+            }
+        );
+        const result = await popup.show();
+        if (result === POPUP_RESULT.AFFIRMATIVE) {
+            const val = popup.inputResults.get('sp') ?? '';
+            getSettings().systemPrompt = val;
+            saveSettings();
+            const preview = document.getElementById('comfy-imagine-system-prompt-preview');
+            if (preview) preview.textContent = val;
+        }
+    };
+    document.getElementById('comfy-imagine-edit-system-prompt')?.addEventListener('click', openPromptEditor);
+    document.getElementById('comfy-imagine-system-prompt-preview')?.addEventListener('click', openPromptEditor);
     bind('comfy-imagine-prompt-prefix', 'promptPrefix');
     bind('comfy-imagine-prompt-suffix', 'promptSuffix');
     bind('comfy-imagine-negative-prompt', 'negativePrompt');

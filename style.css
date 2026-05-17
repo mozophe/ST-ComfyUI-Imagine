@@ -88,3 +88,20 @@
     border-radius: 3px;
 }
 
+/* System prompt preview — truncated to 3 lines, clickable */
+#comfy-imagine-settings .comfy-imagine-prompt-preview {
+    font-size: 0.85em;
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.7;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    cursor: pointer;
+    padding: 4px 0;
+    white-space: pre-wrap;
+}
+
+#comfy-imagine-settings .comfy-imagine-prompt-preview:hover {
+    opacity: 1;
+}

@@ -56,8 +56,13 @@
                     <span id="comfy-imagine-llm-status" class="comfy-imagine-status"></span>
                 </div>
                 <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-system-prompt">System Prompt</label>
-                    <textarea id="comfy-imagine-system-prompt" class="text_pole" rows="5"></textarea>
+                    <div class="comfy-imagine-row--inline">
+                        <label>System Prompt</label>
+                        <button id="comfy-imagine-edit-system-prompt" class="menu_button" title="Edit system prompt">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                        </button>
+                    </div>
+                    <div id="comfy-imagine-system-prompt-preview" class="comfy-imagine-prompt-preview" title="Click to edit"></div>
                 </div>
                 <div class="comfy-imagine-row">
                     <label for="comfy-imagine-prompt-prefix">Prompt Prefix</label>
