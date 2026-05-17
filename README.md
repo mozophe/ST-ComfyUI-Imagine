@@ -19,8 +19,8 @@ In SillyTavern's Extension Manager, paste the GitHub repo URL and install.
 
 ## Setup
 
-1. **ComfyUI Base URL** — set to the machine's IP and port, e.g. `http://192.168.1.50:8188`. Click **Test Connection** to verify.
-2. **LLM** — enter your API base URL, API key, and model name. Click **Test LLM API** to verify.
+1. **ComfyUI Base URL** — set to the machine's IP and port, e.g. `http://192.168.1.50:8188`. Click **Test ComfyUI Connection** to verify.
+2. **LLM** — enter your API base URL, API key, and model name. Click **Test API Connection** to verify.
 3. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
 4. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
 5. **Generation Settings** — image count (1–8), sender name for injected messages.
@@ -36,7 +36,7 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 
 Use ST's built-in **Abort** button to cancel generation mid-flight.
 
-Each generated image message has a bug-icon button in the message action row. Click it to open a debug modal showing the raw LLM prompt, the injected positive prompt, and the negative prompt that were used for that image.
+Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
 ## Security Note
 
