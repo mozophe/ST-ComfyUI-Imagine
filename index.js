@@ -385,7 +385,16 @@ async function fetchImageAsDataUrl(imageUrl, signal) {
 // ── /imagine Slash Command ──────────────────────────────────────────────────
 
 async function runImagine(args) {
-    const signal = args?.abortController?.signal;
+    // ST passes a SlashCommandAbortController (custom class, not DOM AbortController)
+    // as args._abortController. Bridge it to a native AbortController so fetch() responds.
+    const stAbortController = args?._abortController;
+    const nativeAbort = new AbortController();
+    const signal = nativeAbort.signal;
+    const onAbort = () => nativeAbort.abort();
+    stAbortController?.addEventListener('abort', onAbort);
+
+    try {
+
     const s = getSettings();
 
     if (!s.activeWorkflow || !s.workflows?.[s.activeWorkflow]) {
@@ -468,6 +477,10 @@ async function runImagine(args) {
         };
         chat.push(imageMessage);
         await addOneMessage(imageMessage, { scroll: true, save: true });
+    }
+
+    } finally {
+        stAbortController?.removeEventListener('abort', onAbort);
     }
 
     return '';
