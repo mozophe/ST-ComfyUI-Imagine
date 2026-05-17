@@ -88,22 +88,3 @@
     border-radius: 3px;
 }
 
-/* Cancel button injected into the send bar */
-#comfy-imagine-cancel-btn {
-    display: none;
-    background: var(--red, #f44336);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 0.3em 0.8em;
-    cursor: pointer;
-    font-size: 0.85em;
-    margin-left: 4px;
-    height: 2em;
-    align-self: center;
-    flex-shrink: 0;
-}
-
-#comfy-imagine-cancel-btn:hover {
-    opacity: 0.85;
-}

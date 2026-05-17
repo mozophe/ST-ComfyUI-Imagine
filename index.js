@@ -41,9 +41,6 @@ const defaultSettings = {
     senderName: 'Camera',
 };
 
-let cancelFlag = false;
-let activePendingPromptId = null;
-
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function getSettings() {
@@ -340,14 +337,9 @@ async function submitAndPoll(workflowJson) {
         throw new Error(`Comfy Imagine: Cannot reach ComfyUI at ${comfyUrl}`);
     }
 
-    activePendingPromptId = promptId;
-
     const deadline = Date.now() + GENERATION_TIMEOUT_MS;
     while (Date.now() < deadline) {
-        if (cancelFlag) return null;
-
         await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-        if (cancelFlag) return null;
 
         try {
             const resp = await fetch(`${comfyUrl}/history/${promptId}`);
@@ -355,7 +347,6 @@ async function submitAndPoll(workflowJson) {
             const history = await resp.json();
             const entry = history[promptId];
             if (entry?.status?.completed) {
-                activePendingPromptId = null;
                 const outputs = entry.outputs ?? {};
                 for (const nodeOut of Object.values(outputs)) {
                     const images = nodeOut.images ?? [];
@@ -370,7 +361,6 @@ async function submitAndPoll(workflowJson) {
         }
     }
 
-    activePendingPromptId = null;
     throw new Error('timeout');
 }
 
@@ -384,50 +374,6 @@ async function fetchImageAsDataUrl(imageUrl) {
         reader.onerror = reject;
         reader.readAsDataURL(blob);
     });
-}
-
-// ── Cancel ──────────────────────────────────────────────────────────────────
-
-function showCancelButton() {
-    const btn = document.getElementById('comfy-imagine-cancel-btn');
-    if (btn) btn.style.display = 'inline-flex';
-}
-
-function hideCancelButton() {
-    const btn = document.getElementById('comfy-imagine-cancel-btn');
-    if (btn) btn.style.display = 'none';
-}
-
-async function cancelGeneration() {
-    cancelFlag = true;
-    if (activePendingPromptId) {
-        const comfyUrl = getSettings().comfyUrl.replace(/\/$/, '');
-        try {
-            await fetch(`${comfyUrl}/queue`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ delete: [activePendingPromptId] }),
-            });
-        } catch { /* best-effort */ }
-        activePendingPromptId = null;
-    }
-    hideCancelButton();
-    toast('Generation cancelled');
-}
-
-// ── Inject Cancel Button ────────────────────────────────────────────────────
-
-function injectCancelButton() {
-    if (document.getElementById('comfy-imagine-cancel-btn')) return;
-    const btn = document.createElement('button');
-    btn.id = 'comfy-imagine-cancel-btn';
-    btn.textContent = 'Cancel';
-    btn.title = 'Cancel image generation';
-    btn.addEventListener('click', cancelGeneration);
-
-    // Try to attach near the send button
-    const sendBar = document.getElementById('send_but') ?? document.getElementById('rightSendForm');
-    sendBar?.parentElement?.appendChild(btn);
 }
 
 // ── /imagine Slash Command ──────────────────────────────────────────────────
@@ -448,80 +394,71 @@ async function runImagine() {
         return '';
     }
 
-    cancelFlag = false;
-    showCancelButton();
     toast('Generating image…');
 
-    try {
-        // Step 1 — gather context
-        const contextString = assembleContext();
+    // Step 1 — gather context
+    const contextString = assembleContext();
 
-        // Step 2 — call LLM
-        let llmOutput;
+    // Step 2 — call LLM
+    let llmOutput;
+    try {
+        llmOutput = await generatePromptViaLLM(contextString);
+    } catch (err) {
+        toast(`Comfy Imagine: LLM error — ${err.message}`, 'error');
+        return '';
+    }
+
+    const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
+    toast('Prompt ready, submitting to ComfyUI…');
+
+    // Steps 3–N: for each image
+    const imageCount = Math.min(8, Math.max(1, s.imageCount || 1));
+    for (let i = 0; i < imageCount; i++) {
+        const workflow = JSON.parse(JSON.stringify(workflowBase)); // deep clone
+
         try {
-            llmOutput = await generatePromptViaLLM(contextString);
+            injectPromptIntoWorkflow(workflow, finalPrompt, s.negativePrompt);
         } catch (err) {
-            toast(`Comfy Imagine: LLM error — ${err.message}`, 'error');
+            toast(`Comfy Imagine: ${err.message}`, 'error');
             return '';
         }
 
-        const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
+        if (imageCount > 1) randomiseSeed(workflow);
 
-        // Steps 3–6: for each image
-        const imageCount = Math.min(8, Math.max(1, s.imageCount || 1));
-        for (let i = 0; i < imageCount; i++) {
-            if (cancelFlag) break;
-
-            const workflow = JSON.parse(JSON.stringify(workflowBase)); // deep clone
-
-            try {
-                injectPromptIntoWorkflow(workflow, finalPrompt, s.negativePrompt);
-            } catch (err) {
-                toast(`Comfy Imagine: ${err.message}`, 'error');
-                return '';
+        let imageUrl;
+        try {
+            imageUrl = await submitAndPoll(workflow);
+        } catch (err) {
+            if (err.message === 'timeout') {
+                toast('Comfy Imagine: Generation timed out.', 'error');
+            } else {
+                toast(err.message, 'error');
             }
-
-            if (imageCount > 1) randomiseSeed(workflow);
-
-            let imageUrl;
-            try {
-                imageUrl = await submitAndPoll(workflow);
-            } catch (err) {
-                if (err.message === 'timeout') {
-                    toast('Comfy Imagine: Generation timed out.', 'error');
-                } else {
-                    toast(err.message, 'error');
-                }
-                return '';
-            }
-
-            if (!imageUrl) break; // cancelled
-
-            let dataUrl;
-            try {
-                dataUrl = await fetchImageAsDataUrl(imageUrl);
-            } catch {
-                toast('Comfy Imagine: Image generated but could not be retrieved.', 'error');
-                return '';
-            }
-
-            const { chat, addOneMessage } = SillyTavern.getContext();
-            const imageMessage = {
-                name: s.senderName || 'Camera',
-                is_user: false,
-                is_system: true,
-                send_date: new Date().toISOString(),
-                mes: `![generated image](${dataUrl})`,
-                extra: {
-                    image: dataUrl,
-                    title: 'comfy-imagine',
-                },
-            };
-            chat.push(imageMessage);
-            await addOneMessage(imageMessage, { scroll: true, save: true });
+            return '';
         }
-    } finally {
-        hideCancelButton();
+
+        let dataUrl;
+        try {
+            dataUrl = await fetchImageAsDataUrl(imageUrl);
+        } catch {
+            toast('Comfy Imagine: Image generated but could not be retrieved.', 'error');
+            return '';
+        }
+
+        const { chat, addOneMessage } = SillyTavern.getContext();
+        const imageMessage = {
+            name: s.senderName || 'Camera',
+            is_user: false,
+            is_system: true,
+            send_date: new Date().toISOString(),
+            mes: `![generated image](${dataUrl})`,
+            extra: {
+                image: dataUrl,
+                title: 'comfy-imagine',
+            },
+        };
+        chat.push(imageMessage);
+        await addOneMessage(imageMessage, { scroll: true, save: true });
     }
 
     return '';
@@ -543,7 +480,6 @@ async function runImagine() {
 
     loadSettingsIntoUI();
     bindSettingsEvents();
-    injectCancelButton();
 
     // Register /imagine slash command
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
