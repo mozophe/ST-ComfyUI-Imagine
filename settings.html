@@ -15,7 +15,12 @@
                 </div>
                 <div class="comfy-imagine-info">
                     Start ComfyUI with <code>--listen</code> so it accepts network connections:<br/>
-                    <code>python main.py --listen 0.0.0.0 --port 8188</code>
+                    <code>python main.py --listen 0.0.0.0 --port 8188 --enable-cors-header</code>
+                </div>
+                <div class="comfy-imagine-info">
+                    If ComfyUI runs on a <strong>different machine</strong> than SillyTavern,
+                    <code>--enable-cors-header</code> is required — without it the browser blocks
+                    cross-origin requests even if the port is reachable.
                 </div>
                 <div class="comfy-imagine-row--inline">
                     <button id="comfy-imagine-test-connection" class="menu_button">Test Connection</button>
