@@ -1,0 +1,79 @@
+#comfy-imagine-settings .comfy-imagine-section {
+    margin-bottom: 1em;
+    padding-bottom: 0.75em;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #444);
+}
+
+#comfy-imagine-settings .comfy-imagine-section:last-child {
+    border-bottom: none;
+}
+
+#comfy-imagine-settings h5 {
+    margin: 0.5em 0;
+    color: var(--SmartThemeBodyColor, inherit);
+    font-size: 0.95em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+}
+
+#comfy-imagine-settings .comfy-imagine-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5em;
+    gap: 0.25em;
+}
+
+#comfy-imagine-settings label {
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
+#comfy-imagine-settings .comfy-imagine-status {
+    font-size: 0.85em;
+    min-height: 1.2em;
+}
+
+#comfy-imagine-settings .comfy-imagine-status.success {
+    color: var(--green, #4caf50);
+}
+
+#comfy-imagine-settings .comfy-imagine-status.error {
+    color: var(--red, #f44336);
+}
+
+#comfy-imagine-settings .comfy-imagine-info {
+    font-size: 0.85em;
+    opacity: 0.8;
+    padding: 0.4em 0.6em;
+    background: var(--SmartThemeBlurTintColor, rgba(255,255,255,0.05));
+    border-radius: 4px;
+}
+
+#comfy-imagine-settings .comfy-imagine-info code {
+    font-family: monospace;
+    background: var(--SmartThemeBlurTintColor, rgba(255,255,255,0.1));
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+}
+
+/* Cancel button injected into the send bar */
+#comfy-imagine-cancel-btn {
+    display: none;
+    background: var(--red, #f44336);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.3em 0.8em;
+    cursor: pointer;
+    font-size: 0.85em;
+    margin-left: 4px;
+    height: 2em;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+#comfy-imagine-cancel-btn:hover {
+    opacity: 0.85;
+}

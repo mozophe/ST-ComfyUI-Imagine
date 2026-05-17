@@ -1,0 +1,91 @@
+<div id="comfy-imagine-settings">
+
+    <h4>Comfy Imagine</h4>
+
+    <!-- Section 1: ComfyUI Connection -->
+    <div class="comfy-imagine-section">
+        <h5>ComfyUI Connection</h5>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-url">ComfyUI Base URL</label>
+            <input id="comfy-imagine-url" type="text" class="text_pole" placeholder="http://192.168.1.x:8188" />
+        </div>
+        <div class="comfy-imagine-row">
+            <button id="comfy-imagine-test-connection" class="menu_button">Test Connection</button>
+            <span id="comfy-imagine-connection-status" class="comfy-imagine-status"></span>
+        </div>
+    </div>
+
+    <!-- Section 2: LLM -->
+    <div class="comfy-imagine-section">
+        <h5>LLM (Prompt Generator)</h5>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-llm-url">API Base URL</label>
+            <input id="comfy-imagine-llm-url" type="text" class="text_pole" placeholder="https://api.nano-gpt.com/v1" />
+        </div>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-llm-key">API Key</label>
+            <input id="comfy-imagine-llm-key" type="password" class="text_pole" />
+        </div>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-llm-model">Model</label>
+            <input id="comfy-imagine-llm-model" type="text" class="text_pole" placeholder="gpt-4o-mini" />
+        </div>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-system-prompt">System Prompt</label>
+            <textarea id="comfy-imagine-system-prompt" class="text_pole" rows="5"></textarea>
+        </div>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-prompt-prefix">Prompt Prefix</label>
+            <input id="comfy-imagine-prompt-prefix" type="text" class="text_pole" placeholder="masterpiece, best quality, " />
+        </div>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-prompt-suffix">Prompt Suffix</label>
+            <input id="comfy-imagine-prompt-suffix" type="text" class="text_pole" placeholder=", sharp focus, 8k" />
+        </div>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-negative-prompt">Negative Prompt</label>
+            <input id="comfy-imagine-negative-prompt" type="text" class="text_pole" placeholder="blurry, watermark, lowres" />
+        </div>
+    </div>
+
+    <!-- Section 3: Workflows -->
+    <div class="comfy-imagine-section">
+        <h5>Workflows</h5>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-workflow-upload">Upload Workflow (.json)</label>
+            <input id="comfy-imagine-workflow-upload" type="file" accept=".json" />
+        </div>
+        <span id="comfy-imagine-upload-status" class="comfy-imagine-status"></span>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-active-workflow">Active Workflow</label>
+            <select id="comfy-imagine-active-workflow" class="text_pole">
+                <option value="">— none —</option>
+            </select>
+        </div>
+        <div class="comfy-imagine-row">
+            <button id="comfy-imagine-reload-workflows" class="menu_button">Reload Workflows</button>
+        </div>
+    </div>
+
+    <!-- Section 4: Generation Settings -->
+    <div class="comfy-imagine-section">
+        <h5>Generation Settings</h5>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-image-count">Image Count</label>
+            <input id="comfy-imagine-image-count" type="number" class="text_pole" min="1" max="8" />
+        </div>
+        <div class="comfy-imagine-row">
+            <label for="comfy-imagine-sender-name">Sender Name</label>
+            <input id="comfy-imagine-sender-name" type="text" class="text_pole" placeholder="Camera" />
+        </div>
+    </div>
+
+    <!-- Section 5: Quick Reply Setup -->
+    <div class="comfy-imagine-section">
+        <h5>Quick Reply Setup</h5>
+        <div class="comfy-imagine-info">
+            To trigger image generation from a Quick Reply button, create a Quick Reply with the command: <code>/imagine</code>
+        </div>
+    </div>
+
+</div>
