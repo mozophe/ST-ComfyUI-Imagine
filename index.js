@@ -177,6 +177,38 @@ function bindSettingsEvents() {
     document.getElementById('comfy-imagine-reload-workflows')?.addEventListener('click', () => {
         populateWorkflowDropdown();
     });
+
+    document.getElementById('comfy-imagine-workflow-upload-btn')?.addEventListener('click', () => {
+        document.getElementById('comfy-imagine-workflow-upload')?.click();
+    });
+
+    document.getElementById('comfy-imagine-test-llm')?.addEventListener('click', async () => {
+        const statusEl = document.getElementById('comfy-imagine-llm-status');
+        const s = getSettings();
+        const base = (s.llmBaseUrl || '').replace(/\/$/, '');
+        if (!base) {
+            statusEl.textContent = 'No API URL set';
+            statusEl.className = 'comfy-imagine-status error';
+            return;
+        }
+        statusEl.textContent = 'Testing…';
+        statusEl.className = 'comfy-imagine-status';
+        try {
+            const resp = await fetch(`${base}/models`, {
+                headers: s.llmApiKey ? { Authorization: `Bearer ${s.llmApiKey}` } : {},
+            });
+            if (resp.ok) {
+                statusEl.textContent = 'Connected ✓';
+                statusEl.className = 'comfy-imagine-status success';
+            } else {
+                statusEl.textContent = `Failed (HTTP ${resp.status})`;
+                statusEl.className = 'comfy-imagine-status error';
+            }
+        } catch {
+            statusEl.textContent = 'Unreachable';
+            statusEl.className = 'comfy-imagine-status error';
+        }
+    });
 }
 
 // ── Context Assembly ────────────────────────────────────────────────────────

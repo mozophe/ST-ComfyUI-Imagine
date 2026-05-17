@@ -19,6 +19,31 @@
     gap: 0.25em;
 }
 
+#comfy-imagine-settings .comfy-imagine-row--inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5em;
+    flex-wrap: wrap;
+}
+
+#comfy-imagine-settings .comfy-imagine-row--inline label {
+    flex: 0 0 9em;
+    text-align: right;
+    white-space: nowrap;
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
+#comfy-imagine-settings .comfy-imagine-row--inline .text_pole {
+    flex: 1;
+    min-width: 0;
+}
+
+#comfy-imagine-settings .comfy-imagine-row--inline .comfy-imagine-status {
+    flex: 0 1 auto;
+    white-space: nowrap;
+}
+
 #comfy-imagine-settings label {
     font-size: 0.85em;
     opacity: 0.85;
