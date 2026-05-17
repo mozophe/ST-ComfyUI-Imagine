@@ -36,6 +36,8 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 
 Use ST's built-in **Abort** button to cancel generation mid-flight.
 
+Each generated image message has a bug-icon button in the message action row. Click it to open a debug modal showing the raw LLM prompt, the injected positive prompt, and the negative prompt that were used for that image.
+
 ## Security Note
 
 The LLM API key is stored in SillyTavern's `settings.json` in plain text. Do not commit or share that file.
