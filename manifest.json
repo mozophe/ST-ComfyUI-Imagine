@@ -1,10 +1,10 @@
 {
   "display_name": "ComfyUI-Imagine",
   "version": "1.0.0",
-  "author": "your-name",
+  "author": "mozophe",
   "js": "index.js",
   "css": "style.css",
-  "homePage": "https://github.com/your/comfy-imagine",
+  "homePage": "https://github.com/mozophe/ST-ComfyUI-Imagine",
   "auto_update": true,
   "minimum_client_version": "1.18.0"
 }

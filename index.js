@@ -197,6 +197,10 @@ function bindSettingsEvents() {
             statusEl.textContent = `Workflow '${file.name}' uploaded successfully`;
             statusEl.className = 'comfy-imagine-status success';
         };
+        reader.onerror = () => {
+            statusEl.textContent = 'Failed to read file.';
+            statusEl.className = 'comfy-imagine-status error';
+        };
         reader.readAsText(file);
         e.target.value = '';
     });
@@ -429,7 +433,7 @@ function showDebugModal(mesid) {
     const { chat, callGenericPopup, POPUP_TYPE } = SillyTavern.getContext();
     const msg = chat[mesid];
     if (!msg) return;
-    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const sys = esc(getSettings().systemPrompt ?? '');
     const ctx = esc(msg.extra?.debugContext ?? '(not stored — regenerate with /imagine to capture)');
     const prompt = esc(msg.extra?.debugPrompt ?? '(not stored)');
