@@ -429,7 +429,7 @@ function injectDebugButtonOnMessage(mesid) {
     btn.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
     btn.title = 'View LLM context & prompt';
     btn.tabIndex = 0;
-    container.prepend(btn);
+    container.append(btn);
 }
 
 function injectAllDebugButtons() {
