@@ -237,7 +237,7 @@ function assembleContext() {
     // ctx.persona is undefined in ST v1.18.0; use powerUserSettings from context
     // powerUserSettings.persona_description is synced to the active persona on selection
     const userName = ctx.name1 ?? 'User';
-    const userDescription = ctx.powerUserSettings?.persona_description ?? '';
+    const userDescription = ctx.substituteParams(ctx.powerUserSettings?.persona_description ?? '');
 
     const lines = [];
 
