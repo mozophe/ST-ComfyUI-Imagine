@@ -11,7 +11,7 @@ A SillyTavern extension that generates images on demand by reading the current c
   ```
   - `--listen 0.0.0.0` — accept connections from other machines on the network
   - `--enable-cors-header` — required when SillyTavern runs on a **different machine** (e.g. a Raspberry Pi); without it the browser blocks cross-origin requests even if the port is reachable via `curl`
-- An OpenAI-compatible LLM API endpoint (e.g. nano-gpt, OpenAI, a local Ollama server)
+- An OpenAI-compatible LLM API endpoint (e.g. OpenAI, a local Ollama server, or any OpenAI-compatible API)
 
 ## Installation
 
