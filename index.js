@@ -234,10 +234,11 @@ function bindSettingsEvents() {
 function assembleContext() {
     const ctx = SillyTavern.getContext();
     const character = ctx.characters?.[ctx.characterId] ?? {};
-    // ctx.persona is undefined in ST v1.18.0; read directly from power_user global
-    const activePersona = window.power_user?.personas?.[window.power_user?.persona] ?? ctx.persona ?? {};
-    const userName = activePersona?.name ?? ctx.name1 ?? 'User';
-    const userDescription = activePersona?.description ?? '';
+    // ctx.persona is undefined in ST v1.18.0; use ST globals directly
+    // user_avatar = active persona key; power_user.personas[key] = name string
+    // power_user.persona_description = active persona description (synced on selection)
+    const userName = window.power_user?.personas?.[window.user_avatar] ?? ctx.name1 ?? 'User';
+    const userDescription = window.power_user?.persona_description ?? '';
 
     const lines = [];
 
