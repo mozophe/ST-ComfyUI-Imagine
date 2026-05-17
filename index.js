@@ -256,7 +256,7 @@ function assembleContext() {
 
 // ── LLM Call ────────────────────────────────────────────────────────────────
 
-async function generatePromptViaLLM(contextString) {
+async function generatePromptViaLLM(contextString, signal) {
     const s = getSettings();
     const baseUrl = s.llmBaseUrl.replace(/\/$/, '');
     const body = {
@@ -276,6 +276,7 @@ async function generatePromptViaLLM(contextString) {
             'Authorization': `Bearer ${s.llmApiKey}`,
         },
         body: JSON.stringify(body),
+        signal,
     });
 
     if (!resp.ok) {
@@ -319,7 +320,7 @@ function randomiseSeed(workflow) {
 
 // ── ComfyUI Submit & Poll ───────────────────────────────────────────────────
 
-async function submitAndPoll(workflowJson) {
+async function submitAndPoll(workflowJson, signal) {
     const s = getSettings();
     const comfyUrl = s.comfyUrl.replace(/\/$/, '');
 
@@ -329,20 +330,24 @@ async function submitAndPoll(workflowJson) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: workflowJson }),
+            signal,
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         promptId = data.prompt_id;
     } catch (err) {
+        if (err.name === 'AbortError') throw err;
         throw new Error(`Comfy Imagine: Cannot reach ComfyUI at ${comfyUrl}`);
     }
 
     const deadline = Date.now() + GENERATION_TIMEOUT_MS;
     while (Date.now() < deadline) {
+        if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
         await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+        if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
         try {
-            const resp = await fetch(`${comfyUrl}/history/${promptId}`);
+            const resp = await fetch(`${comfyUrl}/history/${promptId}`, { signal });
             if (!resp.ok) continue;
             const history = await resp.json();
             const entry = history[promptId];
@@ -356,7 +361,8 @@ async function submitAndPoll(workflowJson) {
                     }
                 }
             }
-        } catch {
+        } catch (err) {
+            if (err.name === 'AbortError') throw err;
             // transient poll error — keep trying
         }
     }
@@ -364,8 +370,8 @@ async function submitAndPoll(workflowJson) {
     throw new Error('timeout');
 }
 
-async function fetchImageAsDataUrl(imageUrl) {
-    const resp = await fetch(imageUrl);
+async function fetchImageAsDataUrl(imageUrl, signal) {
+    const resp = await fetch(imageUrl, { signal });
     if (!resp.ok) throw new Error('fetch_failed');
     const blob = await resp.blob();
     return new Promise((resolve, reject) => {
@@ -378,7 +384,8 @@ async function fetchImageAsDataUrl(imageUrl) {
 
 // ── /imagine Slash Command ──────────────────────────────────────────────────
 
-async function runImagine() {
+async function runImagine(args) {
+    const signal = args?.abortController?.signal;
     const s = getSettings();
 
     if (!s.activeWorkflow || !s.workflows?.[s.activeWorkflow]) {
@@ -402,8 +409,9 @@ async function runImagine() {
     // Step 2 — call LLM
     let llmOutput;
     try {
-        llmOutput = await generatePromptViaLLM(contextString);
+        llmOutput = await generatePromptViaLLM(contextString, signal);
     } catch (err) {
+        if (err.name === 'AbortError') return '';
         toast(`Comfy Imagine: LLM error — ${err.message}`, 'error');
         return '';
     }
@@ -427,8 +435,9 @@ async function runImagine() {
 
         let imageUrl;
         try {
-            imageUrl = await submitAndPoll(workflow);
+            imageUrl = await submitAndPoll(workflow, signal);
         } catch (err) {
+            if (err.name === 'AbortError') return '';
             if (err.message === 'timeout') {
                 toast('Comfy Imagine: Generation timed out.', 'error');
             } else {
@@ -439,8 +448,9 @@ async function runImagine() {
 
         let dataUrl;
         try {
-            dataUrl = await fetchImageAsDataUrl(imageUrl);
-        } catch {
+            dataUrl = await fetchImageAsDataUrl(imageUrl, signal);
+        } catch (err) {
+            if (err.name === 'AbortError') return '';
             toast('Comfy Imagine: Image generated but could not be retrieved.', 'error');
             return '';
         }
