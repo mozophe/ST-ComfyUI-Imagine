@@ -523,7 +523,7 @@ async function runImagine(args) {
             return '';
         }
 
-        const { chat, addOneMessage } = SillyTavern.getContext();
+        const { chat, addOneMessage, saveChat } = SillyTavern.getContext();
         const imageMessage = {
             name: s.senderName || 'Camera',
             is_user: false,
@@ -537,7 +537,8 @@ async function runImagine(args) {
             },
         };
         chat.push(imageMessage);
-        await addOneMessage(imageMessage, { scroll: true, save: true });
+        await addOneMessage(imageMessage, { scroll: true });
+        await saveChat();
         injectDebugButtonOnMessage(chat.length - 1);
     }
 
