@@ -425,8 +425,7 @@ function injectDebugButtonOnMessage(mesid) {
     const container = mesEl.querySelector('.extraMesButtons') ?? mesEl.querySelector('.mes_buttons');
     if (!container) return;
     const btn = document.createElement('div');
-    btn.className = 'mes_button comfy-imagine-debug-btn interactable';
-    btn.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+    btn.className = 'mes_button comfy-imagine-debug-btn fa-solid fa-circle-info interactable';
     btn.title = 'View LLM context & prompt';
     btn.tabIndex = 0;
     container.append(btn);
