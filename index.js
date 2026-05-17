@@ -463,7 +463,6 @@ async function runImagine(args) {
             send_date: new Date().toISOString(),
             mes: `![generated image](${dataUrl})`,
             extra: {
-                image: dataUrl,
                 title: 'comfy-imagine',
             },
         };
