@@ -34,7 +34,7 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 3. Post the prompt to ComfyUI and wait for the result
 4. Inject the generated image into chat as a message from "Camera" (hidden from the main model)
 
-A **Cancel** button appears in the send bar during generation.
+Use ST's built-in **Abort** button to cancel generation mid-flight.
 
 ## Security Note
 
