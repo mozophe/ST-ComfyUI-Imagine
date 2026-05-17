@@ -9,7 +9,7 @@
             <!-- Section 1: ComfyUI Connection -->
             <div class="comfy-imagine-section">
                 <h5>ComfyUI Connection</h5>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-url">Base URL</label>
                     <input id="comfy-imagine-url" type="text" class="text_pole" placeholder="http://192.168.1.x:8188" />
                 </div>
@@ -17,8 +17,7 @@
                     Start ComfyUI with <code>--listen</code> so it accepts network connections:<br/>
                     <code>python main.py --listen 0.0.0.0 --port 8188</code>
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
-                    <span class="comfy-imagine-label-spacer"></span>
+                <div class="comfy-imagine-row--inline">
                     <button id="comfy-imagine-test-connection" class="menu_button">Test Connection</button>
                     <span id="comfy-imagine-connection-status" class="comfy-imagine-status"></span>
                 </div>
@@ -27,20 +26,19 @@
             <!-- Section 2: LLM -->
             <div class="comfy-imagine-section">
                 <h5>LLM (Prompt Generator)</h5>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-llm-url">API Base URL</label>
                     <input id="comfy-imagine-llm-url" type="text" class="text_pole" placeholder="https://api.nano-gpt.com/v1" />
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-llm-key">API Key</label>
                     <input id="comfy-imagine-llm-key" type="password" class="text_pole" />
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-llm-model">Model</label>
                     <input id="comfy-imagine-llm-model" type="text" class="text_pole" placeholder="gpt-4o-mini" />
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
-                    <span class="comfy-imagine-label-spacer"></span>
+                <div class="comfy-imagine-row--inline">
                     <button id="comfy-imagine-test-llm" class="menu_button">Test LLM API</button>
                     <span id="comfy-imagine-llm-status" class="comfy-imagine-status"></span>
                 </div>
@@ -48,15 +46,15 @@
                     <label for="comfy-imagine-system-prompt">System Prompt</label>
                     <textarea id="comfy-imagine-system-prompt" class="text_pole" rows="5"></textarea>
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-prompt-prefix">Prompt Prefix</label>
                     <input id="comfy-imagine-prompt-prefix" type="text" class="text_pole" placeholder="masterpiece, best quality, " />
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-prompt-suffix">Prompt Suffix</label>
                     <input id="comfy-imagine-prompt-suffix" type="text" class="text_pole" placeholder=", sharp focus, 8k" />
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-negative-prompt">Negative Prompt</label>
                     <input id="comfy-imagine-negative-prompt" type="text" class="text_pole" placeholder="blurry, watermark, lowres" />
                 </div>
@@ -65,38 +63,39 @@
             <!-- Section 3: Workflows -->
             <div class="comfy-imagine-section">
                 <h5>Workflows</h5>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
-                    <span class="comfy-imagine-label-spacer"></span>
+                <div class="comfy-imagine-info">
+                    Upload a workflow exported from ComfyUI in <strong>API format</strong>.<br/>
+                    In ComfyUI: enable <em>Dev Mode</em> (Settings &rarr; Enable Dev Mode Options),
+                    then click <em>Save (API Format)</em> to export the file.
+                </div>
+                <div class="comfy-imagine-row--inline">
                     <button id="comfy-imagine-workflow-upload-btn" class="menu_button">
                         <i class="fa-solid fa-upload"></i> Upload Workflow
                     </button>
                     <input id="comfy-imagine-workflow-upload" type="file" accept=".json" style="display:none" />
                     <span id="comfy-imagine-upload-status" class="comfy-imagine-status"></span>
                 </div>
-                <div class="comfy-imagine-info">
-                    Upload a workflow exported from ComfyUI in <strong>API format</strong>.<br/>
-                    In ComfyUI: enable <em>Dev Mode</em> (Settings &rarr; Enable Dev Mode Options),
-                    then click <em>Save (API Format)</em> to export the file.
-                </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-active-workflow">Active Workflow</label>
-                    <select id="comfy-imagine-active-workflow" class="text_pole">
-                        <option value="">— none —</option>
-                    </select>
-                    <button id="comfy-imagine-reload-workflows" class="menu_button" title="Reload list">
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
+                    <div class="comfy-imagine-row--inline">
+                        <select id="comfy-imagine-active-workflow" class="text_pole">
+                            <option value="">— none —</option>
+                        </select>
+                        <button id="comfy-imagine-reload-workflows" class="menu_button" title="Reload list">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Section 4: Generation Settings -->
             <div class="comfy-imagine-section">
                 <h5>Generation Settings</h5>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-image-count">Image Count</label>
                     <input id="comfy-imagine-image-count" type="number" class="text_pole" min="1" max="8" />
                 </div>
-                <div class="comfy-imagine-row comfy-imagine-row--inline">
+                <div class="comfy-imagine-row">
                     <label for="comfy-imagine-sender-name">Sender Name</label>
                     <input id="comfy-imagine-sender-name" type="text" class="text_pole" placeholder="Camera" />
                 </div>

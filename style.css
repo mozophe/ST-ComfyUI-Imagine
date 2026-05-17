@@ -1,56 +1,45 @@
+/* Sections separated by a subtle border */
 #comfy-imagine-settings .comfy-imagine-section {
-    margin-bottom: 1em;
+    padding: 0.75em 0;
+    border-top: 1px solid var(--SmartThemeBorderColor, rgba(255,255,255,0.1));
 }
 
+#comfy-imagine-settings .comfy-imagine-section:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+/* Section headers — bold, readable, not uppercase */
 #comfy-imagine-settings h5 {
-    margin: 0.5em 0;
+    margin: 0 0 0.6em 0;
     color: var(--SmartThemeBodyColor, inherit);
-    font-size: 0.95em;
+    font-size: 1em;
     font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.75;
 }
 
+/* Default row: label above input (column) */
 #comfy-imagine-settings .comfy-imagine-row {
     display: flex;
     flex-direction: column;
-    margin-bottom: 0.5em;
-    gap: 0.25em;
+    margin-bottom: 0.6em;
+    gap: 0.3em;
 }
 
+/* Inline row: for button+status pairs only */
 #comfy-imagine-settings .comfy-imagine-row--inline {
     flex-direction: row;
     align-items: center;
     gap: 0.5em;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    margin-bottom: 0.4em;
 }
 
-#comfy-imagine-settings .comfy-imagine-row--inline label {
-    flex: 0 0 9em;
-    text-align: right;
-    white-space: nowrap;
-    font-size: 0.85em;
-    opacity: 0.85;
-}
-
+/* Inputs fill available width */
+#comfy-imagine-settings .comfy-imagine-row .text_pole,
 #comfy-imagine-settings .comfy-imagine-row--inline .text_pole {
     flex: 1;
     min-width: 0;
-}
-
-#comfy-imagine-settings .comfy-imagine-row--inline .comfy-imagine-status {
-    flex: 0 1 auto;
-    white-space: nowrap;
-}
-
-#comfy-imagine-settings .menu_button {
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-#comfy-imagine-settings .comfy-imagine-label-spacer {
-    flex: 0 0 9em;
+    width: 100%;
 }
 
 #comfy-imagine-settings label {
@@ -58,9 +47,17 @@
     opacity: 0.85;
 }
 
+/* Buttons: never wrap text */
+#comfy-imagine-settings .menu_button {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Status text */
 #comfy-imagine-settings .comfy-imagine-status {
     font-size: 0.85em;
     min-height: 1.2em;
+    white-space: nowrap;
 }
 
 #comfy-imagine-settings .comfy-imagine-status.success {
@@ -71,12 +68,14 @@
     color: var(--red, #f44336);
 }
 
+/* Info boxes */
 #comfy-imagine-settings .comfy-imagine-info {
-    font-size: 0.85em;
-    opacity: 0.8;
+    font-size: 0.82em;
+    opacity: 0.75;
     padding: 0.4em 0.6em;
-    background: var(--SmartThemeBlurTintColor, rgba(255,255,255,0.05));
+    background: var(--SmartThemeBlurTintColor, rgba(255,255,255,0.04));
     border-radius: 4px;
+    margin-bottom: 0.5em;
 }
 
 #comfy-imagine-settings .comfy-imagine-info code {
