@@ -2,6 +2,9 @@ import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.j
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 
 const MODULE_NAME = 'comfy_imagine';
+// Derive the actual folder name from this script's URL so renderExtensionTemplateAsync
+// resolves settings.html correctly regardless of what the repo was cloned as.
+const EXTENSION_FOLDER = new URL(import.meta.url).pathname.split('/').slice(-2, -1)[0];
 const POLL_INTERVAL_MS = 1500;
 const GENERATION_TIMEOUT_MS = 120_000;
 
@@ -485,7 +488,7 @@ async function runImagine() {
     lodash.merge(extensionSettings[MODULE_NAME], { ...defaultSettings, ...extensionSettings[MODULE_NAME] });
 
     // Render settings panel
-    const settingsHtml = await renderExtensionTemplateAsync(MODULE_NAME, 'settings');
+    const settingsHtml = await renderExtensionTemplateAsync(EXTENSION_FOLDER, 'settings');
     document.getElementById('extensions_settings')?.insertAdjacentHTML('beforeend', settingsHtml);
 
     loadSettingsIntoUI();
