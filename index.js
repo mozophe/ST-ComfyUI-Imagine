@@ -178,6 +178,20 @@ function bindSettingsEvents() {
         populateWorkflowDropdown();
     });
 
+    document.getElementById('comfy-imagine-delete-workflow')?.addEventListener('click', () => {
+        const settings = getSettings();
+        const name = settings.activeWorkflow;
+        if (!name || !settings.workflows?.[name]) {
+            toast('No workflow selected.', 'error');
+            return;
+        }
+        delete settings.workflows[name];
+        settings.activeWorkflow = '';
+        saveSettings();
+        populateWorkflowDropdown();
+        toast(`Workflow '${name}' deleted.`);
+    });
+
     document.getElementById('comfy-imagine-workflow-upload-btn')?.addEventListener('click', () => {
         document.getElementById('comfy-imagine-workflow-upload')?.click();
     });
