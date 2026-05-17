@@ -388,11 +388,17 @@ function showDebugModal(mesid) {
     const { chat, callGenericPopup, POPUP_TYPE } = SillyTavern.getContext();
     const msg = chat[mesid];
     if (!msg) return;
-    const ctx = (msg.extra?.debugContext ?? '(not stored — regenerate with /imagine to capture)').replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    const prompt = (msg.extra?.debugPrompt ?? '(not stored)').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const sys = esc(getSettings().systemPrompt ?? '');
+    const ctx = esc(msg.extra?.debugContext ?? '(not stored — regenerate with /imagine to capture)');
+    const prompt = esc(msg.extra?.debugPrompt ?? '(not stored)');
     const html = `<div style="display:flex;flex-direction:column;gap:12px;min-width:min(600px,80vw)">
         <div>
-            <label style="font-weight:bold;display:block;margin-bottom:4px">LLM Context (sent)</label>
+            <label style="font-weight:bold;display:block;margin-bottom:4px">System Prompt</label>
+            <textarea readonly rows="6" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${sys}</textarea>
+        </div>
+        <div>
+            <label style="font-weight:bold;display:block;margin-bottom:4px">User Message (character + persona + chat log)</label>
             <textarea readonly rows="12" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${ctx}</textarea>
         </div>
         <div>
