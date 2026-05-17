@@ -1,11 +1,5 @@
 #comfy-imagine-settings .comfy-imagine-section {
     margin-bottom: 1em;
-    padding-bottom: 0.75em;
-    border-bottom: 1px solid var(--SmartThemeBorderColor, #444);
-}
-
-#comfy-imagine-settings .comfy-imagine-section:last-child {
-    border-bottom: none;
 }
 
 #comfy-imagine-settings h5 {
