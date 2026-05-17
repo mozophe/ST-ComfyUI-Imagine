@@ -235,6 +235,7 @@ function assembleContext() {
     const ctx = SillyTavern.getContext();
     const character = ctx.characters?.[ctx.characterId] ?? {};
     const persona = ctx.persona ?? {};
+    console.log('[ComfyUI-Imagine] persona object:', JSON.stringify(ctx.persona));
 
     const lines = [];
 
