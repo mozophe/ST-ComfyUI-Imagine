@@ -56,7 +56,8 @@ function saveSettings() {
 }
 
 function toast(msg, type = 'info') {
-    const t = SillyTavern.libs.toastr;
+    const t = SillyTavern.libs?.toastr ?? window.toastr;
+    if (!t) return;
     if (type === 'error') t.error(msg);
     else if (type === 'success') t.success(msg);
     else t.info(msg);
