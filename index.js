@@ -234,8 +234,10 @@ function bindSettingsEvents() {
 function assembleContext() {
     const ctx = SillyTavern.getContext();
     const character = ctx.characters?.[ctx.characterId] ?? {};
-    const persona = ctx.persona ?? {};
-    console.log('[ComfyUI-Imagine] persona object:', JSON.stringify(ctx.persona));
+    // ctx.persona is undefined in ST v1.18.0; read directly from power_user global
+    const activePersona = window.power_user?.personas?.[window.power_user?.persona] ?? ctx.persona ?? {};
+    const userName = activePersona?.name ?? ctx.name1 ?? 'User';
+    const userDescription = activePersona?.description ?? '';
 
     const lines = [];
 
@@ -247,14 +249,14 @@ function assembleContext() {
 
     lines.push('');
     lines.push('[USER PERSONA]');
-    lines.push(`Name: ${persona.name ?? ctx.name1 ?? 'User'}`);
-    if (persona.description) lines.push(`Description: ${persona.description}`);
+    lines.push(`Name: ${userName}`);
+    if (userDescription) lines.push(`Description: ${userDescription}`);
 
     lines.push('');
     lines.push('[CHAT LOG]');
     for (const msg of (ctx.chat ?? [])) {
         if (msg.is_system) continue;
-        const speaker = msg.is_user ? (persona.name ?? ctx.name1 ?? 'User') : (character.name ?? 'Character');
+        const speaker = msg.is_user ? userName : (character.name ?? 'Character');
         lines.push(`${speaker}: ${msg.mes}`);
     }
 
