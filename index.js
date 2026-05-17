@@ -382,6 +382,41 @@ async function fetchImageAsDataUrl(imageUrl, signal) {
     });
 }
 
+// ── Debug Viewer ────────────────────────────────────────────────────────────
+
+function showDebugModal(mesid) {
+    const { chat, callGenericPopup, POPUP_TYPE } = SillyTavern.getContext();
+    const msg = chat[mesid];
+    if (!msg) return;
+    const ctx = (msg.extra?.debugContext ?? '(not stored — regenerate with /imagine to capture)').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const prompt = (msg.extra?.debugPrompt ?? '(not stored)').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const html = `<div style="display:flex;flex-direction:column;gap:12px;min-width:min(600px,80vw)">
+        <div>
+            <label style="font-weight:bold;display:block;margin-bottom:4px">LLM Context (sent)</label>
+            <textarea readonly rows="12" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${ctx}</textarea>
+        </div>
+        <div>
+            <label style="font-weight:bold;display:block;margin-bottom:4px">Generated Prompt (returned)</label>
+            <textarea readonly rows="6" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${prompt}</textarea>
+        </div>
+    </div>`;
+    callGenericPopup(html, POPUP_TYPE.TEXT, '', { okButton: 'Close' });
+}
+
+function refreshDebugButtons() {
+    const { chat } = SillyTavern.getContext();
+    document.querySelectorAll('.mes').forEach(mesEl => {
+        const mesid = parseInt(mesEl.getAttribute('mesid'));
+        if (isNaN(mesid)) return;
+        const msg = chat[mesid];
+        const btn = mesEl.querySelector('.comfy-imagine-debug-btn');
+        if (!btn) return;
+        const hasData = msg?.extra?.title === 'comfy-imagine'
+            && (msg.extra.debugContext || msg.extra.debugPrompt);
+        btn.style.display = hasData ? '' : 'none';
+    });
+}
+
 // ── /imagine Slash Command ──────────────────────────────────────────────────
 
 async function runImagine(args) {
@@ -473,6 +508,8 @@ async function runImagine(args) {
             mes: `![generated image](${dataUrl})`,
             extra: {
                 title: 'comfy-imagine',
+                debugContext: contextString,
+                debugPrompt: llmOutput,
             },
         };
         chat.push(imageMessage);
@@ -502,6 +539,32 @@ async function runImagine(args) {
 
     loadSettingsIntoUI();
     bindSettingsEvents();
+
+    // Inject debug button into the message template (cloned for every new message, hidden by default)
+    const tmplButtons = document.querySelector('#message_template .mes_buttons .extraMesButtons');
+    if (tmplButtons && !tmplButtons.querySelector('.comfy-imagine-debug-btn')) {
+        const debugBtn = document.createElement('div');
+        debugBtn.className = 'mes_button comfy-imagine-debug-btn interactable';
+        debugBtn.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+        debugBtn.title = 'View LLM context & prompt';
+        debugBtn.tabIndex = 0;
+        debugBtn.style.display = 'none';
+        tmplButtons.prepend(debugBtn);
+    }
+
+    // Delegated click handler
+    $(document).on('click', '.comfy-imagine-debug-btn', e => {
+        const mesid = parseInt($(e.currentTarget).closest('.mes').attr('mesid'));
+        if (!isNaN(mesid)) showDebugModal(mesid);
+    });
+
+    // Show button on comfy-imagine messages when they render or chat changes
+    const { eventSource, event_types } = SillyTavern.getContext();
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, () => refreshDebugButtons());
+    eventSource.on(event_types.CHAT_CHANGED, () => refreshDebugButtons());
+
+    // Show on any messages already in the DOM at load time
+    refreshDebugButtons();
 
     // Register /imagine slash command
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
