@@ -338,11 +338,14 @@ async function generatePromptViaLLM(contextString, signal) {
 function setNodeText(node, value) {
     if (node.inputs && typeof node.inputs.text === 'string') {
         node.inputs.text = value;
+    } else if (node.inputs && typeof node.inputs.value === 'string') {
+        // PrimitiveString / PrimitiveStringMultiline nodes store their literal in `value`
+        node.inputs.value = value;
     } else if (Array.isArray(node.widgets_values) && node.widgets_values.length > 0) {
         node.widgets_values[0] = value;
     } else if (node.inputs) {
-        // inputs.text exists but is a link array — node is wired as input, not a text source
-        throw new Error(`Node "${node._meta?.title ?? node.class_type}" inputs.text is a link, not a string. Cannot inject.`);
+        // text/value exists but is a link array — node is wired as input, not a text source
+        throw new Error(`Node "${node._meta?.title ?? node.class_type}" has no literal text/value field (wired as link). Cannot inject.`);
     } else {
         throw new Error(`Node "${node._meta?.title ?? node.class_type}" has no settable text field.`);
     }
