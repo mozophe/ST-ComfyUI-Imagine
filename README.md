@@ -47,3 +47,15 @@ The LLM API key is stored in SillyTavern's `settings.json` in plain text. Do not
 - Workflows must be in **ComfyUI API export format** (not the standard UI format).
 - The extension injects the LLM-generated prompt into the first `CLIPTextEncode` node (positive conditioning) and the negative prompt (if set) into the second.
 - If image count > 1, the KSampler seed is randomised for each job.
+
+### Custom Prompt Target Nodes
+
+If you want to prepend a fixed keyword or prefix inside the workflow itself (e.g. using a string concat node), you can redirect injection away from `CLIPTextEncode` using node titles:
+
+1. In ComfyUI, set the title of your **prompt-receiver** string node to `IMAGINE_PROMPT`.
+2. Optionally, title your negative-prompt string node `IMAGINE_NEGATIVE`.
+3. Export the workflow in API format and upload it.
+
+The extension will inject into those titled nodes instead of the first/second `CLIPTextEncode`. Fallback to `CLIPTextEncode` order applies when no titled nodes are found (existing workflows are unaffected).
+
+Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's built-in `PrimitiveNode`) are supported.

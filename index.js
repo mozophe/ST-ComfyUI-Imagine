@@ -335,22 +335,44 @@ async function generatePromptViaLLM(contextString, signal) {
 
 // ── Workflow Injection ──────────────────────────────────────────────────────
 
+function setNodeText(node, value) {
+    if (node.inputs && typeof node.inputs.text === 'string') {
+        node.inputs.text = value;
+    } else if (Array.isArray(node.widgets_values) && node.widgets_values.length > 0) {
+        node.widgets_values[0] = value;
+    } else if (node.inputs) {
+        // inputs.text exists but is a link array — node is wired as input, not a text source
+        throw new Error(`Node "${node._meta?.title ?? node.class_type}" inputs.text is a link, not a string. Cannot inject.`);
+    } else {
+        throw new Error(`Node "${node._meta?.title ?? node.class_type}" has no settable text field.`);
+    }
+}
+
 function injectPromptIntoWorkflow(workflow, positivePrompt, negativePrompt) {
+    // Title-convention targets override CLIPTextEncode detection.
+    // In ComfyUI, set a node's title to IMAGINE_PROMPT or IMAGINE_NEGATIVE
+    // to make it the injection target instead of the first/second CLIPTextEncode.
+    let positiveTarget = null;
+    let negativeTarget = null;
     const clipNodes = [];
-    for (const [id, node] of Object.entries(workflow)) {
-        if (node.class_type === 'CLIPTextEncode') {
-            clipNodes.push({ id, node });
-        }
+
+    for (const node of Object.values(workflow)) {
+        const title = node._meta?.title;
+        if (title === 'IMAGINE_PROMPT') positiveTarget = node;
+        else if (title === 'IMAGINE_NEGATIVE') negativeTarget = node;
+        if (node.class_type === 'CLIPTextEncode') clipNodes.push(node);
     }
 
-    if (clipNodes.length === 0) {
-        throw new Error('Workflow JSON is invalid or missing CLIPTextEncode node.');
+    if (!positiveTarget) {
+        if (clipNodes.length === 0) throw new Error('Workflow JSON is invalid or missing CLIPTextEncode node.');
+        positiveTarget = clipNodes[0];
     }
 
-    clipNodes[0].node.inputs.text = positivePrompt;
+    setNodeText(positiveTarget, positivePrompt);
 
-    if (negativePrompt && clipNodes.length >= 2) {
-        clipNodes[1].node.inputs.text = negativePrompt;
+    if (negativePrompt) {
+        if (!negativeTarget) negativeTarget = clipNodes[1] ?? null;
+        if (negativeTarget) setNodeText(negativeTarget, negativePrompt);
     }
 }
 
