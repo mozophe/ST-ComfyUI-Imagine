@@ -31,7 +31,7 @@ In SillyTavern's Extension Manager, paste the GitHub repo URL and install.
 Type `/imagine` in the chat input or attach it to a Quick Reply button. The extension will:
 
 1. Gather the current character card, user persona, and chat history
-2. Ask the configured LLM to write a Stable Diffusion prompt
+2. Ask the configured LLM to write a prompt for Comfy UI
 3. Post the prompt to ComfyUI and wait for the result
 4. Inject the generated image into chat as a message from "Camera" (hidden from the main model)
 
