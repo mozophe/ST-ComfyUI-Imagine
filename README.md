@@ -96,3 +96,7 @@ If you want to prepend a fixed keyword or prefix inside the workflow itself (e.g
 The extension will inject into those titled nodes instead of the first/second `CLIPTextEncode`. Fallback to `CLIPTextEncode` order applies when no titled nodes are found (existing workflows are unaffected).
 
 Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's built-in `PrimitiveNode`) are supported.
+
+## License
+
+[MIT](LICENSE) © mozophe
