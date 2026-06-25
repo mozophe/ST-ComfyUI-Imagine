@@ -33,7 +33,9 @@ https://github.com/mozophe/ST-ComfyUI-Imagine
    - `--enable-cors-header` — needed in **both** cases. SillyTavern and ComfyUI run on different ports, so the browser treats them as different origins and blocks `fetch` without this header — even on the same machine, even when the port is reachable via `curl`.
    - `--listen 0.0.0.0` — **only** for the different-machines case; it makes ComfyUI accept connections from other computers on the network. Omit it for a same-machine setup.
    - Add `--port <number>` to either command if you don't want the default port `8188`.
-2. **ComfyUI Base URL** — set to the machine's IP and port, e.g. `http://192.168.1.50:8188`. Click **Test ComfyUI Connection** to verify.
+2. **ComfyUI Base URL** — point it at ComfyUI, then click **Test ComfyUI Connection** to verify:
+   - **Same machine** — `http://localhost:8188`
+   - **Different machine** — the ComfyUI computer's LAN IP and port, e.g. `http://192.168.1.50:8188`
 3. **LLM** — enter your API base URL, API key, and model name. Click **Test API Connection** to verify.
 4. **System Prompt Presets** — save the current system prompt under a name with **Save As**, switch between saved prompts via the dropdown, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
 5. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
