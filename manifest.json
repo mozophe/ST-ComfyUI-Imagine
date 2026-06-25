@@ -2,6 +2,7 @@
   "display_name": "ComfyUI-Imagine",
   "version": "1.0.0",
   "author": "mozophe",
+  "license": "MIT",
   "js": "index.js",
   "css": "style.css",
   "homePage": "https://github.com/mozophe/ST-ComfyUI-Imagine",
