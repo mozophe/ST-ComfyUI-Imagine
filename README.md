@@ -37,6 +37,7 @@ https://github.com/mozophe/ST-ComfyUI-Imagine
    - **Same machine** — `http://localhost:8188`
    - **Different machine** — the ComfyUI computer's LAN IP and port, e.g. `http://192.168.1.50:8188`
 3. **LLM** — enter your API base URL, API key, and model name. Click **Test API Connection** to verify.
+   > ⚠️ The API key is stored **in plain text** in SillyTavern's `settings.json` and sent from the browser. Use a key scoped to just this purpose — set a low spending cap. Avoid pasting an unrestricted account-wide key.
 4. **System Prompt Presets** — save the current system prompt under a name with **Save As**, switch between saved prompts via the dropdown, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
 5. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
 6. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
