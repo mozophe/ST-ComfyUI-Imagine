@@ -33,6 +33,7 @@ const defaultSettings = {
     llmApiKey: '',
     llmModel: '',
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
+    systemPromptPresets: {},
     promptPrefix: '',
     promptSuffix: '',
     negativePrompt: '',
@@ -81,6 +82,21 @@ function populateWorkflowDropdown() {
     select.value = settings.workflows?.[prev] ? prev : (settings.activeWorkflow || '');
 }
 
+function populateSystemPromptPresetDropdown() {
+    const settings = getSettings();
+    const select = document.getElementById('comfy-imagine-sp-preset');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">— select preset —</option>';
+    for (const name of Object.keys(settings.systemPromptPresets || {})) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+    }
+    select.value = '';
+}
+
 function loadSettingsIntoUI() {
     const s = getSettings();
 
@@ -103,6 +119,7 @@ function loadSettingsIntoUI() {
     set('comfy-imagine-temperature', s.temperature);
 
     populateWorkflowDropdown();
+    populateSystemPromptPresetDropdown();
 }
 
 function bindSettingsEvents() {
@@ -142,6 +159,56 @@ function bindSettingsEvents() {
             if (inlineEl) inlineEl.value = val;
         }
     });
+    document.getElementById('comfy-imagine-sp-preset')?.addEventListener('change', e => {
+        const name = e.target.value;
+        if (!name) return;
+        const preset = getSettings().systemPromptPresets?.[name];
+        if (preset == null) return;
+        getSettings().systemPrompt = preset;
+        saveSettings();
+        const inlineEl = document.getElementById('comfy-imagine-system-prompt');
+        if (inlineEl) inlineEl.value = preset;
+        toast(`Loaded preset '${name}'.`);
+    });
+
+    document.getElementById('comfy-imagine-sp-preset-save')?.addEventListener('click', async () => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'text_pole';
+        input.placeholder = 'Preset name';
+        const popup = new Popup(input, POPUP_TYPE.TEXT, '', {
+            okButton: 'Save',
+            cancelButton: 'Cancel',
+        });
+        const result = await popup.show();
+        if (result !== POPUP_RESULT.AFFIRMATIVE) return;
+        const name = input.value.trim();
+        if (!name) {
+            toast('Preset name required.', 'error');
+            return;
+        }
+        const settings = getSettings();
+        if (!settings.systemPromptPresets) settings.systemPromptPresets = {};
+        settings.systemPromptPresets[name] = settings.systemPrompt ?? '';
+        saveSettings();
+        populateSystemPromptPresetDropdown();
+        toast(`Preset '${name}' saved.`, 'success');
+    });
+
+    document.getElementById('comfy-imagine-sp-preset-delete')?.addEventListener('click', () => {
+        const select = document.getElementById('comfy-imagine-sp-preset');
+        const name = select?.value;
+        const settings = getSettings();
+        if (!name || !settings.systemPromptPresets?.[name]) {
+            toast('No preset selected.', 'error');
+            return;
+        }
+        delete settings.systemPromptPresets[name];
+        saveSettings();
+        populateSystemPromptPresetDropdown();
+        toast(`Preset '${name}' deleted.`);
+    });
+
     bind('comfy-imagine-prompt-prefix', 'promptPrefix');
     bind('comfy-imagine-prompt-suffix', 'promptSuffix');
     bind('comfy-imagine-negative-prompt', 'negativePrompt');
