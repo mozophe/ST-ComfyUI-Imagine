@@ -21,9 +21,10 @@ In SillyTavern's Extension Manager, paste the GitHub repo URL and install.
 
 1. **ComfyUI Base URL** — set to the machine's IP and port, e.g. `http://192.168.1.50:8188`. Click **Test ComfyUI Connection** to verify.
 2. **LLM** — enter your API base URL, API key, and model name. Click **Test API Connection** to verify.
-3. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
-4. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
-5. **Generation Settings** — image count (1–8), sender name for injected messages.
+3. **System Prompt Presets** — save the current system prompt under a name with **Save As**, switch between saved prompts via the dropdown, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
+4. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
+5. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
+6. **Generation Settings** — image count (1–8), sender name for injected messages.
 
 ## Usage
 
