@@ -37,6 +37,21 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 
 Use ST's built-in **Abort** button to cancel generation mid-flight.
 
+### Quick Reply Setup
+
+To add a one-click image button to the chat bar:
+
+1. Open the **Quick Reply** extension settings and create (or edit) a Quick Reply set, then add a new reply.
+2. In the reply editor, set the **Message / Command** box to:
+   ```
+   /imagine
+   ```
+3. Give it a **Label** (e.g. `📷`) or pick an icon so it shows on the chat bar.
+4. Leave the **Auto-Execute** options at their defaults — `Don't trigger auto-execute` should stay checked so it only fires when you click it.
+5. Click **OK**, then enable the Quick Reply set so the button appears.
+
+Clicking the button now runs `/imagine` exactly as typing it would.
+
 Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
 ## Security Note
