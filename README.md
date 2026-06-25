@@ -52,6 +52,8 @@ To add a one-click image button to the chat bar:
 
 Clicking the button now runs `/imagine` exactly as typing it would.
 
+![Quick Reply editor with /imagine command](docs/images/quick-reply.png)
+
 Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
 ## Security Note
