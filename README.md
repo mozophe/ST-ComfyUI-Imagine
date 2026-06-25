@@ -5,12 +5,7 @@ A SillyTavern extension that generates images on demand by reading the current c
 ## Requirements
 
 - SillyTavern `release` v1.18.0+
-- A running ComfyUI instance, started with:
-  ```
-  python main.py --listen 0.0.0.0 --port 8188 --enable-cors-header
-  ```
-  - `--listen 0.0.0.0` — accept connections from other machines on the network
-  - `--enable-cors-header` — required when SillyTavern runs on a **different machine** (e.g. a Raspberry Pi); without it the browser blocks cross-origin requests even if the port is reachable via `curl`
+- A running ComfyUI instance
 - An OpenAI-compatible LLM API endpoint (e.g. OpenAI, a local Ollama server, or any OpenAI-compatible API)
 
 ## Installation
@@ -19,12 +14,18 @@ In SillyTavern's Extension Manager, paste the GitHub repo URL and install.
 
 ## Setup
 
-1. **ComfyUI Base URL** — set to the machine's IP and port, e.g. `http://192.168.1.50:8188`. Click **Test ComfyUI Connection** to verify.
-2. **LLM** — enter your API base URL, API key, and model name. Click **Test API Connection** to verify.
-3. **System Prompt Presets** — save the current system prompt under a name with **Save As**, switch between saved prompts via the dropdown, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
-4. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
-5. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
-6. **Generation Settings** — image count (1–8), sender name for injected messages.
+1. **Start ComfyUI** — launch it with:
+   ```
+   python main.py --listen 0.0.0.0 --port 8188 --enable-cors-header
+   ```
+   - `--enable-cors-header` — needed in almost every setup. SillyTavern and ComfyUI run on different ports, so the browser treats them as different origins and blocks `fetch` without this header — even on the same machine, even when the port is reachable via `curl`.
+   - `--listen 0.0.0.0` — only needed when ComfyUI is on a **different machine** than SillyTavern (e.g. a Raspberry Pi). Omit it for a same-machine (localhost) setup.
+2. **ComfyUI Base URL** — set to the machine's IP and port, e.g. `http://192.168.1.50:8188`. Click **Test ComfyUI Connection** to verify.
+3. **LLM** — enter your API base URL, API key, and model name. Click **Test API Connection** to verify.
+4. **System Prompt Presets** — save the current system prompt under a name with **Save As**, switch between saved prompts via the dropdown, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
+5. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
+6. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
+7. **Generation Settings** — image count (1–8), sender name for injected messages.
 
 ## Usage
 
