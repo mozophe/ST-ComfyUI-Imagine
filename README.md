@@ -1,6 +1,6 @@
 # ComfyUI-Imagine
 
-A SillyTavern extension that generates images on demand by reading the current chat context, sending it to an LLM to write a Stable Diffusion prompt, and posting it to a ComfyUI instance.
+A SillyTavern extension that generates images on demand by reading the current chat context, sending it to an LLM to write an image prompt, and sending it to a ComfyUI instance.
 
 ## Requirements
 
@@ -43,7 +43,8 @@ https://github.com/mozophe/ST-ComfyUI-Imagine
 4. **System Prompt** — the extension ships with a default system prompt (tuned for Z-Image Turbo) that tells the LLM how to write the image prompt. Edit it directly in the settings textarea to suit your model. Save it under a name with **Save As**, switch between saved prompts via the **System Prompt Presets** dropdown, overwrite the selected preset with **Save**, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
 5. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI → Save API Format), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
 6. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
-7. **Generation Settings** — image count (1–8), sender name for injected messages.
+7. **Character LoRAs** *(optional)* — attach a LoRA to the active character so it loads automatically whenever that character is active. See [Per-Character LoRAs](#per-character-loras) below.
+8. **Generation Settings** — image count (1–8), sender name for injected messages.
 
 ## Usage
 
@@ -96,6 +97,19 @@ If you want to prepend a fixed keyword or prefix inside the workflow itself (e.g
 The extension will inject into those titled nodes instead of the first/second `CLIPTextEncode`. Fallback to `CLIPTextEncode` order applies when no titled nodes are found (existing workflows are unaffected).
 
 Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's built-in `PrimitiveNode`) are supported.
+
+### Per-Character LoRAs
+
+Bind a different LoRA to each SillyTavern character so the right one loads automatically — no settings change when you switch characters. The workflow stays the same; only the LoRA filename (and strength) swaps based on who is active.
+
+**One-time workflow setup:** in ComfyUI, title a `LoraLoader` node `IMAGINE_LORA`, then export and upload the workflow. If no node is titled, the first `LoraLoader` in the workflow is used.
+
+**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a LoRA dropdown (pulled live from ComfyUI), and a strength field. Pick a LoRA and strength — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
+
+- The binding is keyed by the character card's avatar filename, so it survives renames.
+- Switch to a character with no LoRA set → the workflow's own default `lora_name`/strength is used unchanged.
+- The list is fetched from ComfyUI (`/object_info/LoraLoader`); ComfyUI must be reachable to populate the dropdown.
+- Stored in your SillyTavern settings (not on the character card), so the binding does not travel if you export/share the card.
 
 ## License
 

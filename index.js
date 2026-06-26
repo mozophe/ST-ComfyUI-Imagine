@@ -12,6 +12,10 @@ const EXTENSION_FOLDER = (() => {
 const POLL_INTERVAL_MS = 1500;
 const GENERATION_TIMEOUT_MS = 120_000;
 
+// Cached LoRA filename list from ComfyUI /object_info/LoraLoader. Populated on
+// first settings-panel render; reload button clears it to force a refetch.
+let loraListCache = null;
+
 const DEFAULT_SYSTEM_PROMPT = `You are an expert image prompt writer for Z-Image Turbo, a diffusion model that reads natural-language sentences rather than comma-separated tag lists.
 
 You will be given a roleplay chat log, character description, and user persona. Write a single image prompt (80–150 words) that visually captures the current scene.
@@ -40,6 +44,7 @@ const defaultSettings = {
     negativePrompt: '',
     workflows: {},
     activeWorkflow: '',
+    characterLoras: {},   // { [character.avatar]: { lora, strength } }
     imageCount: 1,
     senderName: 'Camera',
     maxTokens: 350,
@@ -100,6 +105,89 @@ function populateSystemPromptPresetDropdown() {
     select.value = settings.systemPromptPresets?.[active] ? active : '';
 }
 
+// Returns the active character object (has .avatar, .name) or null when none is
+// selected (e.g. group chat or welcome screen). avatar is the stable per-card key.
+function getActiveCharacter() {
+    const ctx = SillyTavern.getContext();
+    if (ctx.characterId === undefined || ctx.characterId === null) return null;
+    return ctx.characters?.[ctx.characterId] ?? null;
+}
+
+// Pull installed LoRA filenames from ComfyUI. The /object_info/LoraLoader node
+// schema lists them under input.required.lora_name[0].
+async function fetchLoraList() {
+    const url = getSettings().comfyUrl.replace(/\/$/, '');
+    const resp = await fetch(`${url}/object_info/LoraLoader`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const names = data?.LoraLoader?.input?.required?.lora_name?.[0];
+    if (!Array.isArray(names)) throw new Error('No LoraLoader node in ComfyUI');
+    return names;
+}
+
+// Refresh the Character LoRAs panel for whoever is active right now. Called on
+// settings load and on CHAT_CHANGED so the fields track character switches.
+async function populateCharacterLoraUI() {
+    const nameEl = document.getElementById('comfy-imagine-lora-charname');
+    const select = document.getElementById('comfy-imagine-lora-select');
+    const strengthEl = document.getElementById('comfy-imagine-lora-strength');
+    if (!nameEl || !select) return;
+
+    const char = getActiveCharacter();
+    if (!char) {
+        nameEl.textContent = '— no character selected —';
+        select.innerHTML = '<option value="">— none —</option>';
+        select.disabled = true;
+        if (strengthEl) strengthEl.disabled = true;
+        return;
+    }
+    select.disabled = false;
+    if (strengthEl) strengthEl.disabled = false;
+    nameEl.textContent = char.name ?? char.avatar;
+
+    if (!loraListCache) {
+        select.innerHTML = '<option value="">— loading… —</option>';
+        try {
+            loraListCache = await fetchLoraList();
+        } catch {
+            select.innerHTML = '<option value="">— fetch failed, check ComfyUI &amp; reload —</option>';
+            return;
+        }
+    }
+
+    const saved = getSettings().characterLoras?.[char.avatar] ?? {};
+    select.innerHTML = '<option value="">— none —</option>';
+    for (const name of loraListCache) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+    }
+    select.value = (saved.lora && loraListCache.includes(saved.lora)) ? saved.lora : '';
+    if (strengthEl) strengthEl.value = saved.strength ?? 1;
+}
+
+// Persist the current panel selection against the active character's avatar.
+// Empty LoRA removes the entry so the workflow's own default is used.
+function saveCharacterLora() {
+    const char = getActiveCharacter();
+    if (!char) return;
+    const select = document.getElementById('comfy-imagine-lora-select');
+    const strengthEl = document.getElementById('comfy-imagine-lora-strength');
+    const settings = getSettings();
+    if (!settings.characterLoras) settings.characterLoras = {};
+    const lora = select?.value ?? '';
+    if (!lora) {
+        delete settings.characterLoras[char.avatar];
+    } else {
+        settings.characterLoras[char.avatar] = {
+            lora,
+            strength: Math.min(2, Math.max(-2, parseFloat(strengthEl?.value) || 1)),
+        };
+    }
+    saveSettings();
+}
+
 function loadSettingsIntoUI() {
     const s = getSettings();
 
@@ -123,6 +211,7 @@ function loadSettingsIntoUI() {
 
     populateWorkflowDropdown();
     populateSystemPromptPresetDropdown();
+    populateCharacterLoraUI();
 }
 
 function bindSettingsEvents() {
@@ -292,6 +381,13 @@ function bindSettingsEvents() {
 
     document.getElementById('comfy-imagine-reload-workflows')?.addEventListener('click', () => {
         populateWorkflowDropdown();
+    });
+
+    document.getElementById('comfy-imagine-lora-select')?.addEventListener('change', saveCharacterLora);
+    document.getElementById('comfy-imagine-lora-strength')?.addEventListener('input', saveCharacterLora);
+    document.getElementById('comfy-imagine-lora-reload')?.addEventListener('click', () => {
+        loraListCache = null;
+        populateCharacterLoraUI();
     });
 
     document.getElementById('comfy-imagine-delete-workflow')?.addEventListener('click', () => {
@@ -473,6 +569,36 @@ function randomiseSeed(workflow) {
     }
 }
 
+// Apply the active character's saved LoRA (Option A: stored in extension settings,
+// keyed by character.avatar). Target is the node titled IMAGINE_LORA, else the
+// first LoraLoader. No saved LoRA → leave the workflow untouched (its own default).
+// Returns an error string if a LoRA is set but no loader node exists, else null.
+function injectCharacterLora(workflow) {
+    const char = getActiveCharacter();
+    if (!char) return null;
+    const entry = getSettings().characterLoras?.[char.avatar];
+    if (!entry?.lora) return null;
+
+    let target = null;
+    for (const node of Object.values(workflow)) {
+        if (node._meta?.title === 'IMAGINE_LORA') { target = node; break; }
+    }
+    if (!target) {
+        for (const node of Object.values(workflow)) {
+            if (node.class_type === 'LoraLoader' || node.class_type === 'LoraLoaderModelOnly') { target = node; break; }
+        }
+    }
+    if (!target?.inputs) {
+        return `'${char.name}' has a LoRA set but the workflow has no LoraLoader node. Title one IMAGINE_LORA.`;
+    }
+
+    target.inputs.lora_name = entry.lora;
+    const strength = entry.strength ?? 1;
+    if (target.inputs.strength_model !== undefined) target.inputs.strength_model = strength;
+    if (target.inputs.strength_clip !== undefined) target.inputs.strength_clip = strength;
+    return null;
+}
+
 // ── ComfyUI Submit & Poll ───────────────────────────────────────────────────
 
 async function submitAndPoll(workflowJson, signal) {
@@ -644,6 +770,9 @@ async function runImagine(args) {
             return '';
         }
 
+        const loraErr = injectCharacterLora(workflow);
+        if (loraErr && i === 0) toast(`Comfy Imagine: ${loraErr}`, 'error');
+
         if (imageCount > 1) randomiseSeed(workflow);
 
         let imageUrl;
@@ -719,7 +848,10 @@ async function runImagine(args) {
 
     // Inject debug buttons on chat load/switch and at startup
     const { eventSource, event_types } = SillyTavern.getContext();
-    eventSource.on(event_types.CHAT_CHANGED, () => injectAllDebugButtons());
+    eventSource.on(event_types.CHAT_CHANGED, () => {
+        injectAllDebugButtons();
+        populateCharacterLoraUI();
+    });
     injectAllDebugButtons();
 
     // Register /imagine slash command

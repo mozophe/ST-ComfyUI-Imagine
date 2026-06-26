@@ -124,7 +124,36 @@
                 </div>
             </div>
 
-            <!-- Section 4: Generation Settings -->
+            <!-- Section 4: Character LoRAs -->
+            <div class="comfy-imagine-section">
+                <h5>Character LoRAs</h5>
+                <div class="comfy-imagine-info">
+                    Attach a LoRA to the <strong>active character</strong>. On <code>/imagine</code> the
+                    active character's LoRA is injected automatically — switch character and the LoRA
+                    follows, no settings change needed. In ComfyUI, title a <code>LoraLoader</code> node
+                    <code>IMAGINE_LORA</code> (otherwise the first LoraLoader is used). The list is pulled
+                    live from ComfyUI.
+                </div>
+                <div class="comfy-imagine-row">
+                    <label>Active Character</label>
+                    <span id="comfy-imagine-lora-charname" class="comfy-imagine-status">—</span>
+                </div>
+                <label for="comfy-imagine-lora-select">LoRA</label>
+                <div class="comfy-imagine-row--inline">
+                    <select id="comfy-imagine-lora-select" class="text_pole">
+                        <option value="">— none —</option>
+                    </select>
+                    <button id="comfy-imagine-lora-reload" class="menu_button" title="Reload LoRA list from ComfyUI">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+                <div class="comfy-imagine-row">
+                    <label for="comfy-imagine-lora-strength">Strength</label>
+                    <input id="comfy-imagine-lora-strength" type="number" class="text_pole" min="-2" max="2" step="0.05" />
+                </div>
+            </div>
+
+            <!-- Section 5: Generation Settings -->
             <div class="comfy-imagine-section">
                 <h5>Generation Settings</h5>
                 <div class="comfy-imagine-row">
@@ -137,7 +166,7 @@
                 </div>
             </div>
 
-            <!-- Section 5: Quick Reply Setup -->
+            <!-- Section 6: Quick Reply Setup -->
             <div class="comfy-imagine-section">
                 <h5>Quick Reply Setup</h5>
                 <div class="comfy-imagine-info">
