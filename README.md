@@ -145,7 +145,7 @@ Want a LoRA that's applied to **every** image regardless of character — a styl
 
 LoRA loaders chain through the `model` connection. In the example workflow the chain is `UNETLoader → IMAGINE_LORA → KSampler`; you insert your extra loader into that chain:
 
-1. In ComfyUI, **Add Node → loaders → LoraLoaderModelOnly** (this Krea2 setup loads CLIP separately, so model-only is correct; use `LoraLoader` only if your model's LoRA also needs the CLIP).
+1. In ComfyUI, **double-click an empty spot on the canvas** to open node search and type `LoraLoaderModelOnly` (or just `lora`), then pick it. (This Krea2 setup loads CLIP separately, so model-only is correct; use `LoraLoader` only if your model's LoRA also needs the CLIP.) Tip: you can also drag a link off the `IMAGINE_LORA` **MODEL** output onto empty canvas and release — ComfyUI then lists only nodes that accept a MODEL input.
 2. **Rewire** so the new node sits in the model chain. Either order works — e.g. put it after `IMAGINE_LORA`:
    - connect `IMAGINE_LORA`'s **MODEL** output → the new node's **model** input
    - connect the new node's **MODEL** output → **KSampler**'s **model** input
