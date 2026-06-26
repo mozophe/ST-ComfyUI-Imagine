@@ -16,16 +16,20 @@ const GENERATION_TIMEOUT_MS = 120_000;
 // first settings-panel render; reload button clears it to force a refetch.
 let loraListCache = null;
 
-const DEFAULT_SYSTEM_PROMPT = `You are an expert image prompt writer for Krea 2 Turbo, an aesthetic-first diffusion model that reads natural-language sentences rather than comma-separated tag lists. Krea 2 excels at photorealism and rich texture, and responds strongly to camera and composition language.
+const DEFAULT_SYSTEM_PROMPT = `You are an expert image prompt writer for Krea 2 Turbo, an aesthetic-first diffusion model that reads natural-language sentences rather than comma-separated tag lists. Krea 2 excels at photorealism and rich texture.
 
-You will be given a roleplay chat log, character description, and user persona. Write a single image prompt (80–150 words) that visually captures the current scene as if describing a real photograph or a film shot.
+You will be given a roleplay chat log, character description, and user persona. The user persona is the viewer. Write a single image prompt (80–150 words) describing the current scene as a first-person POV photograph taken from the viewer's own eyes.
+
+Hard rules:
+- The camera is always the viewer's first-person point of view. The viewer (the user persona) is NOT in the frame, except possibly their own hands, arms, or an object they are holding reaching into view. Never describe the viewer's face or full body.
+- Describe ONLY what is actually visible in the viewer's field of view at this moment. Do not mention sounds, smells, thoughts, dialogue, past events, or anything outside or behind the frame.
 
 Follow this structure in order:
-1. Shot and camera — use concrete camera language: "low-angle medium shot", "wide angle establishing shot", "close-up macro", "shallow depth of field", "eye-level portrait"
-2. Subject(s) — describe each character present with 2–4 physical traits and explicit clothing details; name poses precisely (e.g. "contrapposto", "leaning over a table")
-3. Environment — the setting, specific but not cluttered
+1. Framing — first-person POV; pick the visible distance and direction ("looking down at", "facing across the table", "close-up of"), with shallow depth of field where it fits
+2. Subject(s) in view — describe each character the viewer is looking at with 2–4 physical traits and explicit clothing; name poses precisely (e.g. "leaning over the table", "kneeling close")
+3. Environment — the visible setting, specific but not cluttered
 4. Lighting — name the quality: "soft diffused daylight", "warm candlelight", "cinematic rim lighting", etc.
-5. Mood and atmosphere — the emotional tone of the scene
+5. Mood and atmosphere — the visible emotional tone
 6. Style — default to "natural candid photograph, realistic skin texture, fine detail"; use the character card's implied art style only if it is clearly non-realistic
 
 Write in complete sentences, not comma-separated tags. Use concrete, technical description; avoid vague subjective words like "beautiful" or "amazing". Output only the prompt. Do not explain or comment.`;
@@ -873,13 +877,12 @@ async function runImagine(args) {
     if (!extensionSettings[MODULE_NAME]) extensionSettings[MODULE_NAME] = {};
     lodash.merge(extensionSettings[MODULE_NAME], { ...defaultSettings, ...extensionSettings[MODULE_NAME] });
 
-    // Make the default system prompt available as a preset (create if missing —
-    // don't overwrite a user edit, but restore it if it was never there).
+    // Keep the extension-owned default preset in sync with DEFAULT_SYSTEM_PROMPT so
+    // shipped updates reach existing installs. This preset is authoritative — to
+    // customise, use Save As under a different name (that one is never overwritten).
     const settings = extensionSettings[MODULE_NAME];
     if (!settings.systemPromptPresets) settings.systemPromptPresets = {};
-    if (!(DEFAULT_PRESET_NAME in settings.systemPromptPresets)) {
-        settings.systemPromptPresets[DEFAULT_PRESET_NAME] = DEFAULT_SYSTEM_PROMPT;
-    }
+    settings.systemPromptPresets[DEFAULT_PRESET_NAME] = DEFAULT_SYSTEM_PROMPT;
 
     // Render settings panel
     const settingsHtml = await renderExtensionTemplateAsync(EXTENSION_FOLDER, 'settings');
