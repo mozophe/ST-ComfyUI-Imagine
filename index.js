@@ -596,20 +596,23 @@ function randomiseSeed(workflow) {
 
 // Apply the active character's saved LoRA (Option A: stored in extension settings,
 // keyed by character.avatar). Target is the node titled IMAGINE_LORA, else the
-// first LoraLoader. The saved trigger word is written into the IMAGINE_LORA_TRIGGER
-// node (if present) so it gets prepended to the prompt in-workflow.
-// No saved LoRA → leave the workflow untouched (its own default).
-// Returns an error string if a LoRA is set but no loader node exists, else null.
+// first LoraLoader; trigger word → the IMAGINE_LORA_TRIGGER node (if present).
+//
+// When the active character has NO saved LoRA (or no character is active), the
+// LoRA is neutralised rather than left at the workflow's baked default: strength
+// is forced to 0 (identity merge — image identical to no-LoRA; API-format JSON
+// can't express a true ComfyUI node bypass) and the trigger node is cleared to "".
+// Returns an error string only if a LoRA IS set but no loader node exists, else null.
 function injectCharacterLora(workflow) {
     const char = getActiveCharacter();
-    if (!char) return null;
-    const entry = getSettings().characterLoras?.[char.avatar];
-    if (!entry?.lora) return null;
+    const entry = char ? getSettings().characterLoras?.[char.avatar] : null;
+    const hasLora = !!entry?.lora;
 
-    // Trigger word → IMAGINE_LORA_TRIGGER node (optional; not all workflows have one).
+    // Trigger word → IMAGINE_LORA_TRIGGER node. Empty string when no LoRA so a
+    // stale baked trigger doesn't leak into the prompt.
     for (const node of Object.values(workflow)) {
         if (node._meta?.title === 'IMAGINE_LORA_TRIGGER') {
-            try { setNodeText(node, entry.trigger ?? ''); } catch { /* wired as link — skip */ }
+            try { setNodeText(node, hasLora ? (entry.trigger ?? '') : ''); } catch { /* wired as link — skip */ }
             break;
         }
     }
@@ -624,11 +627,12 @@ function injectCharacterLora(workflow) {
         }
     }
     if (!target?.inputs) {
-        return `'${char.name}' has a LoRA set but the workflow has no LoraLoader node. Title one IMAGINE_LORA.`;
+        // No loader node is only an error when the character actually has a LoRA set.
+        return hasLora ? `'${char.name}' has a LoRA set but the workflow has no LoraLoader node. Title one IMAGINE_LORA.` : null;
     }
 
-    target.inputs.lora_name = entry.lora;
-    const strength = entry.strength ?? 1;
+    if (hasLora) target.inputs.lora_name = entry.lora;
+    const strength = hasLora ? (entry.strength ?? 1) : 0;
     if (target.inputs.strength_model !== undefined) target.inputs.strength_model = strength;
     if (target.inputs.strength_clip !== undefined) target.inputs.strength_clip = strength;
     return null;

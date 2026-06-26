@@ -106,10 +106,10 @@ Bind a different LoRA to each SillyTavern character so the right one loads autom
 
 **Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a searchable LoRA dropdown (pulled live from ComfyUI — type to filter, handles thousands of LoRAs), a strength field, and an optional **trigger word(s)** field. Pick a LoRA, strength, and trigger — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
 
-**Trigger words (optional):** many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, and in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt (e.g. via a `StringConcatenate` node ahead of `CLIPTextEncode`). The active character's trigger is written into that node on each generation. Use a concat delimiter like `", "` so the trigger and prompt don't run together. Leave the field blank for LoRAs that need no trigger.
+**Trigger words (optional):** many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, and in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt (e.g. via a `StringConcatenate` node ahead of `CLIPTextEncode`). The active character's trigger is written into that node on each generation. **Set the concat delimiter to empty (`""`) and end each trigger with its own separator** (e.g. `aliceface woman, `) — that way a character with no trigger produces a clean prompt with nothing prepended. Leave the field blank for LoRAs that need no trigger.
 
 - The binding is keyed by the character card's avatar filename, so it survives renames.
-- Switch to a character with no LoRA set → the workflow's own default `lora_name`/strength/trigger is used unchanged.
+- Switch to a character with **no LoRA set** (or no character active, e.g. a group chat) → the LoRA is neutralised: its strength is forced to `0` (image identical to no-LoRA) and the trigger node is cleared. The workflow's baked-in default LoRA does **not** leak in. (API-format workflows can't express a true node bypass, so strength 0 is used instead — the loader still runs but has zero effect.)
 - The list is fetched from ComfyUI (`/object_info/LoraLoader`); ComfyUI must be reachable to populate the dropdown.
 - Stored in your SillyTavern settings (not on the character card), so the binding does not travel if you export/share the card.
 
