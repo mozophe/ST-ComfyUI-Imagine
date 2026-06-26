@@ -102,7 +102,7 @@ Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's
 
 Bind a different LoRA to each SillyTavern character so the right one loads automatically — no settings change when you switch characters. The workflow stays the same; only the LoRA filename (and strength) swaps based on who is active.
 
-**One-time workflow setup:** in ComfyUI, title a `LoraLoader` node `IMAGINE_LORA`, then export and upload the workflow. If no node is titled, the first `LoraLoader` in the workflow is used.
+**One-time workflow setup:** in ComfyUI, title a `LoraLoader` node `IMAGINE_LORA`, then export and upload the workflow. The extension acts **only** on that titled node (and the `IMAGINE_LORA_TRIGGER` node) — any other LoRA loaders in your workflow are left untouched. If a character has a LoRA set but no `IMAGINE_LORA` node exists, `/imagine` shows an error telling you to title it.
 
 **Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a searchable LoRA dropdown (pulled live from ComfyUI — type to filter, handles thousands of LoRAs), a strength field, and an optional **trigger word(s)** field. Pick a LoRA, strength, and trigger — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
 

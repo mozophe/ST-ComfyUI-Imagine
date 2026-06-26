@@ -595,14 +595,16 @@ function randomiseSeed(workflow) {
 }
 
 // Apply the active character's saved LoRA (Option A: stored in extension settings,
-// keyed by character.avatar). Target is the node titled IMAGINE_LORA, else the
-// first LoraLoader; trigger word → the IMAGINE_LORA_TRIGGER node (if present).
+// keyed by character.avatar). This ONLY ever touches the nodes explicitly titled
+// IMAGINE_LORA and IMAGINE_LORA_TRIGGER — never any other LoraLoader in the
+// workflow — so permanent/style LoRAs are left exactly as exported.
 //
 // When the active character has NO saved LoRA (or no character is active), the
-// LoRA is neutralised rather than left at the workflow's baked default: strength
-// is forced to 0 (identity merge — image identical to no-LoRA; API-format JSON
-// can't express a true ComfyUI node bypass) and the trigger node is cleared to "".
-// Returns an error string only if a LoRA IS set but no loader node exists, else null.
+// IMAGINE_LORA node is neutralised rather than left at the workflow's baked
+// default: strength is forced to 0 (identity merge — image identical to no-LoRA;
+// API-format JSON can't express a true ComfyUI node bypass) and the trigger node
+// is cleared to "". When neither titled node exists, nothing is touched.
+// Returns an error string only if a LoRA IS set but no IMAGINE_LORA node exists.
 function injectCharacterLora(workflow) {
     const char = getActiveCharacter();
     const entry = char ? getSettings().characterLoras?.[char.avatar] : null;
@@ -621,14 +623,10 @@ function injectCharacterLora(workflow) {
     for (const node of Object.values(workflow)) {
         if (node._meta?.title === 'IMAGINE_LORA') { target = node; break; }
     }
-    if (!target) {
-        for (const node of Object.values(workflow)) {
-            if (node.class_type === 'LoraLoader' || node.class_type === 'LoraLoaderModelOnly') { target = node; break; }
-        }
-    }
     if (!target?.inputs) {
-        // No loader node is only an error when the character actually has a LoRA set.
-        return hasLora ? `'${char.name}' has a LoRA set but the workflow has no LoraLoader node. Title one IMAGINE_LORA.` : null;
+        // No IMAGINE_LORA node: an error only when the character actually has a
+        // LoRA set (so they know to title it). Otherwise a clean no-op.
+        return hasLora ? `'${char.name}' has a LoRA set but the workflow has no node titled IMAGINE_LORA. Title your LoraLoader node IMAGINE_LORA.` : null;
     }
 
     if (hasLora) target.inputs.lora_name = entry.lora;
