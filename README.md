@@ -90,22 +90,19 @@ The LLM API key is stored in SillyTavern's `settings.json` in plain text. Do not
 
 The repo's [`workflows/Krea2_CLora.json`](workflows/Krea2_CLora.json) is a ready-made template wired for the **ComfyUI-Imagine** node titles (`IMAGINE_PROMPT`, `IMAGINE_LORA`, `IMAGINE_LORA_TRIGGER`) plus the empty-delimiter trigger convention. It targets a **Krea2 Turbo** setup (separate diffusion model + CLIP + VAE, 8 steps, cfg 1, euler/simple). Use it as a starting point — but you must point the loaders at **your own** model files first.
 
-It uses placeholder filenames, so it won't run until you replace them. Because API-format JSON can't be drag-loaded onto the ComfyUI canvas, edit the file directly in a text editor:
+It ships with placeholder filenames, so it won't run until you set the real ones:
 
 1. **Download** [`Krea2_CLora.json`](workflows/Krea2_CLora.json) from the repo.
-2. In ComfyUI, open each loader node and note the **exact filename** it lists in its dropdown (including any subfolder, e.g. `Krea2\my_model.safetensors`).
-3. In the JSON, replace each placeholder with your real filename. **On Windows, escape backslashes** — a path shows in JSON as `"Krea2\\my_model.safetensors"` (double backslash):
+2. **Drag and drop** the file onto the ComfyUI canvas to load the graph.
+3. Set the **right files** in each loader's dropdown:
+   - **Load Diffusion Model** (`UNETLoader`) → your Krea2/diffusion model
+   - **Load CLIP** (`CLIPLoader`) → your text-encoder/CLIP
+   - **Load VAE** (`VAELoader`) → your VAE
+   - **IMAGINE_LORA** (`LoraLoaderModelOnly`) → any **real** LoRA file (see note below)
+4. **Export as API format** (enable Dev Mode in ComfyUI → Settings → Enable Dev Mode Options, then **Save (API Format)**).
+5. **Upload** the exported file via Settings → Workflows → **Upload Workflow**, then select it as the active workflow.
 
-   | Placeholder | Node | What to set it to |
-   |---|---|---|
-   | `your_model.safetensors` | `48` UNETLoader | your Krea2/diffusion model file |
-   | `your_clip.safetensors` | `44` CLIPLoader | your text-encoder/CLIP file |
-   | `your_vae.safetensors` | `45` VAELoader | your VAE file |
-   | `your_character_lora.safetensors` | `59` IMAGINE_LORA | any **real** LoRA file (see note below) |
-
-4. **Upload** the edited file via Settings → Workflows → **Upload Workflow**, then select it as the active workflow.
-
-> **The `IMAGINE_LORA` placeholder must be a real, existing LoRA file**, even though per-character settings override it. `LoraLoaderModelOnly` still loads the file when no character LoRA is set (it's just applied at strength 0), so a non-existent filename makes ComfyUI error. Point it at any valid LoRA as the fallback.
+> **The `IMAGINE_LORA` node must point at a real, existing LoRA file**, even though per-character settings override it. `LoraLoaderModelOnly` still loads the file when no character LoRA is set (it's just applied at strength 0), so a non-existent filename makes ComfyUI error. Point it at any valid LoRA as the fallback.
 
 Using a different base model (not Krea2)? Don't adapt this file — build your own workflow in ComfyUI, apply the `IMAGINE_*` node titles (see below), export in API format, and upload.
 
