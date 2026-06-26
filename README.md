@@ -78,7 +78,12 @@ Each generated image message has a ⓘ button in the message action row. Click i
 
 ## Security Note
 
-The LLM API key is stored **in plain text** in SillyTavern's `data/<user>/settings.json` and sent directly from the browser — unavoidable for a browser-only extension with no backend. Use a **dedicated, low-spending-limit API key** for this extension (see the warning in [Setup](#setup) step 3), and don't share or post your `settings.json` (or a backup of it) — anyone who gets it gets the key.
+The LLM API key is stored **in plain text** in SillyTavern's `data/<user>/settings.json` and sent directly from the browser — unavoidable for a browser-only extension with no backend. It can leak two ways:
+
+1. **The file** — anyone who gets your `settings.json` (or a backup, screen-share, or a copy you post when asking for help) can read the key directly.
+2. **The browser** — because the key lives in the page, any other installed extension, a malicious script injected by a character card, or an XSS bug in ST can read it at runtime. (Enabling ST's `allowKeysExposure = true` makes this worse — it exposes **every** key ST stores, not just this one.)
+
+Mitigation: use a **dedicated, low-spending-limit API key** for this extension (see the warning in [Setup](#setup) step 3) so a leak caps the damage, and don't share or post your `settings.json`.
 
 ## Workflow Notes
 
