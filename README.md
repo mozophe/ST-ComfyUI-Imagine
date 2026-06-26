@@ -155,7 +155,7 @@ LoRA loaders chain through the `model` connection. In the example workflow the c
 
 Repeat to stack more always-on LoRAs — just keep chaining `MODEL` out → next loader's `model` in, ending at the `KSampler`. If such a LoRA needs a trigger word in the prompt, bake it into the **Prompt Prefix/Suffix** fields (Setup step 3) since the per-character trigger field is reserved for `IMAGINE_LORA_TRIGGER`.
 
-A worked example with two LoRAs is in [`workflows/Krea2_RealismEngine_CLora.json`](workflows/Krea2_RealismEngine_CLora.json): an always-on style loader (`Load LoRA`) feeds the per-character loader (`IMAGINE_LORA`), chained `UNETLoader → Load LoRA → IMAGINE_LORA → KSampler`. Note only `IMAGINE_LORA` is touched by the extension; `Load LoRA` stays on for every image. (Same placeholder-path caveat as the single-LoRA template — adapt the model/LoRA files to your setup.)
+A worked example with two LoRAs is in [`workflows/Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json): an always-on style loader (`Load LoRA`) feeds the per-character loader (`IMAGINE_LORA`), chained `UNETLoader → Load LoRA → IMAGINE_LORA → KSampler`. Note only `IMAGINE_LORA` is touched by the extension; `Load LoRA` stays on for every image. (Same placeholder-path caveat as the single-LoRA template — adapt the model/LoRA files to your setup.)
 
 ## License
 
