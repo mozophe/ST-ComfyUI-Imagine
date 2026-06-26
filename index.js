@@ -134,7 +134,7 @@ function refreshLoraSelect2(select) {
     if (!$.fn?.select2) return;
     if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
     if (select.disabled) return;
-    $sel.select2({ width: '100%', dropdownParent: $sel.parent() });
+    $sel.select2({ width: '100%', placeholder: 'Select a LoRA', allowClear: true });
 }
 
 async function populateCharacterLoraUI() {
