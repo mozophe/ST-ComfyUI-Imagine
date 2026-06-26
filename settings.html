@@ -151,6 +151,14 @@
                     <label for="comfy-imagine-lora-strength">Strength</label>
                     <input id="comfy-imagine-lora-strength" type="number" class="text_pole" min="-2" max="2" step="0.05" />
                 </div>
+                <div class="comfy-imagine-row">
+                    <label for="comfy-imagine-lora-trigger">Trigger Word(s)</label>
+                    <input id="comfy-imagine-lora-trigger" type="text" class="text_pole" placeholder="e.g. aliceface woman" />
+                </div>
+                <div class="comfy-imagine-info">
+                    Injected into a node titled <code>IMAGINE_LORA_TRIGGER</code> (typically concatenated
+                    before the prompt). Leave blank if the LoRA needs no trigger.
+                </div>
             </div>
 
             <!-- Section 5: Generation Settings -->

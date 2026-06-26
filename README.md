@@ -104,10 +104,12 @@ Bind a different LoRA to each SillyTavern character so the right one loads autom
 
 **One-time workflow setup:** in ComfyUI, title a `LoraLoader` node `IMAGINE_LORA`, then export and upload the workflow. If no node is titled, the first `LoraLoader` in the workflow is used.
 
-**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a searchable LoRA dropdown (pulled live from ComfyUI — type to filter, handles thousands of LoRAs), and a strength field. Pick a LoRA and strength — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
+**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a searchable LoRA dropdown (pulled live from ComfyUI — type to filter, handles thousands of LoRAs), a strength field, and an optional **trigger word(s)** field. Pick a LoRA, strength, and trigger — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
+
+**Trigger words (optional):** many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, and in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt (e.g. via a `StringConcatenate` node ahead of `CLIPTextEncode`). The active character's trigger is written into that node on each generation. Use a concat delimiter like `", "` so the trigger and prompt don't run together. Leave the field blank for LoRAs that need no trigger.
 
 - The binding is keyed by the character card's avatar filename, so it survives renames.
-- Switch to a character with no LoRA set → the workflow's own default `lora_name`/strength is used unchanged.
+- Switch to a character with no LoRA set → the workflow's own default `lora_name`/strength/trigger is used unchanged.
 - The list is fetched from ComfyUI (`/object_info/LoraLoader`); ComfyUI must be reachable to populate the dropdown.
 - Stored in your SillyTavern settings (not on the character card), so the binding does not travel if you export/share the card.
 

@@ -44,7 +44,7 @@ const defaultSettings = {
     negativePrompt: '',
     workflows: {},
     activeWorkflow: '',
-    characterLoras: {},   // { [character.avatar]: { lora, strength } }
+    characterLoras: {},   // { [character.avatar]: { lora, strength, trigger } }
     imageCount: 1,
     senderName: 'Camera',
     maxTokens: 350,
@@ -141,6 +141,7 @@ async function populateCharacterLoraUI() {
     const nameEl = document.getElementById('comfy-imagine-lora-charname');
     const select = document.getElementById('comfy-imagine-lora-select');
     const strengthEl = document.getElementById('comfy-imagine-lora-strength');
+    const triggerEl = document.getElementById('comfy-imagine-lora-trigger');
     if (!nameEl || !select) return;
 
     // Tear down any existing select2 before mutating the underlying <select>.
@@ -153,10 +154,12 @@ async function populateCharacterLoraUI() {
         select.innerHTML = '<option value="">— none —</option>';
         select.disabled = true;
         if (strengthEl) strengthEl.disabled = true;
+        if (triggerEl) triggerEl.disabled = true;
         return;
     }
     select.disabled = false;
     if (strengthEl) strengthEl.disabled = false;
+    if (triggerEl) triggerEl.disabled = false;
     nameEl.textContent = char.name ?? char.avatar;
 
     if (!loraListCache) {
@@ -179,6 +182,7 @@ async function populateCharacterLoraUI() {
     }
     select.value = (saved.lora && loraListCache.includes(saved.lora)) ? saved.lora : '';
     if (strengthEl) strengthEl.value = saved.strength ?? 1;
+    if (triggerEl) triggerEl.value = saved.trigger ?? '';
 
     refreshLoraSelect2(select);
 }
@@ -190,6 +194,7 @@ function saveCharacterLora() {
     if (!char) return;
     const select = document.getElementById('comfy-imagine-lora-select');
     const strengthEl = document.getElementById('comfy-imagine-lora-strength');
+    const triggerEl = document.getElementById('comfy-imagine-lora-trigger');
     const settings = getSettings();
     if (!settings.characterLoras) settings.characterLoras = {};
     const lora = select?.value ?? '';
@@ -199,6 +204,7 @@ function saveCharacterLora() {
         settings.characterLoras[char.avatar] = {
             lora,
             strength: Math.min(2, Math.max(-2, parseFloat(strengthEl?.value) || 1)),
+            trigger: (triggerEl?.value ?? '').trim(),
         };
     }
     saveSettings();
@@ -403,6 +409,7 @@ function bindSettingsEvents() {
     // native listeners don't catch. Survives select2 destroy/re-init.
     $('#comfy-imagine-lora-select').on('change', saveCharacterLora);
     document.getElementById('comfy-imagine-lora-strength')?.addEventListener('input', saveCharacterLora);
+    document.getElementById('comfy-imagine-lora-trigger')?.addEventListener('input', saveCharacterLora);
     document.getElementById('comfy-imagine-lora-reload')?.addEventListener('click', () => {
         loraListCache = null;
         populateCharacterLoraUI();
@@ -589,13 +596,23 @@ function randomiseSeed(workflow) {
 
 // Apply the active character's saved LoRA (Option A: stored in extension settings,
 // keyed by character.avatar). Target is the node titled IMAGINE_LORA, else the
-// first LoraLoader. No saved LoRA → leave the workflow untouched (its own default).
+// first LoraLoader. The saved trigger word is written into the IMAGINE_LORA_TRIGGER
+// node (if present) so it gets prepended to the prompt in-workflow.
+// No saved LoRA → leave the workflow untouched (its own default).
 // Returns an error string if a LoRA is set but no loader node exists, else null.
 function injectCharacterLora(workflow) {
     const char = getActiveCharacter();
     if (!char) return null;
     const entry = getSettings().characterLoras?.[char.avatar];
     if (!entry?.lora) return null;
+
+    // Trigger word → IMAGINE_LORA_TRIGGER node (optional; not all workflows have one).
+    for (const node of Object.values(workflow)) {
+        if (node._meta?.title === 'IMAGINE_LORA_TRIGGER') {
+            try { setNodeText(node, entry.trigger ?? ''); } catch { /* wired as link — skip */ }
+            break;
+        }
+    }
 
     let target = null;
     for (const node of Object.values(workflow)) {
