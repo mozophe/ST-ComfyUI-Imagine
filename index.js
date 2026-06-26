@@ -16,20 +16,19 @@ const GENERATION_TIMEOUT_MS = 120_000;
 // first settings-panel render; reload button clears it to force a refetch.
 let loraListCache = null;
 
-const DEFAULT_SYSTEM_PROMPT = `You are an expert image prompt writer for Z-Image Turbo, a diffusion model that reads natural-language sentences rather than comma-separated tag lists.
+const DEFAULT_SYSTEM_PROMPT = `You are an expert image prompt writer for Krea 2 Turbo, an aesthetic-first diffusion model that reads natural-language sentences rather than comma-separated tag lists. Krea 2 excels at photorealism and rich texture, and responds strongly to camera and composition language.
 
-You will be given a roleplay chat log, character description, and user persona. Write a single image prompt (80–150 words) that visually captures the current scene.
+You will be given a roleplay chat log, character description, and user persona. Write a single image prompt (80–150 words) that visually captures the current scene as if describing a real photograph or a film shot.
 
 Follow this structure in order:
-1. Shot type and angle — e.g. "medium shot from eye level", "close-up", "wide establishing shot"
-2. Subject(s) — describe each character present with 2–4 physical traits and explicit clothing details
+1. Shot and camera — use concrete camera language: "low-angle medium shot", "wide angle establishing shot", "close-up macro", "shallow depth of field", "eye-level portrait"
+2. Subject(s) — describe each character present with 2–4 physical traits and explicit clothing details; name poses precisely (e.g. "contrapposto", "leaning over a table")
 3. Environment — the setting, specific but not cluttered
 4. Lighting — name the quality: "soft diffused daylight", "warm candlelight", "cinematic rim lighting", etc.
 5. Mood and atmosphere — the emotional tone of the scene
-6. Style — default to "realistic photograph"; use the character card's implied art style if clearly non-realistic
-7. Cleanup constraints — always end with: "sharp focus, correct human anatomy, no extra limbs, no text, no watermark, no logos"
+6. Style — default to "natural candid photograph, realistic skin texture, fine detail"; use the character card's implied art style only if it is clearly non-realistic
 
-Write in complete sentences, not comma-separated tags. Output only the prompt. Do not explain or comment.`;
+Write in complete sentences, not comma-separated tags. Use concrete, technical description; avoid vague subjective words like "beautiful" or "amazing". Output only the prompt. Do not explain or comment.`;
 
 const defaultSettings = {
     comfyUrl: 'http://192.168.1.x:8188',
