@@ -30,6 +30,10 @@ Follow this structure in order:
 
 Write in complete sentences, not comma-separated tags. Use concrete, technical description; avoid vague subjective words like "beautiful" or "amazing". Output only the prompt. Do not explain or comment.`;
 
+// Name under which DEFAULT_SYSTEM_PROMPT is seeded into the presets dropdown so
+// users can always switch back to it after editing.
+const DEFAULT_PRESET_NAME = 'Krea 2 Turbo (default)';
+
 const defaultSettings = {
     comfyUrl: 'http://192.168.1.x:8188',
     llmBaseUrl: '',
@@ -868,6 +872,14 @@ async function runImagine(args) {
     // Merge defaults into extensionSettings
     if (!extensionSettings[MODULE_NAME]) extensionSettings[MODULE_NAME] = {};
     lodash.merge(extensionSettings[MODULE_NAME], { ...defaultSettings, ...extensionSettings[MODULE_NAME] });
+
+    // Make the default system prompt available as a preset (create if missing —
+    // don't overwrite a user edit, but restore it if it was never there).
+    const settings = extensionSettings[MODULE_NAME];
+    if (!settings.systemPromptPresets) settings.systemPromptPresets = {};
+    if (!(DEFAULT_PRESET_NAME in settings.systemPromptPresets)) {
+        settings.systemPromptPresets[DEFAULT_PRESET_NAME] = DEFAULT_SYSTEM_PROMPT;
+    }
 
     // Render settings panel
     const settingsHtml = await renderExtensionTemplateAsync(EXTENSION_FOLDER, 'settings');
