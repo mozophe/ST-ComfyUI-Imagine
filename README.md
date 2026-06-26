@@ -128,7 +128,7 @@ Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's
 
 Bind a different LoRA to each SillyTavern character so the right one loads automatically — no settings change when you switch characters. The workflow stays the same; only the LoRA filename (and strength) swaps based on who is active.
 
-**One-time workflow setup:** in ComfyUI, title a `LoraLoader` node `IMAGINE_LORA`, then export and upload the workflow. The extension acts **only** on that titled node (and the `IMAGINE_LORA_TRIGGER` node) — any other LoRA loaders in your workflow are left untouched. If a character has a LoRA set but no `IMAGINE_LORA` node exists, `/imagine` shows an error telling you to title it.
+**One-time workflow setup:** in ComfyUI, add a **Load LoRA** node (display name for `LoraLoaderModelOnly`; or **Load LoRA (Model and CLIP)** = `LoraLoader` if your model's LoRA also needs CLIP — both are accepted) and set its **title** to `IMAGINE_LORA`, then export and upload the workflow. The extension acts **only** on that titled node (and the `IMAGINE_LORA_TRIGGER` node) — any other LoRA loaders in your workflow are left untouched. If a character has a LoRA set but no `IMAGINE_LORA` node exists, `/imagine` shows an error telling you to title it.
 
 **Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a searchable LoRA dropdown (pulled live from ComfyUI — type to filter, handles thousands of LoRAs), a strength field, and an optional **trigger word(s)** field. Pick a LoRA, strength, and trigger — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
 
@@ -145,7 +145,7 @@ Want a LoRA that's applied to **every** image regardless of character — a styl
 
 LoRA loaders chain through the `model` connection. In the example workflow the chain is `UNETLoader → IMAGINE_LORA → KSampler`; you insert your extra loader into that chain:
 
-1. In ComfyUI, **double-click an empty spot on the canvas** to open node search and type `LoraLoaderModelOnly` (or just `lora`), then pick it. (This Krea2 setup loads CLIP separately, so model-only is correct; use `LoraLoader` only if your model's LoRA also needs the CLIP.) Tip: you can also drag a link off the `IMAGINE_LORA` **MODEL** output onto empty canvas and release — ComfyUI then lists only nodes that accept a MODEL input.
+1. In ComfyUI, **double-click an empty spot on the canvas** to open node search and type `Load LoRA`, then pick **Load LoRA** (the model-only loader — `class_type` `LoraLoaderModelOnly`). This Krea2 setup loads CLIP separately, so model-only is correct; pick **Load LoRA (Model and CLIP)** (`LoraLoader`) only if your model's LoRA also needs the CLIP. Tip: you can also drag a link off the `IMAGINE_LORA` **MODEL** output onto empty canvas and release — ComfyUI then lists only nodes that accept a MODEL input.
 2. **Rewire** so the new node sits in the model chain. Either order works — e.g. put it after `IMAGINE_LORA`:
    - connect `IMAGINE_LORA`'s **MODEL** output → the new node's **model** input
    - connect the new node's **MODEL** output → **KSampler**'s **model** input
