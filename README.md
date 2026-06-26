@@ -104,7 +104,7 @@ Bind a different LoRA to each SillyTavern character so the right one loads autom
 
 **One-time workflow setup:** in ComfyUI, title a `LoraLoader` node `IMAGINE_LORA`, then export and upload the workflow. If no node is titled, the first `LoraLoader` in the workflow is used.
 
-**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a LoRA dropdown (pulled live from ComfyUI), and a strength field. Pick a LoRA and strength — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
+**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a searchable LoRA dropdown (pulled live from ComfyUI — type to filter, handles thousands of LoRAs), and a strength field. Pick a LoRA and strength — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
 
 - The binding is keyed by the character card's avatar filename, so it survives renames.
 - Switch to a character with no LoRA set → the workflow's own default `lora_name`/strength is used unchanged.
