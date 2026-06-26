@@ -104,8 +104,9 @@ It ships with placeholder filenames, so it won't run until you set the real ones
    - **Load CLIP** (`CLIPLoader`) → your text-encoder/CLIP
    - **Load VAE** (`VAELoader`) → your VAE
    - **IMAGINE_LORA** (`LoraLoaderModelOnly`) → any **real** LoRA file (see note below)
-4. **Export as API format** (enable Dev Mode in ComfyUI → Settings → Enable Dev Mode Options, then **Graph** menu → **Export (API)**).
-5. **Upload** the exported file via Settings → Workflows → **Upload Workflow**, then select it as the active workflow.
+4. *(Optional)* Add an **always-on LoRA** (a style/quality/detail LoRA applied to every image, separate from the per-character one) — see [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora).
+5. **Export as API format** (enable Dev Mode in ComfyUI → Settings → Enable Dev Mode Options, then **Graph** menu → **Export (API)**).
+6. **Upload** the exported file via Settings → Workflows → **Upload Workflow**, then select it as the active workflow.
 
 > **The `IMAGINE_LORA` node must point at a real, existing LoRA file**, even though per-character settings override it. `LoraLoaderModelOnly` still loads the file when no character LoRA is set (it's just applied at strength 0), so a non-existent filename makes ComfyUI error. Point it at any valid LoRA as the fallback.
 
@@ -137,6 +138,22 @@ Bind a different LoRA to each SillyTavern character so the right one loads autom
 - Switch to a character with **no LoRA set** (or no character active, e.g. a group chat) → the LoRA is neutralised: its strength is forced to `0` (image identical to no-LoRA) and the trigger node is cleared. The workflow's baked-in default LoRA does **not** leak in. (API-format workflows can't express a true node bypass, so strength 0 is used instead — the loader still runs but has zero effect.)
 - The list is fetched from ComfyUI (`/object_info/LoraLoader`); ComfyUI must be reachable to populate the dropdown.
 - Stored in your SillyTavern settings (not on the character card), so the binding does not travel if you export/share the card.
+
+### Adding an Always-On (Second) LoRA
+
+Want a LoRA that's applied to **every** image regardless of character — a style, quality, detail, or aesthetic LoRA — alongside the per-character one? Add a second LoRA loader to the workflow. The extension only ever touches the node titled `IMAGINE_LORA`, so **any other loader you add is left exactly as you set it** and stays on for every generation.
+
+LoRA loaders chain through the `model` connection. In the example workflow the chain is `UNETLoader → IMAGINE_LORA → KSampler`; you insert your extra loader into that chain:
+
+1. In ComfyUI, **Add Node → loaders → LoraLoaderModelOnly** (this Krea2 setup loads CLIP separately, so model-only is correct; use `LoraLoader` only if your model's LoRA also needs the CLIP).
+2. **Rewire** so the new node sits in the model chain. Either order works — e.g. put it after `IMAGINE_LORA`:
+   - connect `IMAGINE_LORA`'s **MODEL** output → the new node's **model** input
+   - connect the new node's **MODEL** output → **KSampler**'s **model** input
+3. On the new node, pick its **lora_name** and **strength_model**.
+4. **Do not** title it `IMAGINE_LORA` (or `IMAGINE_LORA_TRIGGER`) — leave its default title or name it something like `Style LoRA`. That keeps the extension from touching it.
+5. Export as API format and upload as usual.
+
+Repeat to stack more always-on LoRAs — just keep chaining `MODEL` out → next loader's `model` in, ending at the `KSampler`. If such a LoRA needs a trigger word in the prompt, bake it into the **Prompt Prefix/Suffix** fields (Setup step 3) since the per-character trigger field is reserved for `IMAGINE_LORA_TRIGGER`.
 
 ## License
 
