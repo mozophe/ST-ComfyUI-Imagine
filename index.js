@@ -53,6 +53,7 @@ const defaultSettings = {
     activeWorkflow: '',
     characterLoras: {},   // { [character.avatar]: { lora, strength, trigger } }
     imageCount: 1,
+    chatHistoryLimit: 20,   // latest N chat messages to send to LLM; 0 = all
     senderName: 'Camera',
     maxTokens: 350,
     temperature: 0.7,
@@ -234,6 +235,7 @@ function loadSettingsIntoUI() {
     set('comfy-imagine-prompt-suffix', s.promptSuffix);
     set('comfy-imagine-negative-prompt', s.negativePrompt);
     set('comfy-imagine-image-count', s.imageCount);
+    set('comfy-imagine-chat-limit', s.chatHistoryLimit);
     set('comfy-imagine-sender-name', s.senderName);
     set('comfy-imagine-max-tokens', s.maxTokens);
     set('comfy-imagine-temperature', s.temperature);
@@ -350,6 +352,7 @@ function bindSettingsEvents() {
     bind('comfy-imagine-negative-prompt', 'negativePrompt');
     bind('comfy-imagine-sender-name', 'senderName');
     bind('comfy-imagine-image-count', 'imageCount', v => Math.min(8, Math.max(1, parseInt(v, 10) || 1)));
+    bind('comfy-imagine-chat-limit', 'chatHistoryLimit', v => Math.max(0, parseInt(v, 10) || 0));
     bind('comfy-imagine-max-tokens', 'maxTokens', v => Math.min(4096, Math.max(1, parseInt(v, 10) || 350)));
     bind('comfy-imagine-temperature', 'temperature', v => Math.min(2, Math.max(0, parseFloat(v) || 0.7)));
 
@@ -494,8 +497,12 @@ function assembleContext() {
 
     lines.push('');
     lines.push('[CHAT LOG]');
-    for (const msg of (ctx.chat ?? [])) {
-        if (msg.is_system) continue;
+    // Filter system messages first so the limit counts real dialogue, not hidden
+    // injected images. limit <= 0 means send the whole log.
+    const limit = getSettings().chatHistoryLimit || 0;
+    let chatMsgs = (ctx.chat ?? []).filter(m => !m.is_system);
+    if (limit > 0) chatMsgs = chatMsgs.slice(-limit);
+    for (const msg of chatMsgs) {
         const speaker = msg.is_user ? userName : (character.name ?? 'Character');
         lines.push(`${speaker}: ${msg.mes}`);
     }

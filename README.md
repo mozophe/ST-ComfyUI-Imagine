@@ -44,7 +44,7 @@ https://github.com/mozophe/ST-ComfyUI-Imagine
 5. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI, then **Graph** menu → **Export (API)**), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server. An example workflow is provided in the repo's [`workflows/`](workflows/) folder (`Krea2_CLora.json`) showing the required `IMAGINE_PROMPT` / `IMAGINE_LORA` / `IMAGINE_LORA_TRIGGER` node titles — it's a **template**, not a drop-in default: the model, VAE, CLIP, and LoRA paths are machine-specific, so adapt them to your setup before uploading. See [Using the Example Workflow](#using-the-example-workflow) for step-by-step instructions.
 6. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
 7. **Character LoRAs** *(optional)* — attach a LoRA to the active character so it loads automatically whenever that character is active. See [Per-Character LoRAs](#per-character-loras) below.
-8. **Generation Settings** — image count (1–8), sender name for injected messages.
+8. **Generation Settings** — image count (1–8), chat history limit (how many of the latest chat messages are sent to the prompt LLM; `0` = entire chat, default `20`), sender name for injected messages.
 
 ## Usage
 
