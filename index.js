@@ -806,6 +806,11 @@ async function runImagine(args) {
         return '';
     }
 
+    if (!llmOutput.trim()) {
+        toast('Comfy Imagine: LLM returned an empty prompt — nothing sent to ComfyUI.', 'error');
+        return '';
+    }
+
     const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
     toast('Prompt ready, submitting to ComfyUI…');
 
