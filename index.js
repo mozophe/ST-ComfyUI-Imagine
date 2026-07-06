@@ -555,10 +555,14 @@ async function generatePromptViaLLM(contextString, signal) {
         // 200 OK but no text — the reason is usually buried in the body
         // (provider error object, content filter, or a stop with no output).
         const code = data.error?.code ?? data.error?.type;
+        const finish = data.choices?.[0]?.finish_reason;
+        if (!data.error && !data.message && finish === 'length') {
+            throw new Error(`LLM hit the token limit before returning a prompt — raise Max Tokens (currently ${s.maxTokens}).`);
+        }
         const reason =
             data.error?.message ??
             data.message ??
-            data.choices?.[0]?.finish_reason ??
+            finish ??
             JSON.stringify(data);
         throw new Error(`LLM returned no prompt (${code != null ? `${code}: ` : ''}${reason})`);
     }
