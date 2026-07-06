@@ -546,7 +546,7 @@ async function generatePromptViaLLM(contextString, signal) {
 
     if (!resp.ok) {
         const text = await resp.text().catch(() => resp.statusText);
-        throw new Error(text);
+        throw new Error(`HTTP ${resp.status} — ${text}`);
     }
 
     const data = await resp.json();
@@ -554,12 +554,13 @@ async function generatePromptViaLLM(contextString, signal) {
     if (!content) {
         // 200 OK but no text — the reason is usually buried in the body
         // (provider error object, content filter, or a stop with no output).
+        const code = data.error?.code ?? data.error?.type;
         const reason =
             data.error?.message ??
             data.message ??
             data.choices?.[0]?.finish_reason ??
             JSON.stringify(data);
-        throw new Error(`LLM returned no prompt (${reason})`);
+        throw new Error(`LLM returned no prompt (${code != null ? `${code}: ` : ''}${reason})`);
     }
     return content;
 }
