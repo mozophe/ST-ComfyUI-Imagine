@@ -550,7 +550,18 @@ async function generatePromptViaLLM(contextString, signal) {
     }
 
     const data = await resp.json();
-    return data.choices?.[0]?.message?.content?.trim() ?? '';
+    const content = data.choices?.[0]?.message?.content?.trim() ?? '';
+    if (!content) {
+        // 200 OK but no text — the reason is usually buried in the body
+        // (provider error object, content filter, or a stop with no output).
+        const reason =
+            data.error?.message ??
+            data.message ??
+            data.choices?.[0]?.finish_reason ??
+            JSON.stringify(data);
+        throw new Error(`LLM returned no prompt (${reason})`);
+    }
+    return content;
 }
 
 // ── Workflow Injection ──────────────────────────────────────────────────────
@@ -803,11 +814,6 @@ async function runImagine(args) {
     } catch (err) {
         if (err.name === 'AbortError') return '';
         toast(`Comfy Imagine: LLM error — ${err.message}`, 'error');
-        return '';
-    }
-
-    if (!llmOutput.trim()) {
-        toast('Comfy Imagine: LLM returned an empty prompt — nothing sent to ComfyUI.', 'error');
         return '';
     }
 
