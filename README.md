@@ -110,7 +110,7 @@ It ships with placeholder filenames, so it won't run until you set the real ones
 
 > **The `IMAGINE_LORA` node must point at a real, existing LoRA file**, even though per-character settings override it. `LoraLoaderModelOnly` still loads the file when no character LoRA is set (it's just applied at strength 0), so a non-existent filename makes ComfyUI error. Point it at any valid LoRA as the fallback.
 
-Using a different base model (not Krea2)? Don't adapt this file — build your own workflow in ComfyUI, apply the `IMAGINE_*` node titles (see below), export in API format, and upload.
+**Using a different base model (not Krea2)?** Don't adapt this file. It's tuned end-to-end for Krea2 Turbo — not just the model, but the sampler, scheduler, CFG, steps, and resolution — so porting it to another model means fixing every one of those, node by node. Instead, **start from a known-good workflow for _your_ model** (the one you already use in ComfyUI, or a reference workflow for that model, which already has the right sampler settings), then just apply the `IMAGINE_*` node titles (see below), export in API format, and upload. The extension only cares about the node titles, not the graph — any workflow works once the titles are set.
 
 ### Custom Prompt Target Nodes
 
