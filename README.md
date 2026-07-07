@@ -108,7 +108,7 @@ This is a separate LLM from your main chat model. Writing an image prompt is a s
 > [!WARNING]
 > **Create a separate API key just for this extension and give it a low spending limit. Don't paste your main key** — if this one leaks, only a small amount of spending is at risk, not your whole account.
 >
-> The key is stored **in plain text** in SillyTavern's `settings.json` and sent from the browser. This is unavoidable: SillyTavern extensions run entirely in the browser with no backend, so there's no server to proxy the request or keep the key secret; the browser calls the LLM API directly and `settings.json` is the only place to persist it. A dedicated key also avoids enabling SillyTavern's `allowKeysExposure = true` — a global flag that hands **every** key ST stores (OpenAI, Claude, etc.) to the browser, where any other extension, injected card script, or XSS could read your whole key vault at once. A single scoped, low-cap key caps the damage instead. See [Security](#-security) for the full picture.
+> The key is stored **in plain text** in SillyTavern's `settings.json` and sent from the browser. This is unavoidable: SillyTavern extensions run entirely in the browser with no backend, so there's no server to proxy the request or keep the key secret; the browser calls the LLM API directly and `settings.json` is the only place to persist it. A dedicated key also avoids enabling SillyTavern's `allowKeysExposure = true` — a global flag that hands **every** key SillyTavern stores (OpenAI, Claude, etc.) to the browser, where any other extension, injected card script, or XSS could read your whole key vault at once. A single scoped, low-cap key caps the damage instead. See [Security](#-security) for the full picture.
 
 ### 4. System Prompt
 
