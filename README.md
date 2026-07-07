@@ -62,7 +62,7 @@ https://github.com/mozophe/ST-ComfyUI-Imagine
 Type `/imagine` in the chat input or attach it to a Quick Reply button. The extension will:
 
 1. Gather the current character card, user persona, and chat history
-2. Ask the configured LLM to write a prompt for Comfy UI
+2. Ask the configured LLM to write a prompt for ComfyUI
 3. Post the prompt to ComfyUI and wait for the result
 4. Inject the generated image into chat as a message from "Camera" (hidden from the main model)
 
@@ -104,7 +104,7 @@ Mitigation: use a **dedicated, low-spending-limit API key** for this extension (
 
 ### Using the Example Workflows
 
-The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagine** node titles (`IMAGINE_PROMPT`, `IMAGINE_LORA`, `IMAGINE_LORA_TRIGGER`) plus the empty-delimiter trigger convention, and both targeting a **Krea2 Turbo** setup (separate diffusion model + CLIP + VAE, 8 steps, cfg 1, euler/simple):
+The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagine** node titles (`IMAGINE_PROMPT`, `IMAGINE_LORA`, `IMAGINE_LORA_TRIGGER`) plus the empty-delimiter trigger convention, and both targeting a **Krea 2 Turbo** setup (separate diffusion model + CLIP + VAE, 8 steps, cfg 1, euler/simple):
 
 | File | LoRA chain | Use when |
 |---|---|---|
@@ -116,7 +116,7 @@ Pick one as your starting point — but you must point the loaders at **your own
 1. **Download** your chosen file from the repo.
 2. **Drag and drop** the file onto the ComfyUI canvas to load the graph.
 3. Set the **right files** in each loader's dropdown:
-   - **Load Diffusion Model** (`UNETLoader`) → your Krea2/diffusion model
+   - **Load Diffusion Model** (`UNETLoader`) → your Krea 2/diffusion model
    - **Load CLIP** (`CLIPLoader`) → your text-encoder/CLIP
    - **Load VAE** (`VAELoader`) → your VAE
    - **IMAGINE_LORA** (`LoraLoaderModelOnly`) → any **real** LoRA file (see note below)
@@ -126,7 +126,7 @@ Pick one as your starting point — but you must point the loaders at **your own
 
 > **The `IMAGINE_LORA` node must point at a real, existing LoRA file**, even though per-character settings override it. `LoraLoaderModelOnly` still loads the file when no character LoRA is set (it's just applied at strength 0), so a non-existent filename makes ComfyUI error. Point it at any valid LoRA as the fallback.
 
-**Using a different base model (not Krea2)?** Don't adapt this file. It's tuned end-to-end for Krea2 Turbo — not just the model, but the sampler, scheduler, CFG, steps, and resolution — so porting it to another model means fixing every one of those, node by node. Instead, **start from a known-good workflow for _your_ model** (the one you already use in ComfyUI, or a reference workflow for that model, which already has the right sampler settings), then just apply the `IMAGINE_*` node titles (see below), export in API format, and upload. The extension only cares about the node titles, not the graph — any workflow works once the titles are set.
+**Using a different base model (not Krea 2)?** Don't adapt this file. It's tuned end-to-end for Krea 2 Turbo — not just the model, but the sampler, scheduler, CFG, steps, and resolution — so porting it to another model means fixing every one of those, node by node. Instead, **start from a known-good workflow for _your_ model** (the one you already use in ComfyUI, or a reference workflow for that model, which already has the right sampler settings), then just apply the `IMAGINE_*` node titles (see below), export in API format, and upload. The extension only cares about the node titles, not the graph — any workflow works once the titles are set.
 
 ### Custom Prompt Target Nodes
 
@@ -161,7 +161,7 @@ Want a LoRA that's applied to **every** image regardless of character — a styl
 
 LoRA loaders chain through the `model` connection. In the example workflow the chain is `UNETLoader → IMAGINE_LORA → KSampler`; you insert your extra loader into that chain:
 
-1. In ComfyUI, **double-click an empty spot on the canvas** to open node search and type `Load LoRA`, then pick **Load LoRA** (the model-only loader — `class_type` `LoraLoaderModelOnly`). This Krea2 setup loads CLIP separately, so model-only is correct; pick **Load LoRA (Model and CLIP)** (`LoraLoader`) only if your model's LoRA also needs the CLIP. Tip: you can also drag a link off the `IMAGINE_LORA` **MODEL** output onto empty canvas and release — ComfyUI then lists only nodes that accept a MODEL input.
+1. In ComfyUI, **double-click an empty spot on the canvas** to open node search and type `Load LoRA`, then pick **Load LoRA** (the model-only loader — `class_type` `LoraLoaderModelOnly`). This Krea 2 setup loads CLIP separately, so model-only is correct; pick **Load LoRA (Model and CLIP)** (`LoraLoader`) only if your model's LoRA also needs the CLIP. Tip: you can also drag a link off the `IMAGINE_LORA` **MODEL** output onto empty canvas and release — ComfyUI then lists only nodes that accept a MODEL input.
 2. **Rewire** so the new node sits in the model chain. Either order works — e.g. put it after `IMAGINE_LORA`:
    - connect `IMAGINE_LORA`'s **MODEL** output → the new node's **model** input
    - connect the new node's **MODEL** output → **KSampler**'s **model** input
@@ -169,7 +169,7 @@ LoRA loaders chain through the `model` connection. In the example workflow the c
 4. **Do not** title it `IMAGINE_LORA` (or `IMAGINE_LORA_TRIGGER`) — leave its default title or name it something like `Style LoRA`. That keeps the extension from touching it.
 5. Export as API format and upload as usual.
 
-Repeat to stack more always-on LoRAs — just keep chaining `MODEL` out → next loader's `model` in, ending at the `KSampler`. If such a LoRA needs a trigger word in the prompt, bake it into the **Prompt Prefix/Suffix** fields (Setup step 3) since the per-character trigger field is reserved for `IMAGINE_LORA_TRIGGER`.
+Repeat to stack more always-on LoRAs — just keep chaining `MODEL` out → next loader's `model` in, ending at the `KSampler`. If such a LoRA needs a trigger word in the prompt, bake it into the **Prompt Prefix/Suffix** fields in the extension's LLM settings since the per-character trigger field is reserved for `IMAGINE_LORA_TRIGGER`.
 
 A worked example with two LoRAs is in [`workflows/Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json): an always-on style loader (`Load LoRA`) feeds the per-character loader (`IMAGINE_LORA`), chained `UNETLoader → Load LoRA → IMAGINE_LORA → KSampler`. Note only `IMAGINE_LORA` is touched by the extension; `Load LoRA` stays on for every image. (Same placeholder-path caveat as the single-LoRA template — adapt the model/LoRA files to your setup.)
 
