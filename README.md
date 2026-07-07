@@ -88,7 +88,7 @@ Mitigation: use a **dedicated, low-spending-limit API key** for this extension (
 ## Workflow Notes
 
 - Workflows must be in **ComfyUI API export format** (not the standard UI format).
-- The extension injects the LLM-generated prompt into the first `CLIPTextEncode` node (positive conditioning) and the negative prompt (if set) into the second.
+- The extension injects the LLM-generated prompt into the first `CLIPTextEncode` node (positive conditioning) and the negative prompt (if set) into the second — **unless** nodes titled `IMAGINE_PROMPT` / `IMAGINE_NEGATIVE` are present, which take precedence (see [Custom Prompt Target Nodes](#custom-prompt-target-nodes)).
 - If image count > 1, the KSampler seed is randomised for each job.
 
 ### Using the Example Workflow
@@ -130,7 +130,7 @@ Bind a different LoRA to each SillyTavern character so the right one loads autom
 
 **One-time workflow setup:** in ComfyUI, add a **Load LoRA** node (display name for `LoraLoaderModelOnly`; or **Load LoRA (Model and CLIP)** = `LoraLoader` if your model's LoRA also needs CLIP — both are accepted) and set its **title** to `IMAGINE_LORA`, then export and upload the workflow. The extension acts **only** on that titled node (and the `IMAGINE_LORA_TRIGGER` node) — any other LoRA loaders in your workflow are left untouched. If a character has a LoRA set but no `IMAGINE_LORA` node exists, `/imagine` shows an error telling you to title it.
 
-**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a searchable LoRA dropdown (pulled live from ComfyUI — type to filter, handles thousands of LoRAs), a strength field, and an optional **trigger word(s)** field. Pick a LoRA, strength, and trigger — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
+**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a LoRA dropdown pulled live from ComfyUI (handles thousands of LoRAs — on **desktop** it's searchable, just start typing to filter; on **mobile** it falls back to your device's native picker, matching how SillyTavern's own model dropdowns behave on touch), a strength field, and an optional **trigger word(s)** field. Pick a LoRA, strength, and trigger — it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
 
 **Trigger words (optional):** many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, and in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt (e.g. via a `StringConcatenate` node ahead of `CLIPTextEncode`). The active character's trigger is written into that node on each generation. **Set the concat delimiter to empty (`""`) and end each trigger with its own separator** (e.g. `aliceface woman, `) — that way a character with no trigger produces a clean prompt with nothing prepended. Leave the field blank for LoRAs that need no trigger.
 
