@@ -41,7 +41,7 @@ https://github.com/mozophe/ST-ComfyUI-Imagine
    >
    > Why: the API key is stored **in plain text** in SillyTavern's `settings.json` and sent from the browser. This is unavoidable — SillyTavern extensions run entirely in the browser with no backend, so there's no server to proxy the request or keep the key secret; the browser calls the LLM API directly and `settings.json` is the only place to persist it. Using a dedicated key here also avoids the alternative of enabling SillyTavern's `allowKeysExposure = true` — a global flag that hands **every** key ST stores (OpenAI, Claude, etc.) to the browser, where any other extension, injected card script, or XSS could read your whole key vault at once. A single scoped, low-cap key caps the damage instead.
 4. **System Prompt** — the extension ships with a default system prompt (tuned for Krea 2 Turbo) that tells the LLM how to write the image prompt. The default frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what's visible in frame**. It's always available as the **`Krea 2 Turbo (default)`** entry in the **System Prompt Presets** dropdown — this entry is kept in sync with the shipped default (it resets on reload), so to customise, edit the textarea and use **Save As** to store your own named preset rather than overwriting the default. Switch between saved prompts via the presets dropdown, overwrite the selected (non-default) preset with **Save**, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
-5. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI, then **Graph** menu → **Export (API)**), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server. An example workflow is provided in the repo's [`workflows/`](workflows/) folder (`Krea2_CLora.json`) showing the required `IMAGINE_PROMPT` / `IMAGINE_LORA` / `IMAGINE_LORA_TRIGGER` node titles — it's a **template**, not a drop-in default: the model, VAE, CLIP, and LoRA paths are machine-specific, so adapt them to your setup before uploading. See [Using the Example Workflow](#using-the-example-workflow) for step-by-step instructions.
+5. **Upload a Workflow** — export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI, then **Graph** menu → **Export (API)**), then upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server. Two example workflows are provided in the repo's [`workflows/`](workflows/) folder, both wired for the required `IMAGINE_PROMPT` / `IMAGINE_LORA` / `IMAGINE_LORA_TRIGGER` node titles — pick whichever matches your setup. They're **templates**, not drop-in defaults: the model, VAE, CLIP, and LoRA paths are machine-specific, so adapt them before uploading. See [Using the Example Workflows](#using-the-example-workflows) for step-by-step instructions.
 6. **Select Active Workflow** — choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
 7. **Character LoRAs** *(optional)* — attach a LoRA to the active character so it loads automatically whenever that character is active. See [Per-Character LoRAs](#per-character-loras) below.
 8. **Generation Settings** — image count (1–8), chat history limit (how many of the latest chat messages are sent to the prompt LLM; `0` = entire chat, default `20`), sender name for injected messages.
@@ -91,13 +91,18 @@ Mitigation: use a **dedicated, low-spending-limit API key** for this extension (
 - The extension injects the LLM-generated prompt into the first `CLIPTextEncode` node (positive conditioning) and the negative prompt (if set) into the second — **unless** nodes titled `IMAGINE_PROMPT` / `IMAGINE_NEGATIVE` are present, which take precedence (see [Custom Prompt Target Nodes](#custom-prompt-target-nodes)).
 - If image count > 1, the KSampler seed is randomised for each job.
 
-### Using the Example Workflow
+### Using the Example Workflows
 
-The repo's [`workflows/Krea2_CLora.json`](workflows/Krea2_CLora.json) is a ready-made template wired for the **ComfyUI-Imagine** node titles (`IMAGINE_PROMPT`, `IMAGINE_LORA`, `IMAGINE_LORA_TRIGGER`) plus the empty-delimiter trigger convention. It targets a **Krea2 Turbo** setup (separate diffusion model + CLIP + VAE, 8 steps, cfg 1, euler/simple). Use it as a starting point — but you must point the loaders at **your own** model files first.
+The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagine** node titles (`IMAGINE_PROMPT`, `IMAGINE_LORA`, `IMAGINE_LORA_TRIGGER`) plus the empty-delimiter trigger convention, and both targeting a **Krea2 Turbo** setup (separate diffusion model + CLIP + VAE, 8 steps, cfg 1, euler/simple):
 
-It ships with placeholder filenames, so it won't run until you set the real ones:
+| File | LoRA chain | Use when |
+|---|---|---|
+| [`Krea2_CLora.json`](workflows/Krea2_CLora.json) | one loader (`IMAGINE_LORA`) for the per-character LoRA | you only want per-character LoRAs |
+| [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | an always-on `Load LoRA` **feeding** the per-character `IMAGINE_LORA` | you also want a style/quality LoRA on **every** image — see [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora) |
 
-1. **Download** [`Krea2_CLora.json`](workflows/Krea2_CLora.json) from the repo.
+Pick one as your starting point — but you must point the loaders at **your own** model files first. Both ship with placeholder filenames, so they won't run until you set the real ones. The steps below use `Krea2_CLora.json`; `Krea2_StyleLora_CLora.json` is identical apart from the extra always-on loader.
+
+1. **Download** your chosen file from the repo.
 2. **Drag and drop** the file onto the ComfyUI canvas to load the graph.
 3. Set the **right files** in each loader's dropdown:
    - **Load Diffusion Model** (`UNETLoader`) → your Krea2/diffusion model
