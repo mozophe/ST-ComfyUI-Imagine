@@ -56,7 +56,7 @@ In SillyTavern, open **Extensions → Install Extension**, paste the repo URL, a
 https://github.com/mozophe/ST-ComfyUI-Imagine
 ```
 
-## ⚙️ Setup
+## 🔧 Setup
 
 ### 1. Start ComfyUI
 
