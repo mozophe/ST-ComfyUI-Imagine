@@ -135,78 +135,55 @@ async function fetchLoraList() {
 
 // Refresh the Character LoRAs panel for whoever is active right now. Called on
 // settings load and on CHAT_CHANGED so the fields track character switches.
-// Turn the LoRA <select> into a searchable dropdown via ST's bundled select2.
-// Re-init each populate (destroy stale widget first); no-op if select2 absent.
-function refreshLoraSelect2(select) {
-    const $sel = $(select);
-    if (!$.fn?.select2) return;
-    if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
-    if (select.disabled) return;
-    // Mobile: opening the soft keyboard resizes the viewport, which fires a
-    // scroll on the drawer and closes a body-appended dropdown before you can
-    // type. Anchor the dropdown inside the drawer so it moves with the scroll
-    // container instead of being orphaned and closed.
-    const dropdownParent = $(select).closest('.inline-drawer-content');
-    $sel.select2({
-        width: '100%',
-        placeholder: 'Select a LoRA',
-        allowClear: true,
-        dropdownParent: dropdownParent.length ? dropdownParent : undefined,
-    });
-    // Also force focus into the search field on open so the keyboard binds to it.
-    $sel.on('select2:open', () => {
-        document.querySelector('.select2-container--open .select2-search__field')?.focus();
-    });
-}
-
+// The LoRA field is a native <input list=…> + <datalist>: the browser's own
+// autocomplete handles type-to-search over 1000+ entries and — unlike select2 —
+// never breaks on mobile (no dropdown to orphan when the soft keyboard opens).
 async function populateCharacterLoraUI() {
     const nameEl = document.getElementById('comfy-imagine-lora-charname');
-    const select = document.getElementById('comfy-imagine-lora-select');
+    const input = document.getElementById('comfy-imagine-lora-select');
+    const listEl = document.getElementById('comfy-imagine-lora-list');
     const strengthEl = document.getElementById('comfy-imagine-lora-strength');
     const triggerEl = document.getElementById('comfy-imagine-lora-trigger');
-    if (!nameEl || !select) return;
-
-    // Tear down any existing select2 before mutating the underlying <select>.
-    const $sel = $(select);
-    if ($.fn?.select2 && $sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+    if (!nameEl || !input) return;
 
     const char = getActiveCharacter();
     if (!char) {
         nameEl.textContent = '— no character selected —';
-        select.innerHTML = '<option value="">— none —</option>';
-        select.disabled = true;
+        input.value = '';
+        input.disabled = true;
         if (strengthEl) strengthEl.disabled = true;
         if (triggerEl) triggerEl.disabled = true;
         return;
     }
-    select.disabled = false;
+    input.disabled = false;
     if (strengthEl) strengthEl.disabled = false;
     if (triggerEl) triggerEl.disabled = false;
     nameEl.textContent = char.name ?? char.avatar;
 
     if (!loraListCache) {
-        select.innerHTML = '<option value="">— loading… —</option>';
+        input.placeholder = 'loading…';
         try {
             loraListCache = await fetchLoraList();
         } catch {
-            select.innerHTML = '<option value="">— fetch failed, check ComfyUI &amp; reload —</option>';
+            input.placeholder = 'fetch failed — check ComfyUI & reload';
             return;
+        }
+    }
+    input.placeholder = 'type to search · blank = none';
+
+    if (listEl) {
+        listEl.innerHTML = '';
+        for (const name of loraListCache) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            listEl.appendChild(opt);
         }
     }
 
     const saved = getSettings().characterLoras?.[char.avatar] ?? {};
-    select.innerHTML = '<option value="">— none —</option>';
-    for (const name of loraListCache) {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        select.appendChild(opt);
-    }
-    select.value = (saved.lora && loraListCache.includes(saved.lora)) ? saved.lora : '';
+    input.value = (saved.lora && loraListCache.includes(saved.lora)) ? saved.lora : '';
     if (strengthEl) strengthEl.value = saved.strength ?? 1;
     if (triggerEl) triggerEl.value = saved.trigger ?? '';
-
-    refreshLoraSelect2(select);
 }
 
 // Persist the current panel selection against the active character's avatar.
@@ -214,12 +191,18 @@ async function populateCharacterLoraUI() {
 function saveCharacterLora() {
     const char = getActiveCharacter();
     if (!char) return;
-    const select = document.getElementById('comfy-imagine-lora-select');
+    const input = document.getElementById('comfy-imagine-lora-select');
     const strengthEl = document.getElementById('comfy-imagine-lora-strength');
     const triggerEl = document.getElementById('comfy-imagine-lora-trigger');
     const settings = getSettings();
     if (!settings.characterLoras) settings.characterLoras = {};
-    const lora = select?.value ?? '';
+    let lora = (input?.value ?? '').trim();
+    // Free-text input: only accept an actually-installed LoRA. A typo or a
+    // half-typed string is treated as "none" and the field is cleared.
+    if (lora && loraListCache && !loraListCache.includes(lora)) {
+        lora = '';
+        if (input) input.value = '';
+    }
     if (!lora) {
         delete settings.characterLoras[char.avatar];
     } else {
@@ -432,9 +415,9 @@ function bindSettingsEvents() {
         populateWorkflowDropdown();
     });
 
-    // jQuery .on (not addEventListener): select2 emits a jQuery 'change', which
-    // native listeners don't catch. Survives select2 destroy/re-init.
-    $('#comfy-imagine-lora-select').on('change', saveCharacterLora);
+    // 'change' (not 'input'): fires on datalist pick / blur / Enter, so we save
+    // a committed value rather than every keystroke mid-search.
+    document.getElementById('comfy-imagine-lora-select')?.addEventListener('change', saveCharacterLora);
     document.getElementById('comfy-imagine-lora-strength')?.addEventListener('input', saveCharacterLora);
     document.getElementById('comfy-imagine-lora-trigger')?.addEventListener('input', saveCharacterLora);
     document.getElementById('comfy-imagine-lora-reload')?.addEventListener('click', () => {
