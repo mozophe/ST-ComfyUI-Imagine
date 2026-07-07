@@ -122,6 +122,9 @@ The extension ships with a default system prompt (tuned for **Krea 2 Turbo**) th
 
 It's always available as the **`Krea 2 Turbo (default)`** entry in the **System Prompt Presets** dropdown — this entry is kept in sync with the shipped default (it resets on reload), so to customise, edit the textarea and use **Save As** to store your own named preset rather than overwriting the default. Switch between saved prompts via the dropdown, overwrite the selected (non-default) preset with **Save**, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
 
+> [!NOTE]
+> **How updates affect the default prompt.** When a new version ships an improved default, it never overwrites your active prompt or any preset you've saved — updating the extension won't change what you're using. The new default arrives **only** as the refreshed **`Krea 2 Turbo (default)`** preset in the dropdown; select it whenever you want to adopt the latest version. Because that entry resets on every reload, keep your own tweaks under a **Save As** name — edits made directly to the `Krea 2 Turbo (default)` preset are replaced when the shipped default updates.
+
 ### 5. Upload a Workflow
 
 Export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI, then **Graph → Export (API)**) and upload it here. Workflows are stored in your SillyTavern settings — no files are written to the server.
