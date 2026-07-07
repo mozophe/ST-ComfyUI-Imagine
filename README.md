@@ -18,7 +18,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 ## ✨ Features
 
 - **`/imagine` anywhere** — a slash command or one-click Quick Reply button that generates an image from the current scene.
-- **Context-aware prompts** — a dedicated LLM turns the character card, your persona, and recent chat into an image generation prompt.
+- **Context-aware prompts** — a dedicated LLM turns the character card, your persona, and recent chat into a prompt for image generation.
 - **Per-character LoRAs** — bind a LoRA to each character; it loads automatically when they're active, with no settings changes on switch.
 - **Always-on style LoRAs** — stack a style/quality LoRA that applies to every image, independent of the per-character one.
 - **Any ComfyUI workflow** — bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
