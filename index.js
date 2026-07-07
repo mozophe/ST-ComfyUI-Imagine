@@ -142,10 +142,18 @@ function refreshLoraSelect2(select) {
     if (!$.fn?.select2) return;
     if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
     if (select.disabled) return;
-    $sel.select2({ width: '100%', placeholder: 'Select a LoRA', allowClear: true });
-    // Mobile: opening the soft keyboard resizes the viewport, which blurs the
-    // search field and closes the dropdown before you can type. Force focus into
-    // the search field on open so the keyboard binds to it and the list stays up.
+    // Mobile: opening the soft keyboard resizes the viewport, which fires a
+    // scroll on the drawer and closes a body-appended dropdown before you can
+    // type. Anchor the dropdown inside the drawer so it moves with the scroll
+    // container instead of being orphaned and closed.
+    const dropdownParent = $(select).closest('.inline-drawer-content');
+    $sel.select2({
+        width: '100%',
+        placeholder: 'Select a LoRA',
+        allowClear: true,
+        dropdownParent: dropdownParent.length ? dropdownParent : undefined,
+    });
+    // Also force focus into the search field on open so the keyboard binds to it.
     $sel.on('select2:open', () => {
         document.querySelector('.select2-container--open .select2-search__field')?.focus();
     });
