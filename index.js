@@ -111,6 +111,21 @@ function populateSystemPromptPresetDropdown() {
     }
     const active = settings.activeSystemPromptPreset || '';
     select.value = settings.systemPromptPresets?.[active] ? active : '';
+    updateSpSaveButtonState();
+}
+
+// Grey out the Save (overwrite) button when the selected preset can't be
+// overwritten — the extension-owned default (rewritten each load) or nothing
+// selected. Save As stays available so custom edits can always be kept.
+function updateSpSaveButtonState() {
+    const btn = document.getElementById('comfy-imagine-sp-preset-overwrite');
+    const select = document.getElementById('comfy-imagine-sp-preset');
+    if (!btn || !select) return;
+    const name = select.value;
+    btn.disabled = !name || name === DEFAULT_PRESET_NAME;
+    btn.title = name === DEFAULT_PRESET_NAME
+        ? `'${DEFAULT_PRESET_NAME}' is read-only — use Save As to keep changes`
+        : (name ? 'Overwrite the selected preset with the current system prompt' : 'Select a preset to overwrite');
 }
 
 // Returns the active character object (has .avatar, .name) or null when none is
@@ -312,6 +327,10 @@ function bindSettingsEvents() {
         if (inlineEl) inlineEl.value = preset;
         toast(`Loaded preset '${name}'.`);
     });
+
+    // Keep the Save button's enabled/greyed state in sync with the selection
+    // (runs regardless of the loader handler's early returns above).
+    document.getElementById('comfy-imagine-sp-preset')?.addEventListener('change', updateSpSaveButtonState);
 
     document.getElementById('comfy-imagine-sp-preset-overwrite')?.addEventListener('click', () => {
         const settings = getSettings();

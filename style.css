@@ -61,6 +61,12 @@
     flex-shrink: 0;
 }
 
+#comfy-imagine-settings .menu_button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* Status text */
 #comfy-imagine-settings .comfy-imagine-status {
     font-size: 0.85em;
