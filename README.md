@@ -19,9 +19,9 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 
 - **`/imagine` anywhere** — a slash command or one-click Quick Reply button that generates an image from the current scene.
 - **Context-aware prompts** — a dedicated LLM turns the character card, your persona, and recent chat into a prompt for image generation.
-- **Any ComfyUI workflow** — bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
 - **Per-character LoRAs** — bind a LoRA to each character; it loads automatically when they're active, with no settings changes on switch.
 - **Always-on LoRA** — stack a LoRA applied to every image (style, quality, detail, aesthetic, …), independent of the per-character one.
+- **Any ComfyUI workflow** — bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
 - **First-person POV default** — ships with a Krea 2 Turbo–tuned system prompt and full preset management.
 - **Desktop & mobile** — searchable LoRA picker on desktop, native picker on touch. Fully abortable; images are hidden from the main model.
 
