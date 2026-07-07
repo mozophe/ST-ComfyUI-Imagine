@@ -33,6 +33,17 @@ https://github.com/mozophe/ST-ComfyUI-Imagine
    - `--enable-cors-header` — needed in **both** cases. SillyTavern and ComfyUI run on different ports, so the browser treats them as different origins and blocks `fetch` without this header — even on the same machine, even when the port is reachable via `curl`.
    - `--listen 0.0.0.0` — **only** for the different-machines case; it makes ComfyUI accept connections from other computers on the network. Omit it for a same-machine setup.
    - Add `--port <number>` to either command if you don't want the default port `8188`.
+
+   > **Easiest way to get ComfyUI running (Windows): the portable build.** Download `ComfyUI_windows_portable` from the [ComfyUI releases page](https://github.com/comfyanonymous/ComfyUI/releases), extract it, and put your models under `ComfyUI\models\`. It bundles its own Python and dependencies — nothing to install.
+   >
+   > You don't run `python main.py` yourself with the portable build — you edit its launcher. Open **`run_nvidia_gpu.bat`** (or `run_cpu.bat`) in Notepad and append the flags to the command line that's already there:
+   >
+   > ```bat
+   > .\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --listen 0.0.0.0 --enable-cors-header
+   > pause
+   > ```
+   >
+   > Save, then double-click the `.bat` to start ComfyUI. Keep the existing `--windows-standalone-build` flag; just add the others. Drop `--listen 0.0.0.0` for a same-machine setup, and add `--port <number>` here too if you don't want `8188`.
 2. **ComfyUI Base URL** — point it at ComfyUI, then click **Test ComfyUI Connection** to verify:
    - **Same machine** — `http://localhost:8188`
    - **Different machine** — the ComfyUI computer's LAN IP and port, e.g. `http://192.168.1.50:8188`
