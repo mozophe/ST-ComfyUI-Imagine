@@ -143,6 +143,12 @@ function refreshLoraSelect2(select) {
     if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
     if (select.disabled) return;
     $sel.select2({ width: '100%', placeholder: 'Select a LoRA', allowClear: true });
+    // Mobile: opening the soft keyboard resizes the viewport, which blurs the
+    // search field and closes the dropdown before you can type. Force focus into
+    // the search field on open so the keyboard binds to it and the list stays up.
+    $sel.on('select2:open', () => {
+        document.querySelector('.select2-container--open .select2-search__field')?.focus();
+    });
 }
 
 async function populateCharacterLoraUI() {
