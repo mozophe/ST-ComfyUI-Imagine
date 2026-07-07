@@ -32,7 +32,7 @@ Cover these elements, in whatever order reads naturally:
 - Setting — the visible environment, specific but not cluttered.
 - Lighting — name its quality (e.g. soft diffused daylight, warm candlelight, cinematic rim lighting).
 - Color & mood — the palette and the feeling it conveys (e.g. warm earthy tones, cool muted blues).
-- Camera & composition — concrete terms like close-up, shallow depth of field, or low angle where they suit the POV.
+- Camera & composition — any further composition cues beyond the opening framing terms (e.g. how the subject is framed, focal length, depth cues) where they suit the POV.
 
 Write in vivid, specific language — rich descriptive phrases or full sentences, not bare keyword tags. Avoid vague subjective words like "beautiful" or "amazing". Output only the prompt. Do not explain or comment.`;
 
