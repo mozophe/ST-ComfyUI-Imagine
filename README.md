@@ -112,6 +112,12 @@ This is a separate LLM from your main chat model. Writing an image prompt is a s
 
 ### 4. System Prompt
 
+> [!TIP]
+> **Once the rest of the setup works, this is the first thing to tailor.** The System Prompt is what shapes every image — its style, framing, and detail — so edit it to suit the look you want and the model you're using.
+
+> [!NOTE]
+> The shipped default is a **work in progress**: a reasonable starting point tuned for Krea 2 Turbo's first-person POV style, not a finished one-size-fits-all prompt. Expect to iterate on it, and don't be surprised if it changes between updates.
+
 The extension ships with a default system prompt (tuned for **Krea 2 Turbo**) that tells the LLM how to write the image prompt. The default frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what's visible in frame**.
 
 It's always available as the **`Krea 2 Turbo (default)`** entry in the **System Prompt Presets** dropdown — this entry is kept in sync with the shipped default (it resets on reload), so to customise, edit the textarea and use **Save As** to store your own named preset rather than overwriting the default. Switch between saved prompts via the dropdown, overwrite the selected (non-default) preset with **Save**, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
