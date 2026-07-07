@@ -320,6 +320,13 @@ function bindSettingsEvents() {
             toast('No preset selected — use Save As.', 'error');
             return;
         }
+        // The default preset is extension-owned and rewritten with the shipped
+        // default on every load, so a Save here would be silently wiped. Block it
+        // and steer the user to Save As, which persists under their own name.
+        if (name === DEFAULT_PRESET_NAME) {
+            toast(`'${DEFAULT_PRESET_NAME}' can't be overwritten — use Save As to keep your changes.`, 'error');
+            return;
+        }
         settings.systemPromptPresets[name] = settings.systemPrompt ?? '';
         saveSettings();
         toast(`Preset '${name}' saved.`, 'success');
