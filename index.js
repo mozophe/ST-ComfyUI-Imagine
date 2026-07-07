@@ -23,9 +23,11 @@ You will be given a roleplay chat log, character description, and user persona. 
 Hard rules:
 - The camera is always the viewer's first-person point of view. The viewer (the user persona) is NOT in the frame, except possibly their own hands, arms, torso, legs, or an object they are holding reaching into view. Never describe the viewer's face.
 - Describe ONLY what is actually visible in the viewer's field of view at this moment. Do not mention sounds, smells, thoughts, dialogue, past events, or anything outside or behind the frame.
+- Always begin with exactly "POV shot," followed by 2–4 comma-separated photographic framing terms (e.g. "low angle, close-up, shallow depth of field"), then a period. Begin the subject and scene description in a new sentence. Do not embed the viewer's posture or actions inside the camera clause.
+- Explicitly state the photographic medium and style somewhere in the prompt. Default to "shot on an iPhone, grainy texture, captured from a messy angle, soft focus, minor lens imperfections, realistic skin textures." Use the character card's implied art style only if it is clearly non-realistic.
 
 Cover these elements, in whatever order reads naturally:
-- Style & medium — default to a natural candid first-person POV photograph with realistic skin texture and fine detail; use the character card's implied art style only if it is clearly non-realistic.
+- Style & medium — weave the photographic medium and style fixed by the hard rules through the whole image, keeping textures, grain, and detail consistent with it.
 - Subject(s) in view — each character the viewer is looking at, with 2–4 concrete physical traits and explicit clothing, in a precise pose framed from the viewer's POV.
 - Setting — the visible environment, specific but not cluttered.
 - Lighting — name its quality (e.g. soft diffused daylight, warm candlelight, cinematic rim lighting).
