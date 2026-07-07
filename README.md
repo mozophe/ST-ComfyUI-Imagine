@@ -193,7 +193,7 @@ The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagin
 | File | LoRA chain | Use when |
 |---|---|---|
 | [`Krea2_CLora.json`](workflows/Krea2_CLora.json) | one loader (`IMAGINE_LORA`) for the per-character LoRA | you only want per-character LoRAs |
-| [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | an always-on `Load LoRA` **feeding** the per-character `IMAGINE_LORA` | you also want a style/quality LoRA on **every** image — see [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora) |
+| [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | an always-on `Load LoRA` **feeding** the per-character `IMAGINE_LORA` | you also want a style/quality/detail/aesthetic LoRA on **every** image — see [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora) |
 
 Pick one as your starting point, but point the loaders at **your own** model files first. Both ship with placeholder filenames, so they won't run until you set the real ones. The steps below use `Krea2_CLora.json`; `Krea2_StyleLora_CLora.json` is identical apart from the extra always-on loader.
 
