@@ -209,9 +209,12 @@ function saveCharacterLora() {
     if (!lora) {
         delete settings.characterLoras[char.avatar];
     } else {
+        // parseFloat first, then default only a truly empty/NaN field to 1 — a
+        // typed 0 is a valid strength (LoRA off) and must not become 1.
+        const parsed = parseFloat(strengthEl?.value);
         settings.characterLoras[char.avatar] = {
             lora,
-            strength: Math.min(2, Math.max(-2, parseFloat(strengthEl?.value) || 1)),
+            strength: Number.isNaN(parsed) ? 1 : Math.min(2, Math.max(-2, parsed)),
             trigger: (triggerEl?.value ?? '').trim(),
         };
     }
