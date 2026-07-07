@@ -206,6 +206,8 @@ Pick one as your starting point, but point the loaders at **your own** model fil
 
 > [!NOTE]
 > **Using a different base model (not Krea 2)?** Don't adapt these files. They're tuned end-to-end for Krea 2 Turbo — not just the model, but the sampler, scheduler, CFG, steps, and resolution — so porting to another model means fixing every one of those, node by node. Instead, **start from a known-good workflow for _your_ model** (the one you already use in ComfyUI, or a reference workflow for that model, which already has the right sampler settings), then just apply the `IMAGINE_*` node titles, export in API format, and upload. The extension only cares about the node titles, not the graph — any workflow works once the titles are set.
+>
+> Applying the titles is covered per feature: **`IMAGINE_PROMPT`** / **`IMAGINE_NEGATIVE`** in [Custom Prompt Target Nodes](#custom-prompt-target-nodes), and **`IMAGINE_LORA`** / **`IMAGINE_LORA_TRIGGER`** in [Per-Character LoRAs](#per-character-loras). At minimum, `IMAGINE_PROMPT` (or a first `CLIPTextEncode`) must receive the prompt; the LoRA titles are only needed if you want per-character LoRAs.
 
 ### Custom Prompt Target Nodes
 
