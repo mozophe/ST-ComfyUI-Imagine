@@ -31,6 +31,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 - [Installation](#-installation)
 - [Setup](#-setup)
 - [Usage](#-usage)
+  - [Quick Reply Setup](#quick-reply-setup)
 - [Security](#-security)
 - [Workflows](#-workflows)
   - [Using the Example Workflows](#using-the-example-workflows)
@@ -169,7 +170,7 @@ Clicking the button now runs `/imagine` exactly as typing it would.
 It can leak two ways:
 
 1. **The file** — anyone who gets your `settings.json` (or a backup, screen-share, or a copy you post when asking for help) can read the key directly.
-2. **The browser** — because the key lives in the page, any other installed extension, a malicious script injected by a character card, or an XSS bug in ST can read it at runtime. (Enabling ST's `allowKeysExposure = true` makes this worse — it exposes **every** key ST stores, not just this one.)
+2. **The browser** — because the key lives in the page, any other installed extension, a malicious script injected by a character card, or an XSS bug in SillyTavern can read it at runtime. (Enabling SillyTavern's `allowKeysExposure = true` makes this worse — it exposes **every** key SillyTavern stores, not just this one.)
 
 **Mitigation:** use a **dedicated, low-spending-limit API key** for this extension (see the warning in [Setup step 3](#3-llm-prompt-generator)) so a leak caps the damage, and don't share or post your `settings.json`.
 
