@@ -1,7 +1,7 @@
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
-import { splitDataUrl, isOwnImaginePath } from './image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath } from './image-helpers.js';
 
 const MODULE_NAME = 'comfy_imagine';
 // Capture everything after scripts/extensions/ up to index.js — this preserves
@@ -803,23 +803,44 @@ async function uploadImageToST(rawB64, format, chName, filename) {
     return (await res.json()).path;
 }
 
-// All image paths currently referenced by comfy-imagine messages in the chat.
+// Stores a debug JSON blob as a file on the ST server (POST /api/files/upload,
+// writes under data/<user>/user/files/), so the large context+prompt lives on
+// disk instead of bloating the chat .jsonl. Returns the saved relative path.
+async function uploadDebugToST(name, jsonString) {
+    const { getRequestHeaders } = SillyTavern.getContext();
+    // UTF-8 safe base64 (context/prompt may contain non-Latin1 characters).
+    const bytes = new TextEncoder().encode(jsonString);
+    let bin = '';
+    for (const b of bytes) bin += String.fromCharCode(b);
+    const res = await fetch('/api/files/upload', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        body: JSON.stringify({ name, data: btoa(bin) }),
+    });
+    if (!res.ok) throw new Error('debug_upload_failed');
+    return (await res.json()).path;
+}
+
+// All server file paths (images + debug sidecars) referenced by comfy-imagine
+// messages in the chat. Used as the cleanup baseline.
 function collectImaginePaths() {
     const { chat } = SillyTavern.getContext();
     const set = new Set();
     for (const msg of chat) {
-        if (msg?.extra?.title === 'comfy-imagine' && msg.extra.imaginePath) {
-            set.add(msg.extra.imaginePath);
-        }
+        if (msg?.extra?.title !== 'comfy-imagine') continue;
+        if (msg.extra.imaginePath) set.add(msg.extra.imaginePath);
+        if (msg.extra.debugPath) set.add(msg.extra.debugPath);
     }
     return set;
 }
 
-// Best-effort delete of one image file from ST's store. Failures are swallowed:
-// a leftover file is harmless; a toast for it would be noise.
-async function deleteImageFromST(path) {
+// Best-effort delete of one of our files from ST's store. Routes to the file
+// endpoint for debug sidecars (under user/files/) and the image endpoint for
+// generated images. Failures are swallowed: a leftover file is harmless.
+async function deleteOwnedFile(path) {
     const { getRequestHeaders } = SillyTavern.getContext();
-    await fetch('/api/images/delete', {
+    const endpoint = isOwnDebugPath(path) ? '/api/files/delete' : '/api/images/delete';
+    await fetch(endpoint, {
         method: 'POST',
         headers: getRequestHeaders(),
         body: JSON.stringify({ path }),
@@ -835,9 +856,9 @@ async function deleteImageFromST(path) {
 // await gap can't be clobbered.
 async function reconcileImagineOrphans() {
     const current = collectImaginePaths();
-    const orphans = [...knownImaginePaths].filter(p => !current.has(p) && isOwnImaginePath(p));
+    const orphans = [...knownImaginePaths].filter(p => !current.has(p) && (isOwnImaginePath(p) || isOwnDebugPath(p)));
     for (const p of orphans) {
-        await deleteImageFromST(p);
+        await deleteOwnedFile(p);
         knownImaginePaths.delete(p);
     }
 }
@@ -882,14 +903,29 @@ async function migrateCurrentChat() {
 
 // ── Debug Viewer ────────────────────────────────────────────────────────────
 
-function showDebugModal(mesid) {
-    const { chat, callGenericPopup, POPUP_TYPE } = SillyTavern.getContext();
+async function showDebugModal(mesid) {
+    const { chat, callGenericPopup, POPUP_TYPE, getRequestHeaders } = SillyTavern.getContext();
     const msg = chat[mesid];
     if (!msg) return;
+    // Newer messages store debug info in a server file (extra.debugPath); older
+    // ones kept it inline (extra.debugContext/debugPrompt). Prefer the file, fall
+    // back to inline, then to a placeholder.
+    let rawContext = msg.extra?.debugContext;
+    let rawPrompt = msg.extra?.debugPrompt;
+    if (msg.extra?.debugPath) {
+        try {
+            const r = await fetch(msg.extra.debugPath, { headers: getRequestHeaders() });
+            if (r.ok) {
+                const d = JSON.parse(await r.text());
+                rawContext = d.context;
+                rawPrompt = d.prompt;
+            }
+        } catch { /* fall back to inline / placeholder below */ }
+    }
     const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const sys = esc(getSettings().systemPrompt ?? '');
-    const ctx = esc(msg.extra?.debugContext ?? '(not stored — regenerate with /imagine to capture)');
-    const prompt = esc(msg.extra?.debugPrompt ?? '(not stored)');
+    const ctx = esc(rawContext ?? '(not stored — regenerate with /imagine to capture)');
+    const prompt = esc(rawPrompt ?? '(not stored)');
     const html = `<div style="display:flex;flex-direction:column;gap:12px;min-width:min(600px,80vw)">
         <div>
             <label style="font-weight:bold;display:block;margin-bottom:4px">System Prompt</label>
@@ -923,7 +959,7 @@ function injectDebugButtonOnMessage(mesid) {
 function injectAllDebugButtons() {
     const { chat } = SillyTavern.getContext();
     chat.forEach((msg, i) => {
-        if (msg?.extra?.title === 'comfy-imagine' && (msg.extra.debugContext || msg.extra.debugPrompt)) {
+        if (msg?.extra?.title === 'comfy-imagine' && (msg.extra.debugPath || msg.extra.debugContext || msg.extra.debugPrompt)) {
             injectDebugButtonOnMessage(i);
         }
     });
@@ -1031,6 +1067,15 @@ async function runImagine(args) {
             return '';
         }
 
+        // Store the debug info (LLM context + generated prompt) as a file on the
+        // server rather than inline in the chat, which would bloat the .jsonl with
+        // the whole context per image. Best-effort: on failure just skip it.
+        let debugPath = null;
+        try {
+            const debugJson = JSON.stringify({ context: contextString, prompt: llmOutput });
+            debugPath = await uploadDebugToST(`imagine_debug_${Date.now()}_${i}.json`, debugJson);
+        } catch { /* debug is optional; a missing sidecar just shows "not stored" */ }
+
         const { chat, addOneMessage, saveChat } = SillyTavern.getContext();
         const imageMessage = {
             name: s.senderName || 'Camera',
@@ -1041,8 +1086,7 @@ async function runImagine(args) {
             extra: {
                 title: 'comfy-imagine',
                 imaginePath: path,
-                debugContext: contextString,
-                debugPrompt: llmOutput,
+                ...(debugPath ? { debugPath } : {}),
             },
         };
         chat.push(imageMessage);
@@ -1050,6 +1094,7 @@ async function runImagine(args) {
         await saveChat();
         injectDebugButtonOnMessage(chat.length - 1);
         knownImaginePaths.add(path);
+        if (debugPath) knownImaginePaths.add(debugPath);
     }
 
     } finally {

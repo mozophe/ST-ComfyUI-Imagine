@@ -22,3 +22,11 @@ export function splitDataUrl(dataUrl) {
 export function isOwnImaginePath(path) {
     return /^\/?user\/images\/(?!\.\.?\/)[^/]+\/imagine_[^/]+\.(png|jpe?g|webp|bmp|jfif)$/i.test(path ?? '');
 }
+
+// True only for debug sidecar files THIS extension created: an
+// `imagine_debug_` JSON directly under user/files/ (ST's file store is flat,
+// no subfolder). Gates the file-delete endpoint the same way isOwnImaginePath
+// gates image deletion. Leading slash optional (upload returns one).
+export function isOwnDebugPath(path) {
+    return /^\/?user\/files\/imagine_debug_[^/]+\.json$/i.test(path ?? '');
+}

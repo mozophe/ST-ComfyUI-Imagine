@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { splitDataUrl, isOwnImaginePath } from '../image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath } from '../image-helpers.js';
 
 // splitDataUrl
 {
@@ -47,5 +47,18 @@ assert.equal(isOwnImaginePath('/user/images/Alice/imagine_1.jpeg'), true);
 // leading slash must not open a bypass: an absolute foreign path still fails
 assert.equal(isOwnImaginePath('//user/images/x/imagine_1.png'), false);
 assert.equal(isOwnImaginePath('/etc/user/images/x/imagine_1.png'), false);
+
+// isOwnDebugPath — only our imagine_debug_*.json under user/files/
+assert.equal(isOwnDebugPath('/user/files/imagine_debug_1783836108170_0.json'), true);
+assert.equal(isOwnDebugPath('user/files/imagine_debug_1.json'), true);
+assert.equal(isOwnDebugPath('/user/files/imagine_debug_migrated_2.json'), true);
+// must NOT match foreign / wrong-shape files
+assert.equal(isOwnDebugPath('/user/files/notes.json'), false);
+assert.equal(isOwnDebugPath('/user/files/imagine_debug_1.txt'), false);
+assert.equal(isOwnDebugPath('/user/images/Alice/imagine_1.png'), false);
+assert.equal(isOwnDebugPath('/user/files/sub/imagine_debug_1.json'), false); // no subfolder allowed
+assert.equal(isOwnDebugPath('/etc/user/files/imagine_debug_1.json'), false);
+// the image gate must NOT match debug files, and vice versa
+assert.equal(isOwnImaginePath('/user/files/imagine_debug_1.json'), false);
 
 console.log('image-helpers: all checks passed');
