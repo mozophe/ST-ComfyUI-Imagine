@@ -32,6 +32,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 - [Setup](#-setup)
 - [Usage](#-usage)
   - [Quick Reply Setup](#quick-reply-setup)
+  - [Migrating Legacy Chats](#migrating-legacy-chats)
 - [Security](#-security)
 - [Workflows](#-workflows)
   - [Using the Example Workflows](#using-the-example-workflows)
@@ -165,6 +166,16 @@ Add a one-click image button to the chat bar:
 Clicking the button now runs `/imagine` exactly as typing it would.
 
 ![Quick Reply editor with /imagine command](docs/images/quick-reply.png)
+
+### Migrating Legacy Chats
+
+New images are saved as files and only their path is stored in the chat, keeping the chat file small. Early versions instead embedded the full image (and debug info) as base64 directly in the message, which bloats the chat file and slows loading.
+
+If you have chats from those early versions, open the extension settings, find the **Image Storage** section, and click **Migrate embedded images to files (legacy)**. It converts the embedded images in the **currently open chat** to files and rewrites the messages to point at them.
+
+- Acts only on the chat you have open, so switch to each old chat and run it once.
+- **Safe to re-run** and non-destructive: an already-migrated message is left alone, and if an upload fails that message keeps its embedded image.
+- New chats need nothing; they already store images as files.
 
 ## 🔒 Security
 
