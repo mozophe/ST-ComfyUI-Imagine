@@ -927,25 +927,15 @@ async function migrateCurrentChat() {
             }
         }
 
-        // 2. Inline debug info -> file, on the message's extra AND every per-swipe
-        //    extra (swipe_info[i].extra). Skipped when already externalised or absent.
+        // 2. Inline debug info -> file. Only ever written to the top-level extra
+        //    (never per-swipe), so swipe_info is not walked. Skipped when already
+        //    externalised or absent.
         try { if (await externaliseDebug(msg.extra, `${idx}`)) dbgMigrated++; }
         catch { dbgSkipped++; }
-        if (Array.isArray(msg.swipe_info)) {
-            for (let si = 0; si < msg.swipe_info.length; si++) {
-                try { if (await externaliseDebug(msg.swipe_info[si]?.extra, `${idx}_s${si}`)) dbgMigrated++; }
-                catch { dbgSkipped++; }
-            }
-        }
     }
 
-    console.log('[comfy-imagine][DEBUG] migrate counts img=', imgMigrated, 'dbg=', dbgMigrated, 'imgSkip=', imgSkipped, 'dbgSkip=', dbgSkipped);
-    const sample = chat.find(msg => msg?.extra?.title === 'comfy-imagine');
-    console.log('[comfy-imagine][DEBUG] sample after mutate: mes[0..40]=', (sample?.mes || '').slice(0, 40), 'extra keys=', sample ? Object.keys(sample.extra) : null);
     if (imgMigrated || dbgMigrated) {
-        console.log('[comfy-imagine][DEBUG] calling saveChat, typeof=', typeof saveChat);
         await saveChat();
-        console.log('[comfy-imagine][DEBUG] saveChat returned; imageRendered=', imageRendered);
         if (imageRendered) reloadCurrentChat?.();   // re-render only when an <img> src changed
     }
     const skipped = imgSkipped + dbgSkipped;
