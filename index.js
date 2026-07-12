@@ -933,7 +933,6 @@ async function runImagine(args) {
             return '';
         }
 
-        const { format, rawB64 } = splitDataUrl(dataUrl);
         const active = getActiveCharacter();
         const chName = active?.name || 'comfy-imagine';
         // _${i}: two images generated in the same millisecond would otherwise
@@ -943,6 +942,7 @@ async function runImagine(args) {
 
         let path;
         try {
+            const { format, rawB64 } = splitDataUrl(dataUrl);
             path = await uploadImageToST(rawB64, format, chName, filename);
         } catch (err) {
             if (err.name === 'AbortError') return '';
