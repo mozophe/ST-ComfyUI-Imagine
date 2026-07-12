@@ -25,4 +25,15 @@ assert.equal(isOwnImaginePath('user/files/Alice/imagine_1.png'), false);
 assert.equal(isOwnImaginePath('../../etc/passwd'), false);
 assert.equal(isOwnImaginePath('user/images/imagine_1.png'), false); // no subfolder
 
+// regression: prefix-anchor bypass — suffix match must not be enough
+assert.equal(isOwnImaginePath('../../../etc/user/images/x/imagine_1.png'), false);
+assert.equal(isOwnImaginePath('/home/attacker/foo/user/images/x/imagine_1.png'), false);
+assert.equal(isOwnImaginePath('C:/Windows/System32/user/images/x/imagine_1.png'), false);
+// regression: `.`/`..` subfolder bypass
+assert.equal(isOwnImaginePath('user/images/../imagine_1.png'), false);
+assert.equal(isOwnImaginePath('user/images/./imagine_1.png'), false);
+// still matches legitimate own-generated files
+assert.equal(isOwnImaginePath('user/images/Alice/imagine_1720000000000_0.png'), true);
+assert.equal(isOwnImaginePath('user/images/comfy-imagine/imagine_migrated_1720000000000_3.webp'), true);
+
 console.log('image-helpers: all checks passed');

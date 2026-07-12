@@ -12,6 +12,10 @@ export function splitDataUrl(dataUrl) {
 // True only for files THIS extension created: an `imagine_` file inside a
 // character subfolder under user/images/. Gates the delete endpoint so a
 // foreign image referenced in chat can never be removed by cleanup.
+// The path must be root-relative and normalized: the regex is anchored to
+// the true start of the string (not just a suffix match), and the subfolder
+// segment cannot be `.` or `..`, so a path-traversal or "looks like a
+// suffix" string can never be mistaken for one of our own files.
 export function isOwnImaginePath(path) {
-    return /(^|\/)user\/images\/[^/]+\/imagine_[^/]+\.(png|jpe?g|webp)$/i.test(path ?? '');
+    return /^user\/images\/(?!\.\.?\/)[^/]+\/imagine_[^/]+\.(png|jpe?g|webp)$/i.test(path ?? '');
 }
