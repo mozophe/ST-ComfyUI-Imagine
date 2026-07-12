@@ -32,13 +32,13 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 - [Setup](#-setup)
 - [Usage](#-usage)
   - [Quick Reply Setup](#quick-reply-setup)
-  - [Migrating Legacy Chats](#migrating-legacy-chats)
-- [Security](#-security)
 - [Workflows](#-workflows)
   - [Using the Example Workflows](#using-the-example-workflows)
   - [Custom Prompt Target Nodes](#custom-prompt-target-nodes)
   - [Per-Character LoRAs](#per-character-loras)
   - [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora)
+- [Migrating Legacy Chats](#-migrating-legacy-chats)
+- [Security](#-security)
 - [License](#-license)
 
 ## 📋 Requirements
@@ -171,24 +171,6 @@ Once enabled, the 📷 button appears on the chat bar (highlighted below). Click
 
 <img src="docs/images/after-setup.png" alt="SillyTavern chat bar with the /imagine Quick Reply button" width="320">
 
-### Migrating Legacy Chats
-
-New images are saved as files and only their path is stored in the chat, keeping the chat file small. Early versions instead embedded the full image (and debug info) as base64 directly in the message, which bloats the chat file and slows loading.
-
-If you have chats from those early versions, open the extension settings, find the **Image Storage** section, and click **Migrate embedded images to files (legacy)**. It converts the embedded images in the **currently open chat** to files and rewrites the messages to point at them.
-
-- Acts only on the chat you have open, so switch to each old chat and run it once.
-- **Safe to re-run** and non-destructive: an already-migrated message is left alone, and if an upload fails that message keeps its embedded image.
-- New chats need nothing; they already store images as files.
-
-## 🔒 Security
-
-This extension stores the LLM API key as plain text in your `data/<user>/settings.json`. A browser-only extension has no backend, so it can't use SillyTavern's server-side key store (`secrets.json`) the way SillyTavern's own connections do — `settings.json` is the only place it can persist the key.
-
-One easy habit keeps this a non-issue: **use a dedicated API key with a low spending limit** for this extension (see [Setup step 3](#3-llm-prompt-generator)), and don't share your `settings.json` (including in screenshots or copies posted for help). That way even if the key is ever exposed, the impact is capped.
-
-For completeness, the key can be read either from the `settings.json` file itself or, at runtime, by anything else running in the SillyTavern page (another extension, a character-card script, or an XSS bug). Leaving SillyTavern's `allowKeysExposure` flag off keeps your `secrets.json` keys out of the browser; a scoped, low-cap key covers this one.
-
 ## 🧩 Workflows
 
 - Workflows must be in **ComfyUI API export format** (not the standard UI format).
@@ -281,6 +263,24 @@ Repeat to stack more always-on LoRAs, just keep chaining `MODEL` out → next lo
 </details>
 
 A worked example with two LoRAs is in [`workflows/Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json): an always-on style loader (`Load LoRA`) feeds the per-character loader (`IMAGINE_LORA`), chained `UNETLoader → Load LoRA → IMAGINE_LORA → KSampler`. Only `IMAGINE_LORA` is touched by the extension; `Load LoRA` stays on for every image. (Same placeholder-path caveat as the single-LoRA template: adapt the model/LoRA files to your setup.)
+
+## 🔁 Migrating Legacy Chats
+
+New images are saved as files and only their path is stored in the chat, keeping the chat file small. Early versions instead embedded the full image (and debug info) as base64 directly in the message, which bloats the chat file and slows loading.
+
+If you have chats from those early versions, open the extension settings, find the **Image Storage** section, and click **Migrate embedded images to files (legacy)**. It converts the embedded images in the **currently open chat** to files and rewrites the messages to point at them.
+
+- Acts only on the chat you have open, so switch to each old chat and run it once.
+- **Safe to re-run** and non-destructive: an already-migrated message is left alone, and if an upload fails that message keeps its embedded image.
+- New chats need nothing; they already store images as files.
+
+## 🔒 Security
+
+This extension stores the LLM API key as plain text in your `data/<user>/settings.json`. A browser-only extension has no backend, so it can't use SillyTavern's server-side key store (`secrets.json`) the way SillyTavern's own connections do — `settings.json` is the only place it can persist the key.
+
+One easy habit keeps this a non-issue: **use a dedicated API key with a low spending limit** for this extension (see [Setup step 3](#3-llm-prompt-generator)), and don't share your `settings.json` (including in screenshots or copies posted for help). That way even if the key is ever exposed, the impact is capped.
+
+For completeness, the key can be read either from the `settings.json` file itself or, at runtime, by anything else running in the SillyTavern page (another extension, a character-card script, or an XSS bug). Leaving SillyTavern's `allowKeysExposure` flag off keeps your `secrets.json` keys out of the browser; a scoped, low-cap key covers this one.
 
 ## 📄 License
 
