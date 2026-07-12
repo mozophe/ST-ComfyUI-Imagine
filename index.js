@@ -819,11 +819,16 @@ function collectImaginePaths() {
 // a leftover file is harmless; a toast for it would be noise.
 async function deleteImageFromST(path) {
     const { getRequestHeaders } = SillyTavern.getContext();
-    await fetch('/api/images/delete', {
-        method: 'POST',
-        headers: getRequestHeaders(),
-        body: JSON.stringify({ path }),
-    }).catch(() => {});
+    try {
+        const res = await fetch('/api/images/delete', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify({ path }),
+        });
+        console.log('[comfy-imagine][DEBUG] delete', path, '->', res.status, await res.text().catch(() => ''));
+    } catch (err) {
+        console.log('[comfy-imagine][DEBUG] delete threw', path, err);
+    }
 }
 
 // On message deletion, delete files whose messages are gone. MESSAGE_DELETED
@@ -836,6 +841,7 @@ async function deleteImageFromST(path) {
 async function reconcileImagineOrphans() {
     const current = collectImaginePaths();
     const orphans = [...knownImaginePaths].filter(p => !current.has(p) && isOwnImaginePath(p));
+    console.log('[comfy-imagine][DEBUG] reconcile: baseline=', [...knownImaginePaths], 'current=', [...current], 'orphans=', orphans);
     for (const p of orphans) {
         await deleteImageFromST(p);
         knownImaginePaths.delete(p);
@@ -1098,7 +1104,7 @@ async function runImagine(args) {
         // switching chats is not deleting.
         knownImaginePaths = collectImaginePaths();
     });
-    eventSource.on(event_types.MESSAGE_DELETED, () => { reconcileImagineOrphans(); });
+    eventSource.on(event_types.MESSAGE_DELETED, () => { console.log('[comfy-imagine][DEBUG] MESSAGE_DELETED fired'); reconcileImagineOrphans(); });
     injectAllDebugButtons();
     knownImaginePaths = collectImaginePaths();   // seed baseline at startup
 
