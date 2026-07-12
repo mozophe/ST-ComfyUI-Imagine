@@ -871,34 +871,56 @@ async function migrateCurrentChat() {
     const statusEl = document.getElementById('comfy-imagine-migrate-status');
     if (!getCurrentChatId()) { toast('Comfy Imagine: No chat open.', 'warning'); return; }
 
-    let migrated = 0, skipped = 0;
+    let imgMigrated = 0, imgSkipped = 0, dbgMigrated = 0, dbgSkipped = 0;
+    let imageRendered = false;
     const active = getActiveCharacter();
     const chName = active?.name || 'comfy-imagine';
 
     for (let idx = 0; idx < chat.length; idx++) {
         const msg = chat[idx];
         if (msg?.extra?.title !== 'comfy-imagine') continue;
+
+        // 1. Embedded base64 image -> file. Skipped when already a path.
         const m = /!\[[^\]]*\]\((data:image\/[^)]+)\)/.exec(msg.mes || '');
-        if (!m) continue;                       // already migrated or no embedded image
-        try {
-            const { format, rawB64 } = splitDataUrl(m[1]);
-            const path = await uploadImageToST(rawB64, format, chName, `imagine_migrated_${Date.now()}_${idx}`);
-            msg.mes = `![generated image](${path})`;
-            msg.extra.imaginePath = path;
-            knownImaginePaths.add(path);
-            migrated++;
-        } catch {
-            skipped++;                          // leave base64 untouched
+        if (m) {
+            try {
+                const { format, rawB64 } = splitDataUrl(m[1]);
+                const path = await uploadImageToST(rawB64, format, chName, `imagine_migrated_${Date.now()}_${idx}`);
+                msg.mes = `![generated image](${path})`;
+                msg.extra.imaginePath = path;
+                knownImaginePaths.add(path);
+                imgMigrated++;
+                imageRendered = true;
+            } catch {
+                imgSkipped++;                   // leave base64 untouched
+            }
+        }
+
+        // 2. Inline debug info -> file. Skipped when already externalised
+        //    (has debugPath) or never had any.
+        if (!msg.extra.debugPath && (msg.extra.debugContext !== undefined || msg.extra.debugPrompt !== undefined)) {
+            try {
+                const debugJson = JSON.stringify({ context: msg.extra.debugContext ?? '', prompt: msg.extra.debugPrompt ?? '' });
+                const dpath = await uploadDebugToST(`imagine_debug_migrated_${Date.now()}_${idx}.json`, debugJson);
+                msg.extra.debugPath = dpath;
+                delete msg.extra.debugContext;
+                delete msg.extra.debugPrompt;
+                knownImaginePaths.add(dpath);
+                dbgMigrated++;
+            } catch {
+                dbgSkipped++;                   // leave inline debug untouched
+            }
         }
     }
 
-    if (migrated) {
+    if (imgMigrated || dbgMigrated) {
         await saveChat();
-        reloadCurrentChat?.();                  // re-render so new <img src=path> shows
+        if (imageRendered) reloadCurrentChat?.();   // re-render only when an <img> src changed
     }
-    const summary = `Migrated ${migrated} image(s)` + (skipped ? `, skipped ${skipped}` : '');
+    const skipped = imgSkipped + dbgSkipped;
+    const summary = `Migrated ${imgMigrated} image(s), ${dbgMigrated} debug record(s)` + (skipped ? `, skipped ${skipped}` : '');
     if (statusEl) statusEl.textContent = summary;
-    toast(`Comfy Imagine: ${summary}`, migrated || !skipped ? 'success' : 'warning');
+    toast(`Comfy Imagine: ${summary}`, skipped ? 'warning' : 'success');
 }
 
 // ── Debug Viewer ────────────────────────────────────────────────────────────
