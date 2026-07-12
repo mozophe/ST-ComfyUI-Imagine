@@ -106,3 +106,11 @@
     resize: vertical;
     box-sizing: border-box;
 }
+
+/* Center generated images in chat. Scoped by the alt text we always emit in
+   the message markdown (![generated image](...)), so it hits our generated and
+   migrated images only, without depending on message flags or ST internals. */
+.mes_text img[alt="generated image"] {
+    display: block;
+    margin: 0 auto;
+}
