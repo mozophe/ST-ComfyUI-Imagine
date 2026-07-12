@@ -105,15 +105,10 @@ The base URL must be an **OpenAI-compatible** endpoint (the extension calls `/ch
 
 This is a separate LLM from your main chat model. Writing an image prompt is a simple task, so a smaller, cheaper model (e.g. Gemma 4 31B, `gemma-4-31B-it`) is usually good enough and keeps cost/latency down. Point it at a larger model if you prefer.
 
-> [!WARNING]
-> **Create a separate API key just for this extension and give it a low spending limit. Don't paste your main key.** If this one leaks, only a small amount of spending is at risk, not your whole account.
->
-> The key is stored **in plain text** in SillyTavern's `settings.json` and sent from the browser. This is unavoidable: SillyTavern extensions run entirely in the browser with no backend, so there's no server to proxy the request or keep the key secret; the browser calls the LLM API directly and `settings.json` is the only place to persist it. A dedicated key also avoids enabling SillyTavern's `allowKeysExposure = true`, a global flag that hands **every** key SillyTavern stores (OpenAI, Claude, etc.) to the browser, where any other extension, injected card script, or XSS could read your whole key vault at once. A single scoped, low-cap key caps the damage instead. See [Security](#-security) for the full picture.
+> [!TIP]
+> **Create a separate API key just for this extension and give it a low spending limit**, rather than pasting your main key. Like any browser-stored key in SillyTavern, it lives as plain text in `settings.json` — so a dedicated, low-cap key keeps the impact small in the unlikely event it's ever exposed. See [Security](#-security) for details.
 
 ### 4. System Prompt
-
-> [!TIP]
-> **Once the rest of the setup works, this is the first thing to tailor.** The System Prompt is what shapes every image (its style, framing, and detail), so edit it to suit the look you want and the model you're using.
 
 > [!NOTE]
 > The shipped default is a **work in progress**: a reasonable starting point tuned for Krea 2 Turbo's first-person POV style, not a finished one-size-fits-all prompt. Expect to iterate on it, and don't be surprised if it changes between updates.
@@ -121,6 +116,9 @@ This is a separate LLM from your main chat model. Writing an image prompt is a s
 The extension ships with a default system prompt (tuned for **Krea 2 Turbo**) that tells the LLM how to write the image prompt. The default frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what's visible in frame**.
 
 It's always available as the **`Krea 2 Turbo (default)`** entry in the **System Prompt Presets** dropdown. This entry is kept in sync with the shipped default (it resets on reload), so to customise, edit the textarea and use **Save As** to store your own named preset rather than overwriting the default. Switch between saved prompts via the dropdown, overwrite the selected (non-default) preset with **Save**, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
+
+> [!TIP]
+> **Once the rest of the setup works, this is the first thing to tailor.** The System Prompt is what shapes every image (its style, framing, and detail), so edit it to suit the look you want and the model you're using.
 
 ### 5. Upload a Workflow
 
@@ -170,15 +168,11 @@ Clicking the button now runs `/imagine` exactly as typing it would.
 
 ## 🔒 Security
 
-> [!WARNING]
-> The LLM API key is stored **in plain text** in SillyTavern's `data/<user>/settings.json` and sent directly from the browser, which is unavoidable for a browser-only extension with no backend.
+Like SillyTavern itself, this extension stores the LLM API key as plain text in your `data/<user>/settings.json` — a browser-only extension has no backend to keep it anywhere else.
 
-It can leak two ways:
+One easy habit keeps this a non-issue: **use a dedicated API key with a low spending limit** for this extension (see [Setup step 3](#3-llm-prompt-generator)), and don't share your `settings.json` (including in screenshots or copies posted for help). That way even if the key is ever exposed, the impact is capped.
 
-1. **The file:** anyone who gets your `settings.json` (or a backup, screen-share, or a copy you post when asking for help) can read the key directly.
-2. **The browser:** because the key lives in the page, any other installed extension, a malicious script injected by a character card, or an XSS bug in SillyTavern can read it at runtime. (Enabling SillyTavern's `allowKeysExposure = true` makes this worse: it exposes **every** key SillyTavern stores, not just this one.)
-
-**Mitigation:** use a **dedicated, low-spending-limit API key** for this extension (see the warning in [Setup step 3](#3-llm-prompt-generator)) so a leak caps the damage, and don't share or post your `settings.json`.
+For completeness, the key can be read either from the `settings.json` file itself or, at runtime, by anything else running in the SillyTavern page (another extension, a character-card script, or an XSS bug) — the same exposure any browser-stored key has. Leaving SillyTavern's `allowKeysExposure` flag off keeps your other keys out of reach; a scoped, low-cap key covers this one.
 
 ## 🧩 Workflows
 
