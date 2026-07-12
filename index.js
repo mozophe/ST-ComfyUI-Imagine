@@ -821,6 +821,16 @@ async function uploadDebugToST(name, jsonString) {
     return (await res.json()).path;
 }
 
+// ST's /api/files/upload rejects any '/' (validateAssetFileName: ^[A-Za-z0-9_.-]+$),
+// so debug sidecars can't live in a per-character SUBfolder like images do. Next
+// best: fold the (sanitised) character name into the filename so one character's
+// sidecars sort together in the flat user/files/ dir. isOwnDebugPath's
+// imagine_debug_[^/]+\.json gate still matches.
+function debugFileName(chName, tag) {
+    const safe = String(chName || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40) || 'comfy';
+    return `imagine_debug_${safe}_${Date.now()}_${tag}.json`;
+}
+
 // All server file paths (images + debug sidecars) referenced by comfy-imagine
 // messages in the chat. Used as the cleanup baseline.
 function collectImaginePaths() {
@@ -894,7 +904,7 @@ async function migrateCurrentChat() {
     const externaliseDebug = async (extra, tag) => {
         if (!extra || extra.debugPath || (extra.debugContext === undefined && extra.debugPrompt === undefined)) return false;
         const debugJson = JSON.stringify({ context: extra.debugContext ?? '', prompt: extra.debugPrompt ?? '' });
-        const dpath = await uploadDebugToST(`imagine_debug_migrated_${Date.now()}_${tag}.json`, debugJson);
+        const dpath = await uploadDebugToST(debugFileName(chName, `migrated_${tag}`), debugJson);
         extra.debugPath = dpath;
         delete extra.debugContext;
         delete extra.debugPrompt;
@@ -1116,7 +1126,7 @@ async function runImagine(args) {
         let debugPath = null;
         try {
             const debugJson = JSON.stringify({ context: contextString, prompt: llmOutput });
-            debugPath = await uploadDebugToST(`imagine_debug_${Date.now()}_${i}.json`, debugJson);
+            debugPath = await uploadDebugToST(debugFileName(chName, i), debugJson);
         } catch { /* debug is optional; a missing sidecar just shows "not stored" */ }
 
         const { chat, addOneMessage, saveChat } = SillyTavern.getContext();
