@@ -106,7 +106,7 @@ The base URL must be an **OpenAI-compatible** endpoint (the extension calls `/ch
 This is a separate LLM from your main chat model. Writing an image prompt is a simple task, so a smaller, cheaper model (e.g. Gemma 4 31B, `gemma-4-31B-it`) is usually good enough and keeps cost/latency down. Point it at a larger model if you prefer.
 
 > [!TIP]
-> **Create a separate API key just for this extension and give it a low spending limit**, rather than pasting your main key. Like any browser-stored key in SillyTavern, it lives as plain text in `settings.json` — so a dedicated, low-cap key keeps the impact small in the unlikely event it's ever exposed. See [Security](#-security) for details.
+> **Create a separate API key just for this extension and give it a low spending limit**, rather than pasting your main key. Since a browser-only extension has no backend, the key is stored as plain text in `settings.json` — so a dedicated, low-cap key keeps the impact small in the unlikely event it's ever exposed. See [Security](#-security) for details.
 
 ### 4. System Prompt
 
@@ -168,11 +168,11 @@ Clicking the button now runs `/imagine` exactly as typing it would.
 
 ## 🔒 Security
 
-Like SillyTavern itself, this extension stores the LLM API key as plain text in your `data/<user>/settings.json` — a browser-only extension has no backend to keep it anywhere else.
+This extension stores the LLM API key as plain text in your `data/<user>/settings.json`. A browser-only extension has no backend, so it can't use SillyTavern's server-side key store (`secrets.json`) the way SillyTavern's own connections do — `settings.json` is the only place it can persist the key.
 
 One easy habit keeps this a non-issue: **use a dedicated API key with a low spending limit** for this extension (see [Setup step 3](#3-llm-prompt-generator)), and don't share your `settings.json` (including in screenshots or copies posted for help). That way even if the key is ever exposed, the impact is capped.
 
-For completeness, the key can be read either from the `settings.json` file itself or, at runtime, by anything else running in the SillyTavern page (another extension, a character-card script, or an XSS bug) — the same exposure any browser-stored key has. Leaving SillyTavern's `allowKeysExposure` flag off keeps your other keys out of reach; a scoped, low-cap key covers this one.
+For completeness, the key can be read either from the `settings.json` file itself or, at runtime, by anything else running in the SillyTavern page (another extension, a character-card script, or an XSS bug). Leaving SillyTavern's `allowKeysExposure` flag off keeps your `secrets.json` keys out of the browser; a scoped, low-cap key covers this one.
 
 ## 🧩 Workflows
 
