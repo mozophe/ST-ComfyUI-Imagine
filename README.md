@@ -167,6 +167,10 @@ Clicking the button now runs `/imagine` exactly as typing it would.
 
 ![Quick Reply editor with /imagine command](docs/images/quick-reply.png)
 
+Once enabled, the 📷 button appears on the chat bar (highlighted below). Click it any time to generate an image from the current scene:
+
+![SillyTavern chat bar with the /imagine Quick Reply button](docs/images/after-setup.png)
+
 ### Migrating Legacy Chats
 
 New images are saved as files and only their path is stored in the chat, keeping the chat file small. Early versions instead embedded the full image (and debug info) as base64 directly in the message, which bloats the chat file and slows loading.
