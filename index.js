@@ -522,6 +522,9 @@ function bindSettingsEvents() {
             statusEl.className = 'comfy-imagine-status error';
         }
     });
+
+    document.getElementById('comfy-imagine-migrate-btn')
+        ?.addEventListener('click', migrateCurrentChat);
 }
 
 // ── Context Assembly ────────────────────────────────────────────────────────
@@ -830,6 +833,44 @@ async function reconcileImagineOrphans() {
     const orphans = [...knownImaginePaths].filter(p => !current.has(p) && isOwnImaginePath(p));
     for (const p of orphans) await deleteImageFromST(p);
     knownImaginePaths = current;
+}
+
+// One-time conversion of already-embedded base64 images in the CURRENT chat to
+// files. Idempotent (a message already holding a path has no data: URL to match)
+// and non-destructive (a failed upload leaves that message's base64 intact).
+async function migrateCurrentChat() {
+    const { chat, saveChat, getCurrentChatId, reloadCurrentChat } = SillyTavern.getContext();
+    const statusEl = document.getElementById('comfy-imagine-migrate-status');
+    if (!getCurrentChatId()) { toast('Comfy Imagine: No chat open.', 'warning'); return; }
+
+    let migrated = 0, skipped = 0;
+    const active = getActiveCharacter();
+    const chName = active?.name || 'comfy-imagine';
+
+    for (let idx = 0; idx < chat.length; idx++) {
+        const msg = chat[idx];
+        if (msg?.extra?.title !== 'comfy-imagine') continue;
+        const m = /!\[[^\]]*\]\((data:image\/[^)]+)\)/.exec(msg.mes || '');
+        if (!m) continue;                       // already migrated or no embedded image
+        try {
+            const { format, rawB64 } = splitDataUrl(m[1]);
+            const path = await uploadImageToST(rawB64, format, chName, `imagine_migrated_${Date.now()}_${idx}`);
+            msg.mes = `![generated image](${path})`;
+            msg.extra.imaginePath = path;
+            knownImaginePaths.add(path);
+            migrated++;
+        } catch {
+            skipped++;                          // leave base64 untouched
+        }
+    }
+
+    if (migrated) {
+        await saveChat();
+        reloadCurrentChat?.();                  // re-render so new <img src=path> shows
+    }
+    const summary = `Migrated ${migrated} image(s)` + (skipped ? `, skipped ${skipped}` : '');
+    if (statusEl) statusEl.textContent = summary;
+    toast(`Comfy Imagine: ${summary}`, migrated || !skipped ? 'success' : 'warning');
 }
 
 // ── Debug Viewer ────────────────────────────────────────────────────────────
