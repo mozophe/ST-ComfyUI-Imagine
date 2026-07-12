@@ -1,6 +1,7 @@
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
+import { splitDataUrl, isOwnImaginePath } from './image-helpers.js';
 
 const MODULE_NAME = 'comfy_imagine';
 // Capture everything after scripts/extensions/ up to index.js — this preserves
@@ -15,6 +16,10 @@ const GENERATION_TIMEOUT_MS = 120_000;
 // Cached LoRA filename list from ComfyUI /object_info/LoraLoader. Populated on
 // first settings-panel render; reload button clears it to force a refetch.
 let loraListCache = null;
+
+// Baseline of image paths referenced by comfy-imagine messages in the current
+// chat. Diffed on MESSAGE_DELETED to find files whose messages were removed.
+let knownImaginePaths = new Set();
 
 const DEFAULT_SYSTEM_PROMPT = `You are an expert image prompt writer for Krea 2 Turbo, an aesthetic-first, photorealistic diffusion model. Krea 2 rewards specific, detailed description over rigid structure — the more concretely you describe the subject, setting, lighting, color, and style, the tighter and more accurate its output. There is no required element order; write it the way it reads best.
 
@@ -777,6 +782,23 @@ async function fetchImageAsDataUrl(imageUrl, signal) {
     });
 }
 
+// Uploads raw base64 to ST's image store (POST /api/images/upload), returns the
+// saved relative path (e.g. "user/images/Alice/imagine_123_0.png"). Hand-rolled
+// because getContext() does not expose ST's own saveBase64AsFile.
+async function uploadImageToST(rawB64, format, chName, filename) {
+    const { getRequestHeaders } = SillyTavern.getContext();
+    const res = await fetch('/api/images/upload', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        body: JSON.stringify({ image: rawB64, format, ch_name: chName || undefined, filename }),
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'upload_failed');
+    }
+    return (await res.json()).path;
+}
+
 // ── Debug Viewer ────────────────────────────────────────────────────────────
 
 function showDebugModal(mesid) {
@@ -911,15 +933,33 @@ async function runImagine(args) {
             return '';
         }
 
+        const { format, rawB64 } = splitDataUrl(dataUrl);
+        const active = getActiveCharacter();
+        const chName = active?.name || 'comfy-imagine';
+        // _${i}: two images generated in the same millisecond would otherwise
+        // share a filename, and deleting one message would orphan-delete the
+        // file the other still uses.
+        const filename = `imagine_${Date.now()}_${i}`;
+
+        let path;
+        try {
+            path = await uploadImageToST(rawB64, format, chName, filename);
+        } catch (err) {
+            if (err.name === 'AbortError') return '';
+            toast('Comfy Imagine: Image generated but could not be saved to disk.', 'error');
+            return '';
+        }
+
         const { chat, addOneMessage, saveChat } = SillyTavern.getContext();
         const imageMessage = {
             name: s.senderName || 'Camera',
             is_user: false,
             is_system: true,
             send_date: new Date().toISOString(),
-            mes: `![generated image](${dataUrl})`,
+            mes: `![generated image](${path})`,
             extra: {
                 title: 'comfy-imagine',
+                imaginePath: path,
                 debugContext: contextString,
                 debugPrompt: llmOutput,
             },
@@ -928,6 +968,7 @@ async function runImagine(args) {
         await addOneMessage(imageMessage, { scroll: true });
         await saveChat();
         injectDebugButtonOnMessage(chat.length - 1);
+        knownImaginePaths.add(path);
     }
 
     } finally {
