@@ -876,39 +876,65 @@ async function migrateCurrentChat() {
     const active = getActiveCharacter();
     const chName = active?.name || 'comfy-imagine';
 
+    // Embedded base64 image in a mes-like string -> uploaded file. Returns the
+    // rewritten "![...](path)" string, or null when there's no data: URL to convert.
+    // Throws on upload failure so callers can count it as a skip.
+    const externaliseImage = async (mesText, tag) => {
+        const m = /!\[[^\]]*\]\((data:image\/[^)]+)\)/.exec(mesText || '');
+        if (!m) return null;
+        const { format, rawB64 } = splitDataUrl(m[1]);
+        const path = await uploadImageToST(rawB64, format, chName, `imagine_migrated_${Date.now()}_${tag}`);
+        knownImaginePaths.add(path);
+        return { path, mes: `![generated image](${path})` };
+    };
+
+    // Inline debug info on an extra-like object -> file. Mutates the object
+    // (adds debugPath, drops debugContext/debugPrompt). Returns true if it did
+    // anything. Throws on upload failure so callers can count it as a skip.
+    const externaliseDebug = async (extra, tag) => {
+        if (!extra || extra.debugPath || (extra.debugContext === undefined && extra.debugPrompt === undefined)) return false;
+        const debugJson = JSON.stringify({ context: extra.debugContext ?? '', prompt: extra.debugPrompt ?? '' });
+        const dpath = await uploadDebugToST(`imagine_debug_migrated_${Date.now()}_${tag}.json`, debugJson);
+        extra.debugPath = dpath;
+        delete extra.debugContext;
+        delete extra.debugPrompt;
+        knownImaginePaths.add(dpath);
+        return true;
+    };
+
     for (let idx = 0; idx < chat.length; idx++) {
         const msg = chat[idx];
         if (msg?.extra?.title !== 'comfy-imagine') continue;
 
-        // 1. Embedded base64 image -> file. Skipped when already a path.
-        const m = /!\[[^\]]*\]\((data:image\/[^)]+)\)/.exec(msg.mes || '');
-        if (m) {
-            try {
-                const { format, rawB64 } = splitDataUrl(m[1]);
-                const path = await uploadImageToST(rawB64, format, chName, `imagine_migrated_${Date.now()}_${idx}`);
-                msg.mes = `![generated image](${path})`;
-                msg.extra.imaginePath = path;
-                knownImaginePaths.add(path);
-                imgMigrated++;
-                imageRendered = true;
-            } catch {
-                imgSkipped++;                   // leave base64 untouched
+        // 1. Embedded base64 image -> file, in the live mes AND every swipe copy.
+        //    ST keeps mes in sync with swipes[swipe_id], but rewriting mes does
+        //    NOT touch swipes[] — the base64 copies there are what keep bloating
+        //    the .jsonl after an old-style migration. Skipped when already a path.
+        let mesResult = null;
+        try {
+            mesResult = await externaliseImage(msg.mes, `${idx}`);
+            if (mesResult) { msg.mes = mesResult.mes; msg.extra.imaginePath ??= mesResult.path; imgMigrated++; imageRendered = true; }
+        } catch { imgSkipped++; }              // leave base64 untouched
+        if (Array.isArray(msg.swipes)) {
+            for (let si = 0; si < msg.swipes.length; si++) {
+                // The active swipe is a copy of mes; reuse its result instead of
+                // re-uploading the identical base64 as a second on-disk file.
+                if (si === msg.swipe_id && mesResult) { msg.swipes[si] = mesResult.mes; continue; }
+                try {
+                    const r = await externaliseImage(msg.swipes[si], `${idx}_s${si}`);
+                    if (r) { msg.swipes[si] = r.mes; imgMigrated++; imageRendered = true; }
+                } catch { imgSkipped++; }
             }
         }
 
-        // 2. Inline debug info -> file. Skipped when already externalised
-        //    (has debugPath) or never had any.
-        if (!msg.extra.debugPath && (msg.extra.debugContext !== undefined || msg.extra.debugPrompt !== undefined)) {
-            try {
-                const debugJson = JSON.stringify({ context: msg.extra.debugContext ?? '', prompt: msg.extra.debugPrompt ?? '' });
-                const dpath = await uploadDebugToST(`imagine_debug_migrated_${Date.now()}_${idx}.json`, debugJson);
-                msg.extra.debugPath = dpath;
-                delete msg.extra.debugContext;
-                delete msg.extra.debugPrompt;
-                knownImaginePaths.add(dpath);
-                dbgMigrated++;
-            } catch {
-                dbgSkipped++;                   // leave inline debug untouched
+        // 2. Inline debug info -> file, on the message's extra AND every per-swipe
+        //    extra (swipe_info[i].extra). Skipped when already externalised or absent.
+        try { if (await externaliseDebug(msg.extra, `${idx}`)) dbgMigrated++; }
+        catch { dbgSkipped++; }
+        if (Array.isArray(msg.swipe_info)) {
+            for (let si = 0; si < msg.swipe_info.length; si++) {
+                try { if (await externaliseDebug(msg.swipe_info[si]?.extra, `${idx}_s${si}`)) dbgMigrated++; }
+                catch { dbgSkipped++; }
             }
         }
     }
