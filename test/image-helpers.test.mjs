@@ -38,4 +38,14 @@ assert.equal(isOwnImaginePath('user/images/./imagine_1.png'), false);
 assert.equal(isOwnImaginePath('user/images/Alice/imagine_1720000000000_0.png'), true);
 assert.equal(isOwnImaginePath('user/images/comfy-imagine/imagine_migrated_1720000000000_3.webp'), true);
 
+// regression: ST's /api/images/upload returns the path with a LEADING SLASH
+// (clientRelativePath slices the root off an absolute path). This is the real
+// format stored in mes/extra.imaginePath, and it must be recognized as own.
+assert.equal(isOwnImaginePath('/user/images/Alice/imagine_1720000000000_0.png'), true);
+assert.equal(isOwnImaginePath('/user/images/comfy-imagine/imagine_migrated_1720000000000_3.webp'), true);
+assert.equal(isOwnImaginePath('/user/images/Alice/imagine_1.jpeg'), true);
+// leading slash must not open a bypass: an absolute foreign path still fails
+assert.equal(isOwnImaginePath('//user/images/x/imagine_1.png'), false);
+assert.equal(isOwnImaginePath('/etc/user/images/x/imagine_1.png'), false);
+
 console.log('image-helpers: all checks passed');
