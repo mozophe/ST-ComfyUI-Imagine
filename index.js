@@ -913,8 +913,13 @@ async function migrateCurrentChat() {
         }
     }
 
+    console.log('[comfy-imagine][DEBUG] migrate counts img=', imgMigrated, 'dbg=', dbgMigrated, 'imgSkip=', imgSkipped, 'dbgSkip=', dbgSkipped);
+    const sample = chat.find(msg => msg?.extra?.title === 'comfy-imagine');
+    console.log('[comfy-imagine][DEBUG] sample after mutate: mes[0..40]=', (sample?.mes || '').slice(0, 40), 'extra keys=', sample ? Object.keys(sample.extra) : null);
     if (imgMigrated || dbgMigrated) {
+        console.log('[comfy-imagine][DEBUG] calling saveChat, typeof=', typeof saveChat);
         await saveChat();
+        console.log('[comfy-imagine][DEBUG] saveChat returned; imageRendered=', imageRendered);
         if (imageRendered) reloadCurrentChat?.();   // re-render only when an <img> src changed
     }
     const skipped = imgSkipped + dbgSkipped;
