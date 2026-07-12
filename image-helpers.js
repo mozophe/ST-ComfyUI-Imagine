@@ -17,5 +17,5 @@ export function splitDataUrl(dataUrl) {
 // segment cannot be `.` or `..`, so a path-traversal or "looks like a
 // suffix" string can never be mistaken for one of our own files.
 export function isOwnImaginePath(path) {
-    return /^user\/images\/(?!\.\.?\/)[^/]+\/imagine_[^/]+\.(png|jpe?g|webp)$/i.test(path ?? '');
+    return /^user\/images\/(?!\.\.?\/)[^/]+\/imagine_[^/]+\.(png|jpe?g|webp|bmp|jfif)$/i.test(path ?? '');
 }

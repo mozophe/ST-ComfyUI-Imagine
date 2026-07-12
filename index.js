@@ -82,6 +82,7 @@ function toast(msg, type = 'info') {
     if (!t) return;
     if (type === 'error') t.error(msg);
     else if (type === 'success') t.success(msg);
+    else if (type === 'warning') t.warning(msg);
     else t.info(msg);
 }
 
@@ -827,12 +828,18 @@ async function deleteImageFromST(path) {
 
 // On message deletion, delete files whose messages are gone. MESSAGE_DELETED
 // cannot report which message was removed (payload is only the new length), so
-// we diff the current referenced-path set against the cached baseline.
+// we diff the current referenced-path set against the cached baseline. Orphans
+// are removed from the shared baseline Set in place, one at a time, after each
+// file's delete succeeds, instead of reassigning the whole Set from a stale
+// snapshot, so a concurrent generate() or CHAT_CHANGED rebuild during the
+// await gap can't be clobbered.
 async function reconcileImagineOrphans() {
     const current = collectImaginePaths();
     const orphans = [...knownImaginePaths].filter(p => !current.has(p) && isOwnImaginePath(p));
-    for (const p of orphans) await deleteImageFromST(p);
-    knownImaginePaths = current;
+    for (const p of orphans) {
+        await deleteImageFromST(p);
+        knownImaginePaths.delete(p);
+    }
 }
 
 // One-time conversion of already-embedded base64 images in the CURRENT chat to

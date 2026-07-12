@@ -18,6 +18,8 @@ assert.throws(() => splitDataUrl('data:text/plain;base64,AAAA'), /bad_data_url/)
 assert.equal(isOwnImaginePath('user/images/Alice/imagine_1720000000000_0.png'), true);
 assert.equal(isOwnImaginePath('user/images/comfy-imagine/imagine_migrated_1720000000000_3.webp'), true);
 assert.equal(isOwnImaginePath('user/images/Alice/imagine_1.JPG'), true);
+assert.equal(isOwnImaginePath('user/images/Alice/imagine_1.bmp'), true);
+assert.equal(isOwnImaginePath('user/images/Alice/imagine_1.jfif'), true);
 // must NOT match foreign files
 assert.equal(isOwnImaginePath('user/images/Alice/vacation.png'), false);
 assert.equal(isOwnImaginePath('user/images/Alice/portrait_imagine.png'), false);
