@@ -799,6 +799,39 @@ async function uploadImageToST(rawB64, format, chName, filename) {
     return (await res.json()).path;
 }
 
+// All image paths currently referenced by comfy-imagine messages in the chat.
+function collectImaginePaths() {
+    const { chat } = SillyTavern.getContext();
+    const set = new Set();
+    for (const msg of chat) {
+        if (msg?.extra?.title === 'comfy-imagine' && msg.extra.imaginePath) {
+            set.add(msg.extra.imaginePath);
+        }
+    }
+    return set;
+}
+
+// Best-effort delete of one image file from ST's store. Failures are swallowed:
+// a leftover file is harmless; a toast for it would be noise.
+async function deleteImageFromST(path) {
+    const { getRequestHeaders } = SillyTavern.getContext();
+    await fetch('/api/images/delete', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        body: JSON.stringify({ path }),
+    }).catch(() => {});
+}
+
+// On message deletion, delete files whose messages are gone. MESSAGE_DELETED
+// cannot report which message was removed (payload is only the new length), so
+// we diff the current referenced-path set against the cached baseline.
+async function reconcileImagineOrphans() {
+    const current = collectImaginePaths();
+    const orphans = [...knownImaginePaths].filter(p => !current.has(p) && isOwnImaginePath(p));
+    for (const p of orphans) await deleteImageFromST(p);
+    knownImaginePaths = current;
+}
+
 // ── Debug Viewer ────────────────────────────────────────────────────────────
 
 function showDebugModal(mesid) {
@@ -1013,8 +1046,13 @@ async function runImagine(args) {
     eventSource.on(event_types.CHAT_CHANGED, () => {
         injectAllDebugButtons();
         populateCharacterLoraUI();
+        // Rebuild the baseline for the newly-opened chat. No deletion here:
+        // switching chats is not deleting.
+        knownImaginePaths = collectImaginePaths();
     });
+    eventSource.on(event_types.MESSAGE_DELETED, () => { reconcileImagineOrphans(); });
     injectAllDebugButtons();
+    knownImaginePaths = collectImaginePaths();   // seed baseline at startup
 
     // Register /imagine slash command
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
