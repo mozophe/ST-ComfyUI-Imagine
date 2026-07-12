@@ -169,7 +169,7 @@ Clicking the button now runs `/imagine` exactly as typing it would.
 
 Once enabled, the 📷 button appears on the chat bar (highlighted below). Click it any time to generate an image from the current scene:
 
-![SillyTavern chat bar with the /imagine Quick Reply button](docs/images/after-setup.png)
+<img src="docs/images/after-setup.png" alt="SillyTavern chat bar with the /imagine Quick Reply button" width="320">
 
 ### Migrating Legacy Chats
 
