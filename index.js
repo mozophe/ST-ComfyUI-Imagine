@@ -989,12 +989,23 @@ async function showDebugModal(mesid) {
             }
         } catch { /* fall back to inline / placeholder below */ }
     }
+    // Generation timing: this image + average of the latest 10 timed generations
+    // in the chat. elapsedMs is a plain number stored in extra (no file fetch).
+    const times = chat.filter(m => m?.extra?.title === 'comfy-imagine' && typeof m.extra.elapsedMs === 'number');
+    const last10 = times.slice(-10).map(m => m.extra.elapsedMs);
+    const avg = last10.length ? last10.reduce((a, b) => a + b, 0) / last10.length : 0;
+    const thisMs = msg.extra?.elapsedMs;
+    const timing = typeof thisMs === 'number'
+        ? `This image: ${(thisMs / 1000).toFixed(1)}s &nbsp;·&nbsp; last ${last10.length} avg: ${(avg / 1000).toFixed(1)}s`
+        : 'Not recorded (generate a new image with /imagine to capture timing)';
+
     const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const sys = esc(getSettings().systemPrompt ?? '');
     const ctx = esc(rawContext ?? '(not stored — regenerate with /imagine to capture)');
     const prompt = esc(rawPrompt ?? '(not stored)');
     const reasoning = esc(rawReasoning ?? '');
     const html = `<div style="display:flex;flex-direction:column;gap:12px;min-width:min(600px,80vw)">
+        <div style="font-size:0.9em;opacity:0.85">⏱ ${timing}</div>
         <div>
             <label style="font-weight:bold;display:block;margin-bottom:4px">System Prompt</label>
             <textarea readonly rows="6" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${sys}</textarea>
@@ -1066,6 +1077,12 @@ async function runImagine(args) {
     }
 
     toast('Generating image…');
+
+    // Wall-clock start for generation timing (click → image saved). Stored per
+    // image as extra.elapsedMs; the debug modal shows it + a last-10 average.
+    // ponytail: single t0 → for imageCount>1 later images carry the shared LLM
+    // time cumulatively, not per-image. Fine for the 1-image camera quick-click.
+    const t0 = performance.now();
 
     // Step 1 — gather context
     const contextString = assembleContext();
@@ -1158,6 +1175,7 @@ async function runImagine(args) {
             extra: {
                 title: 'comfy-imagine',
                 imaginePath: path,
+                elapsedMs: Math.round(performance.now() - t0),
                 ...(debugPath ? { debugPath } : {}),
             },
         };
