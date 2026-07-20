@@ -153,6 +153,9 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 
 Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
+> [!NOTE]
+> If your prompt LLM is a reasoning model that inlines a `<think>…</think>` block in its reply, that block is stripped from the prompt sent to ComfyUI but kept in the debug modal, so you can still inspect the model's reasoning.
+
 ### Quick Reply Setup
 
 Add a one-click image button to the chat bar:
