@@ -606,7 +606,12 @@ async function generatePromptViaLLM(contextString, signal) {
     }
 
     const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content?.trim() ?? '';
+    const message = data.choices?.[0]?.message ?? {};
+    const content = message.content?.trim() ?? '';
+    // Reasoning models split their thinking out: inline as a <think> block in
+    // content, or a separate field (reasoning_content on DeepSeek, reasoning on
+    // OpenRouter/others). Capture whichever exists so the debug modal can show it.
+    const reasoning = (message.reasoning_content ?? message.reasoning ?? '').trim();
     if (!content) {
         // 200 OK but no text — the reason is usually buried in the body
         // (provider error object, content filter, or a stop with no output).
@@ -622,7 +627,7 @@ async function generatePromptViaLLM(contextString, signal) {
             JSON.stringify(data);
         throw new Error(`LLM returned no prompt (${code != null ? `${code}: ` : ''}${reason})`);
     }
-    return content;
+    return { content, reasoning };
 }
 
 // ── Workflow Injection ──────────────────────────────────────────────────────
@@ -965,6 +970,7 @@ async function showDebugModal(mesid) {
     // back to inline, then to a placeholder.
     let rawContext = msg.extra?.debugContext;
     let rawPrompt = msg.extra?.debugPrompt;
+    let rawReasoning = '';
     if (msg.extra?.debugPath) {
         try {
             const r = await fetch(msg.extra.debugPath, { headers: getRequestHeaders() });
@@ -972,6 +978,7 @@ async function showDebugModal(mesid) {
                 const d = JSON.parse(await r.text());
                 rawContext = d.context;
                 rawPrompt = d.prompt;
+                rawReasoning = d.reasoning ?? '';
             }
         } catch { /* fall back to inline / placeholder below */ }
     }
@@ -979,6 +986,7 @@ async function showDebugModal(mesid) {
     const sys = esc(getSettings().systemPrompt ?? '');
     const ctx = esc(rawContext ?? '(not stored — regenerate with /imagine to capture)');
     const prompt = esc(rawPrompt ?? '(not stored)');
+    const reasoning = esc(rawReasoning ?? '');
     const html = `<div style="display:flex;flex-direction:column;gap:12px;min-width:min(600px,80vw)">
         <div>
             <label style="font-weight:bold;display:block;margin-bottom:4px">System Prompt</label>
@@ -988,6 +996,10 @@ async function showDebugModal(mesid) {
             <label style="font-weight:bold;display:block;margin-bottom:4px">User Message (character + persona + chat log)</label>
             <textarea readonly rows="12" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${ctx}</textarea>
         </div>
+        ${reasoning ? `<div>
+            <label style="font-weight:bold;display:block;margin-bottom:4px">Model Reasoning (&lt;think&gt;)</label>
+            <textarea readonly rows="8" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${reasoning}</textarea>
+        </div>` : ''}
         <div>
             <label style="font-weight:bold;display:block;margin-bottom:4px">Generated Prompt (returned)</label>
             <textarea readonly rows="6" style="width:100%;resize:vertical;font-family:monospace;font-size:0.82em;box-sizing:border-box">${prompt}</textarea>
@@ -1052,9 +1064,9 @@ async function runImagine(args) {
     const contextString = assembleContext();
 
     // Step 2 — call LLM
-    let llmOutput;
+    let llmOutput, llmReasoning;
     try {
-        llmOutput = await generatePromptViaLLM(contextString, signal);
+        ({ content: llmOutput, reasoning: llmReasoning } = await generatePromptViaLLM(contextString, signal));
     } catch (err) {
         if (err.name === 'AbortError') return '';
         toast(`Comfy Imagine: LLM error — ${err.message}`, 'error');
@@ -1127,7 +1139,7 @@ async function runImagine(args) {
         // the whole context per image. Best-effort: on failure just skip it.
         let debugPath = null;
         try {
-            const debugJson = JSON.stringify({ context: contextString, prompt: llmOutput });
+            const debugJson = JSON.stringify({ context: contextString, prompt: llmOutput, reasoning: llmReasoning });
             debugPath = await uploadDebugToST(debugFileName(chName, i), debugJson);
         } catch { /* debug is optional; a missing sidecar just shows "not stored" */ }
 
