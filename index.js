@@ -606,10 +606,7 @@ async function generatePromptViaLLM(contextString, signal) {
     }
 
     const data = await resp.json();
-    // ponytail: strip inline <think> blocks; separate-field reasoning models need no change
-    const content = (data.choices?.[0]?.message?.content ?? '')
-        .replace(/<think>[\s\S]*?<\/think>/gi, '')
-        .trim();
+    const content = data.choices?.[0]?.message?.content?.trim() ?? '';
     if (!content) {
         // 200 OK but no text — the reason is usually buried in the body
         // (provider error object, content filter, or a stop with no output).
@@ -1064,7 +1061,9 @@ async function runImagine(args) {
         return '';
     }
 
-    const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
+    // ponytail: strip inline <think> blocks only from the generation prompt; debug keeps raw llmOutput
+    const cleanPrompt = llmOutput.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    const finalPrompt = (s.promptPrefix ?? '') + cleanPrompt + (s.promptSuffix ?? '');
     toast('Prompt ready, submitting to ComfyUI…');
 
     // Steps 3–N: for each image
