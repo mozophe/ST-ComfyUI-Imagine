@@ -606,7 +606,10 @@ async function generatePromptViaLLM(contextString, signal) {
     }
 
     const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content?.trim() ?? '';
+    // ponytail: strip inline <think> blocks; separate-field reasoning models need no change
+    const content = (data.choices?.[0]?.message?.content ?? '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .trim();
     if (!content) {
         // 200 OK but no text — the reason is usually buried in the body
         // (provider error object, content filter, or a stop with no output).
