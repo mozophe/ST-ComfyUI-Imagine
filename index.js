@@ -1,7 +1,7 @@
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
-import { splitDataUrl, isOwnImaginePath, isOwnDebugPath } from './image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning } from './image-helpers.js';
 
 const MODULE_NAME = 'comfy_imagine';
 // Capture everything after scripts/extensions/ up to index.js — this preserves
@@ -627,7 +627,14 @@ async function generatePromptViaLLM(contextString, signal) {
             JSON.stringify(data);
         throw new Error(`LLM returned no prompt (${code != null ? `${code}: ` : ''}${reason})`);
     }
-    return { content, reasoning };
+    // Split any tagged/inline reasoning out of the content, then fold in the
+    // separate-field reasoning (DeepSeek/OpenRouter). Prompt is what's clean.
+    const { prompt, reasoning: inlineReasoning } = separateReasoning(content);
+    const combinedReasoning = [reasoning, inlineReasoning].filter(Boolean).join('\n');
+    if (!prompt) {
+        throw new Error(`LLM returned only reasoning, no prompt — it likely ran out of tokens mid-thought. Raise Max Tokens (currently ${s.maxTokens}).`);
+    }
+    return { content: prompt, reasoning: combinedReasoning };
 }
 
 // ── Workflow Injection ──────────────────────────────────────────────────────
@@ -1073,9 +1080,7 @@ async function runImagine(args) {
         return '';
     }
 
-    // ponytail: strip inline <think> blocks only from the generation prompt; debug keeps raw llmOutput
-    const cleanPrompt = llmOutput.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-    const finalPrompt = (s.promptPrefix ?? '') + cleanPrompt + (s.promptSuffix ?? '');
+    const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
     toast('Prompt ready, submitting to ComfyUI…');
 
     // Steps 3–N: for each image

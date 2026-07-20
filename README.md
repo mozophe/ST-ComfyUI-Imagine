@@ -154,7 +154,7 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
 > [!NOTE]
-> Reasoning models are handled two ways. If the model inlines a `<think>…</think>` block in its reply, that block is stripped from the prompt sent to ComfyUI but stays visible in the debug modal's **Generated Prompt**. If the model returns its reasoning in a separate field (`reasoning_content` on DeepSeek, `reasoning` on OpenRouter and others), it appears in a dedicated **Model Reasoning** section in the debug modal. Either way the reasoning never pollutes the image prompt, and you can still inspect it. Reasoning is captured on new generations only — regenerate with `/imagine` to see it for an existing image.
+> Reasoning models put their chain-of-thought either inline in the reply (a `<think>…</think>` block, or common variants like `<thinking>`/`<reason>`) or in a separate field (`reasoning_content` on DeepSeek, `reasoning` on OpenRouter and others). Both are stripped out of the prompt sent to ComfyUI and shown in a dedicated **Model Reasoning** section in the debug modal. Malformed cases are handled too — a missing opening tag, a variant tag name, or a reply truncated mid-thought (raise **Max Tokens** if that happens). Reasoning is captured on new generations only — regenerate with `/imagine` to see it for an existing image.
 
 ### Quick Reply Setup
 

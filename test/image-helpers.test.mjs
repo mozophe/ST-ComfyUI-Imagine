@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { splitDataUrl, isOwnImaginePath, isOwnDebugPath } from '../image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning } from '../image-helpers.js';
 
 // splitDataUrl
 {
@@ -60,5 +60,49 @@ assert.equal(isOwnDebugPath('/user/files/sub/imagine_debug_1.json'), false); // 
 assert.equal(isOwnDebugPath('/etc/user/files/imagine_debug_1.json'), false);
 // the image gate must NOT match debug files, and vice versa
 assert.equal(isOwnImaginePath('/user/files/imagine_debug_1.json'), false);
+
+// separateReasoning — pull chain-of-thought out of the reply however it's shaped
+{
+    // plain prompt, no reasoning
+    const r = separateReasoning('a cat on a roof');
+    assert.equal(r.prompt, 'a cat on a roof');
+    assert.equal(r.reasoning, '');
+}
+{
+    // well-formed pair
+    const r = separateReasoning('<think>let me plan</think>a cat on a roof');
+    assert.equal(r.prompt, 'a cat on a roof');
+    assert.equal(r.reasoning, 'let me plan');
+}
+{
+    // the reported failure: opening tag eaten, only closing survives
+    const r = separateReasoning('let me plan the scene</think>a cat on a roof');
+    assert.equal(r.prompt, 'a cat on a roof');
+    assert.equal(r.reasoning, 'let me plan the scene');
+}
+{
+    // variant tag name
+    const r = separateReasoning('<thinking>hmm</thinking>a dog');
+    assert.equal(r.prompt, 'a dog');
+    assert.equal(r.reasoning, 'hmm');
+}
+{
+    // truncated mid-thought: opening tag, no close -> no prompt salvageable
+    const r = separateReasoning('a dog<think>now I should');
+    assert.equal(r.prompt, 'a dog');
+    assert.equal(r.reasoning, 'now I should');
+}
+{
+    // all reasoning, no prompt (unclosed from the very start)
+    const r = separateReasoning('<think>thinking hard and ran out');
+    assert.equal(r.prompt, '');
+    assert.equal(r.reasoning, 'thinking hard and ran out');
+}
+{
+    // case-insensitive close, whitespace trimmed around prompt
+    const r = separateReasoning('reasoning here</THINK>\n  a bright sky  ');
+    assert.equal(r.prompt, 'a bright sky');
+    assert.equal(r.reasoning, 'reasoning here');
+}
 
 console.log('image-helpers: all checks passed');
