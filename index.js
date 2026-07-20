@@ -62,7 +62,7 @@ const defaultSettings = {
     imageCount: 1,
     chatHistoryLimit: 20,   // latest N chat messages to send to LLM; 0 = all
     senderName: 'Camera',
-    maxTokens: 350,
+    maxTokens: 8192,
     temperature: 0.7,
 };
 
@@ -405,7 +405,7 @@ function bindSettingsEvents() {
     bind('comfy-imagine-sender-name', 'senderName');
     bind('comfy-imagine-image-count', 'imageCount', v => Math.min(8, Math.max(1, parseInt(v, 10) || 1)));
     bind('comfy-imagine-chat-limit', 'chatHistoryLimit', v => Math.max(0, parseInt(v, 10) || 0));
-    bind('comfy-imagine-max-tokens', 'maxTokens', v => Math.min(4096, Math.max(1, parseInt(v, 10) || 350)));
+    bind('comfy-imagine-max-tokens', 'maxTokens', v => Math.min(32768, Math.max(1, parseInt(v, 10) || 8192)));
     bind('comfy-imagine-temperature', 'temperature', v => Math.min(2, Math.max(0, parseFloat(v) || 0.7)));
 
     document.getElementById('comfy-imagine-active-workflow')?.addEventListener('change', e => {
