@@ -59,6 +59,22 @@ export function separateReasoning(content) {
         text = text.slice(0, om.index);
     }
 
+    // 4. Untagged reasoning: some models think out loud with no tags at all,
+    //    which can't be split structurally. Fall back to the convention that the
+    //    LAST paragraph is the prompt and everything before it is reasoning. Only
+    //    when no tag-based reasoning was found and there's more than one
+    //    paragraph — a clean single-paragraph reply is left whole.
+    // ponytail: paragraphs are blank-line delimited; reasoning glued to the
+    // prompt with only single newlines won't split. The system prompt should be
+    // written so the image prompt is its own final paragraph (see README).
+    if (reasoning.length === 0) {
+        const paras = text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+        if (paras.length > 1) {
+            text = paras[paras.length - 1];
+            reasoning.push(paras.slice(0, -1).join('\n\n'));
+        }
+    }
+
     return { prompt: text.trim(), reasoning: reasoning.join('\n').trim() };
 }
 

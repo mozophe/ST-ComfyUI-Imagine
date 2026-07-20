@@ -39,7 +39,7 @@ Cover these elements, in whatever order reads naturally:
 - Color & mood — the palette and the feeling it conveys (e.g. warm earthy tones, cool muted blues).
 - Camera & composition — any further composition cues beyond the opening framing terms (e.g. how the subject is framed, focal length, depth cues) where they suit the POV.
 
-Write in vivid, specific language — rich descriptive phrases or full sentences, not bare keyword tags. Avoid vague subjective words like "beautiful" or "amazing". Output only the prompt. Do not explain or comment.`;
+Write in vivid, specific language — rich descriptive phrases or full sentences, not bare keyword tags. Avoid vague subjective words like "beautiful" or "amazing". Output the prompt as a single final paragraph, and put nothing after it. Do not explain or comment.`;
 
 // Name under which DEFAULT_SYSTEM_PROMPT is seeded into the presets dropdown so
 // users can always switch back to it after editing.

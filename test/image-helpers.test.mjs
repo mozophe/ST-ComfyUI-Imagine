@@ -104,5 +104,29 @@ assert.equal(isOwnImaginePath('/user/files/imagine_debug_1.json'), false);
     assert.equal(r.prompt, 'a bright sky');
     assert.equal(r.reasoning, 'reasoning here');
 }
+{
+    // untagged reasoning: last paragraph is the prompt
+    const r = separateReasoning('Let me think about the scene.\nThe user is in a kitchen.\n\nPOV shot, close-up. A steaming mug on a wooden table.');
+    assert.equal(r.prompt, 'POV shot, close-up. A steaming mug on a wooden table.');
+    assert.equal(r.reasoning, 'Let me think about the scene.\nThe user is in a kitchen.');
+}
+{
+    // untagged, several reasoning paragraphs then the prompt
+    const r = separateReasoning('First, the setting.\n\nNext, the lighting.\n\nA misty forest at dawn, soft light.');
+    assert.equal(r.prompt, 'A misty forest at dawn, soft light.');
+    assert.equal(r.reasoning, 'First, the setting.\n\nNext, the lighting.');
+}
+{
+    // single paragraph, no tags -> whole thing is the prompt, nothing chopped
+    const r = separateReasoning('A ginger cat perched on a terracotta roof at golden hour.');
+    assert.equal(r.prompt, 'A ginger cat perched on a terracotta roof at golden hour.');
+    assert.equal(r.reasoning, '');
+}
+{
+    // tags win over the paragraph fallback: multi-paragraph prompt stays whole
+    const r = separateReasoning('<think>planning</think>Paragraph one of the prompt.\n\nParagraph two of the prompt.');
+    assert.equal(r.prompt, 'Paragraph one of the prompt.\n\nParagraph two of the prompt.');
+    assert.equal(r.reasoning, 'planning');
+}
 
 console.log('image-helpers: all checks passed');

@@ -154,7 +154,12 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
 > [!NOTE]
-> Reasoning models put their chain-of-thought either inline in the reply (a `<think>…</think>` block, or common variants like `<thinking>`/`<reason>`) or in a separate field (`reasoning_content` on DeepSeek, `reasoning` on OpenRouter and others). Both are stripped out of the prompt sent to ComfyUI and shown in a dedicated **Model Reasoning** section in the debug modal. Malformed cases are handled too — a missing opening tag, a variant tag name, or a reply truncated mid-thought (raise **Max Tokens** if that happens). Reasoning is captured on new generations only — regenerate with `/imagine` to see it for an existing image.
+> **Reasoning models.** Chain-of-thought is separated from the image prompt so it never reaches ComfyUI, and is shown in a dedicated **Model Reasoning** section in the debug modal. Separation works in this order:
+> 1. **Separate field** — `reasoning_content` (DeepSeek) or `reasoning` (OpenRouter and others), when the API returns one.
+> 2. **Tagged inline** — a `<think>…</think>` block or common variants (`<thinking>`, `<reason>`), including malformed cases: a missing opening tag, a reply truncated mid-thought, etc.
+> 3. **Untagged fallback** — if the model reasons in plain prose with no tags at all, the **last paragraph is treated as the prompt** and everything before it as reasoning.
+>
+> Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated from any preamble by a blank line. The bundled default does this. If your prompt and reasoning run together with only single line breaks, they can't be split — keep the prompt as a distinct last paragraph. Reasoning is captured on new generations only; regenerate with `/imagine` to see it for an existing image.
 
 ### Quick Reply Setup
 
