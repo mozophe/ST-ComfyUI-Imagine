@@ -989,16 +989,18 @@ async function showDebugModal(mesid) {
             }
         } catch { /* fall back to inline / placeholder below */ }
     }
-    // Generation timing: this image's own elapsedMs (from extra) + a GLOBAL last-10
-    // average read from the rolling genTimes log in extensionSettings. Global (not
-    // per-chat) so it holds across character/chat switches, where the loaded chat
-    // only ever contains its own messages.
-    const log = getSettings().genTimes ?? [];
-    const last10 = log.slice(-10);
-    const avg = last10.length ? last10.reduce((a, b) => a + b, 0) / last10.length : 0;
+    // Generation timing: this image's own phase times (from extra) + GLOBAL last-10
+    // averages read from the rolling logs in extensionSettings. Global (not per-chat)
+    // so they hold across character/chat switches, where the loaded chat only ever
+    // contains its own messages.
+    const gs = getSettings();
+    const secs = ms => (ms / 1000).toFixed(1);
+    const avg10 = log => { const a = (log ?? []).slice(-10); return a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0; };
     const thisMs = msg.extra?.elapsedMs;
     const timing = typeof thisMs === 'number'
-        ? `This image: ${(thisMs / 1000).toFixed(1)}s &nbsp;·&nbsp; last ${last10.length} avg: ${(avg / 1000).toFixed(1)}s`
+        ? `This image — total ${secs(thisMs)}s`
+            + (typeof msg.extra?.llmMs === 'number' ? ` &nbsp;(LLM ${secs(msg.extra.llmMs)}s · ComfyUI ${secs(msg.extra.comfyMs)}s)` : '')
+            + `<br>Global last-10 avg — total ${secs(avg10(gs.genTimes))}s · LLM ${secs(avg10(gs.llmTimes))}s · ComfyUI ${secs(avg10(gs.comfyTimes))}s`
         : 'Not recorded (generate a new image with /imagine to capture timing)';
 
     const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1099,6 +1101,12 @@ async function runImagine(args) {
         return '';
     }
 
+    // LLM phase time (t0 → prompt returned). Shared across all images in the call,
+    // so it's logged once, not per image.
+    const llmMs = Math.round(performance.now() - t0);
+    (s.llmTimes ??= []).push(llmMs);
+    if (s.llmTimes.length > 50) s.llmTimes.shift();
+
     const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
     toast('Prompt ready, submitting to ComfyUI…');
 
@@ -1118,6 +1126,10 @@ async function runImagine(args) {
         if (loraErr && i === 0) toast(`Comfy Imagine: ${loraErr}`, 'error');
 
         if (imageCount > 1) randomiseSeed(workflow);
+
+        // ComfyUI phase start for THIS image (submit + poll + fetch + upload).
+        // Per-image, so multi-image calls get an accurate comfy time each.
+        const tComfyStart = performance.now();
 
         let imageUrl;
         try {
@@ -1167,12 +1179,17 @@ async function runImagine(args) {
             debugPath = await uploadDebugToST(debugFileName(chName, i), debugJson);
         } catch { /* debug is optional; a missing sidecar just shows "not stored" */ }
 
-        // Per-image time (this image's "click → saved" wall clock) plus a global
-        // rolling log in extensionSettings so the average survives chat/character
-        // switches — the loaded chat only ever holds its own messages.
-        const elapsedMs = Math.round(performance.now() - t0);
+        // Timing: total (click → saved), plus this image's ComfyUI phase alone.
+        // All three phases keep a global rolling log in extensionSettings so the
+        // averages survive chat/character switches — the loaded chat only ever
+        // holds its own messages. llmTimes was already pushed once above.
+        const now = performance.now();
+        const elapsedMs = Math.round(now - t0);
+        const comfyMs = Math.round(now - tComfyStart);
         (s.genTimes ??= []).push(elapsedMs);
+        (s.comfyTimes ??= []).push(comfyMs);
         if (s.genTimes.length > 50) s.genTimes.shift();   // keep last 50; modal averages last 10
+        if (s.comfyTimes.length > 50) s.comfyTimes.shift();
         saveSettings();
 
         const { chat, addOneMessage, saveChat } = SillyTavern.getContext();
@@ -1186,6 +1203,8 @@ async function runImagine(args) {
                 title: 'comfy-imagine',
                 imaginePath: path,
                 elapsedMs,
+                llmMs,
+                comfyMs,
                 ...(debugPath ? { debugPath } : {}),
             },
         };
