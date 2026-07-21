@@ -989,10 +989,12 @@ async function showDebugModal(mesid) {
             }
         } catch { /* fall back to inline / placeholder below */ }
     }
-    // Generation timing: this image + average of the latest 10 timed generations
-    // in the chat. elapsedMs is a plain number stored in extra (no file fetch).
-    const times = chat.filter(m => m?.extra?.title === 'comfy-imagine' && typeof m.extra.elapsedMs === 'number');
-    const last10 = times.slice(-10).map(m => m.extra.elapsedMs);
+    // Generation timing: this image's own elapsedMs (from extra) + a GLOBAL last-10
+    // average read from the rolling genTimes log in extensionSettings. Global (not
+    // per-chat) so it holds across character/chat switches, where the loaded chat
+    // only ever contains its own messages.
+    const log = getSettings().genTimes ?? [];
+    const last10 = log.slice(-10);
     const avg = last10.length ? last10.reduce((a, b) => a + b, 0) / last10.length : 0;
     const thisMs = msg.extra?.elapsedMs;
     const timing = typeof thisMs === 'number'
@@ -1165,6 +1167,14 @@ async function runImagine(args) {
             debugPath = await uploadDebugToST(debugFileName(chName, i), debugJson);
         } catch { /* debug is optional; a missing sidecar just shows "not stored" */ }
 
+        // Per-image time (this image's "click → saved" wall clock) plus a global
+        // rolling log in extensionSettings so the average survives chat/character
+        // switches — the loaded chat only ever holds its own messages.
+        const elapsedMs = Math.round(performance.now() - t0);
+        (s.genTimes ??= []).push(elapsedMs);
+        if (s.genTimes.length > 50) s.genTimes.shift();   // keep last 50; modal averages last 10
+        saveSettings();
+
         const { chat, addOneMessage, saveChat } = SillyTavern.getContext();
         const imageMessage = {
             name: s.senderName || 'Camera',
@@ -1175,7 +1185,7 @@ async function runImagine(args) {
             extra: {
                 title: 'comfy-imagine',
                 imaginePath: path,
-                elapsedMs: Math.round(performance.now() - t0),
+                elapsedMs,
                 ...(debugPath ? { debugPath } : {}),
             },
         };
