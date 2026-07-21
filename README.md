@@ -23,6 +23,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 - **Always-on LoRA:** stack a LoRA applied to every image (style, quality, detail, aesthetic, …), independent of the per-character one.
 - **Any ComfyUI workflow:** bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
 - **First-person POV default:** ships with a Krea 2 Turbo–tuned system prompt and full preset management.
+- **Generation timing:** the debug modal shows how long each image took, split into LLM vs ComfyUI phases, plus a global rolling last-10 average.
 - **Desktop & mobile:** searchable LoRA picker on desktop, native picker on touch. Fully abortable; images are hidden from the main model.
 
 ## 📑 Table of Contents
@@ -151,7 +152,10 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 > [!NOTE]
 > Use SillyTavern's built-in **Abort** button to cancel generation mid-flight.
 
-Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
+Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing **generation timing**, the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
+
+> [!NOTE]
+> **Generation timing.** The debug modal reports how long the image took, split into the two phases: **LLM** (writing the prompt) and **ComfyUI** (rendering), plus the total. It shows *this* image's times and a **global rolling average of the last 10 generations** for each phase. The average is global (kept in your SillyTavern settings), so it persists across reloads and carries over when you switch characters or chats. Only images generated after this feature shipped are timed; older ones show no timing.
 
 > [!NOTE]
 > **Reasoning models.** Chain-of-thought is separated from the image prompt so it never reaches ComfyUI, and is shown in a dedicated **Model Reasoning** section in the debug modal. Separation works in this order:
