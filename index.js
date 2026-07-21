@@ -1573,6 +1573,16 @@ async function runImagine(args) {
 
 // ── Initialisation ──────────────────────────────────────────────────────────
 
+// ST update hook (wired via manifest.json "hooks".update). ST calls this right
+// after the USER manually updates the extension — the moment new files land on
+// disk — then only toasts "reload to apply" without reloading. We reload here so
+// the new build (and its force-synced preset/prompt) takes effect immediately.
+// Updates stay fully manual: this fires only in response to the user clicking
+// Update, and never triggers an update itself.
+export function onExtensionUpdate() {
+    location.reload();
+}
+
 (async function init() {
     const { extensionSettings, renderExtensionTemplateAsync } = SillyTavern.getContext();
     const lodash = SillyTavern.libs.lodash;
