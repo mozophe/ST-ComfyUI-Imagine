@@ -464,10 +464,18 @@ function updateSpSaveButtonState() {
     const select = document.getElementById('comfy-imagine-sp-preset');
     if (!btn || !select) return;
     const name = select.value;
-    btn.disabled = !name || SHIPPED_PRESETS.has(name);
-    btn.title = SHIPPED_PRESETS.has(name)
+    const shipped = SHIPPED_PRESETS.has(name);
+    btn.disabled = !name || shipped;
+    btn.title = shipped
         ? `'${name}' is read-only — use Save As to keep changes`
         : (name ? 'Overwrite the selected preset with the current system prompt' : 'Select a preset to overwrite');
+
+    // Delete is blocked for shipped presets too (they'd re-seed on reload anyway).
+    const del = document.getElementById('comfy-imagine-sp-preset-delete');
+    if (del) {
+        del.disabled = !name || shipped;
+        del.title = shipped ? `'${name}' is built-in and can't be deleted` : (name ? 'Delete the selected preset' : 'Select a preset to delete');
+    }
 }
 
 // Returns the active character object (has .avatar, .name) or null when none is
@@ -724,6 +732,12 @@ function bindSettingsEvents() {
         const settings = getSettings();
         if (!name || !settings.systemPromptPresets?.[name]) {
             toast('No preset selected.', 'error');
+            return;
+        }
+        // Shipped presets are re-seeded on every load, so a delete here would just
+        // reappear on reload — block it like Save, so they can't be removed.
+        if (SHIPPED_PRESETS.has(name)) {
+            toast(`'${name}' is built-in and can't be deleted.`, 'error');
             return;
         }
         delete settings.systemPromptPresets[name];
