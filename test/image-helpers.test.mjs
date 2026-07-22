@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning } from '../image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning, selectChatWindow } from '../image-helpers.js';
 
 // splitDataUrl
 {
@@ -127,6 +127,48 @@ assert.equal(isOwnImaginePath('/user/files/imagine_debug_1.json'), false);
     const r = separateReasoning('<think>planning</think>Paragraph one of the prompt.\n\nParagraph two of the prompt.');
     assert.equal(r.prompt, 'Paragraph one of the prompt.\n\nParagraph two of the prompt.');
     assert.equal(r.reasoning, 'planning');
+}
+
+// ── selectChatWindow ─────────────────────────────────────────────
+{
+    const msgs = [
+        { mes: 'a' },                    // 0
+        { mes: 'b', is_system: true },   // 1
+        { mes: 'c' },                    // 2
+        { mes: 'd' },                    // 3
+        { mes: 'e', is_system: true },   // 4
+        { mes: 'f' },                    // 5
+    ];
+
+    // no cutoff, no limit → all non-system
+    assert.deepStrictEqual(selectChatWindow(msgs).map(m => m.mes), ['a', 'c', 'd', 'f']);
+
+    // no cutoff, limit 2 → last two non-system
+    assert.deepStrictEqual(selectChatWindow(msgs, null, 2).map(m => m.mes), ['d', 'f']);
+
+    // cutoff at index 3 (inclusive) → later messages excluded
+    assert.deepStrictEqual(selectChatWindow(msgs, 3).map(m => m.mes), ['a', 'c', 'd']);
+
+    // cutoff + limit → limit counts non-system messages before the cutoff
+    assert.deepStrictEqual(selectChatWindow(msgs, 3, 2).map(m => m.mes), ['c', 'd']);
+
+    // cutoff on a system message → it stays filtered
+    assert.deepStrictEqual(selectChatWindow(msgs, 4).map(m => m.mes), ['a', 'c', 'd']);
+
+    // cutoff 0 → just the first message
+    assert.deepStrictEqual(selectChatWindow(msgs, 0).map(m => m.mes), ['a']);
+
+    // limit 0 explicitly = all
+    assert.deepStrictEqual(selectChatWindow(msgs, null, 0).map(m => m.mes), ['a', 'c', 'd', 'f']);
+
+    // empty chat
+    assert.deepStrictEqual(selectChatWindow([]), []);
+
+    // input array is not mutated
+    const before = msgs.length;
+    selectChatWindow(msgs, 2, 1);
+    assert.strictEqual(msgs.length, before);
+    console.log('selectChatWindow tests passed');
 }
 
 console.log('image-helpers: all checks passed');

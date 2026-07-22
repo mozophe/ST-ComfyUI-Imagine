@@ -85,3 +85,20 @@ export function separateReasoning(content) {
 export function isOwnDebugPath(path) {
     return /^\/?user\/files\/imagine_debug_[^/]+\.json$/i.test(path ?? '');
 }
+
+/**
+ * Selects the chat-log window fed to the prompt LLM.
+ * Cuts the log at uptoIndex (inclusive) when given, drops system messages,
+ * then keeps the last `limit` messages (limit <= 0 = all). Pure; does not
+ * mutate the input array.
+ * @param {Array<{is_system?: boolean}>} messages Full chat array.
+ * @param {?number} uptoIndex Index of the last message to include, or null for the whole log.
+ * @param {number} limit Max non-system messages to keep (0 = all).
+ * @returns {Array} The selected messages, oldest first.
+ */
+export function selectChatWindow(messages, uptoIndex = null, limit = 0) {
+    let msgs = uptoIndex == null ? messages.slice() : messages.slice(0, uptoIndex + 1);
+    msgs = msgs.filter(m => !m.is_system);
+    if (limit > 0) msgs = msgs.slice(-limit);
+    return msgs;
+}
