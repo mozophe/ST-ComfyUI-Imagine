@@ -21,6 +21,10 @@ let loraListCache = null;
 // chat. Diffed on MESSAGE_DELETED to find files whose messages were removed.
 let knownImaginePaths = new Set();
 
+// Re-entrancy guard: one generation at a time, shared by the slash command
+// and the per-message camera button.
+let isGenerating = false;
+
 const DEFAULT_SYSTEM_PROMPT = `You are an expert image prompt writer for Krea 2, an aesthetic-first, photorealistic diffusion model. Krea 2 rewards specific, detailed description over rigid structure — the more concretely you describe the subject, setting, lighting, color, and style, the tighter and more accurate its output. There is no required element order; write it the way it reads best.
 
 You will be given a roleplay chat log, character description, and user persona. The user persona is the viewer. Write a single image prompt (about 80–150 words) describing the current scene as a first-person POV photograph taken from the viewer's own eyes.
@@ -1409,9 +1413,26 @@ async function runImagine(args) {
     // as args._abortController. Bridge it to a native AbortController so fetch() responds.
     const stAbortController = args?._abortController;
     const nativeAbort = new AbortController();
-    const signal = nativeAbort.signal;
     const onAbort = () => nativeAbort.abort();
     stAbortController?.addEventListener('abort', onAbort);
+    try {
+        return await generateImages({ signal: nativeAbort.signal });
+    } finally {
+        stAbortController?.removeEventListener('abort', onAbort);
+    }
+}
+
+// Shared generation core. targetIndex == null → slash-command tail path
+// (context from chat tail, image appended). targetIndex set → per-message
+// camera path (context cut at that message; insertion handled in Task 4).
+async function generateImages({ targetIndex = null, signal = null } = {}) {
+    if (isGenerating) {
+        toast('Comfy Imagine: already generating.', 'error');
+        return '';
+    }
+    isGenerating = true;
+
+    const chatIdAtStart = SillyTavern.getContext().getCurrentChatId();
 
     try {
 
@@ -1438,8 +1459,8 @@ async function runImagine(args) {
     // time cumulatively, not per-image. Fine for the 1-image camera quick-click.
     const t0 = performance.now();
 
-    // Step 1 — gather context
-    const contextString = assembleContext();
+    // Step 1 — gather context (cut at targetIndex for per-message generation)
+    const contextString = assembleContext(targetIndex);
 
     // Step 2 — call LLM
     let llmOutput, llmReasoning;
@@ -1542,7 +1563,17 @@ async function runImagine(args) {
         if (s.comfyTimes.length > 50) s.comfyTimes.shift();
         saveSettings();
 
-        const { chat, addOneMessage, saveChat } = SillyTavern.getContext();
+        const { chat, addOneMessage, saveChat, getCurrentChatId } = SillyTavern.getContext();
+
+        // Chat-switch guard: the user may have opened another chat during the
+        // async generation. Inserting now would put the image into the wrong
+        // chat's array — discard instead. (The uploaded file stays on disk but
+        // is invisible; acceptable for a rare race.)
+        if (getCurrentChatId() !== chatIdAtStart) {
+            toast('Comfy Imagine: chat changed during generation — image discarded.', 'error');
+            return '';
+        }
+
         const imageMessage = {
             name: s.senderName || 'Camera',
             is_user: false,
@@ -1567,7 +1598,7 @@ async function runImagine(args) {
     }
 
     } finally {
-        stAbortController?.removeEventListener('abort', onAbort);
+        isGenerating = false;
     }
 
     return '';
