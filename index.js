@@ -1432,6 +1432,7 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
     }
 
     let chatIdAtStart = null;
+    let insertedCount = 0;
 
     try {
 
@@ -1443,7 +1444,6 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
     // inserts/deletes can't shift the index out from under us.
     const targetMsg = targetIndex != null ? SillyTavern.getContext().chat[targetIndex] : null;
     const isMidChat = targetMsg != null;
-    let insertedCount = 0;
 
     const s = getSettings();
 
