@@ -1457,6 +1457,9 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
 
     let chatIdAtStart = null;
     let insertedCount = 0;
+    // Path of the first image spliced mid-chat; the finally uses it to scroll
+    // back to the insertion point after reloadCurrentChat lands at the bottom.
+    let firstInsertedPath = null;
 
     try {
 
@@ -1631,6 +1634,7 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
             const insertAt = at === -1 ? chat.length : at + 1 + insertedCount;
             chat.splice(insertAt, 0, imageMessage);
             insertedCount++;
+            if (firstInsertedPath == null) firstInsertedPath = path;
             // No addOneMessage / per-image save here: the DOM would get stale
             // mesid attributes. One saveChat + reloadCurrentChat in the finally
             // renders everything consistently (ST's own mid-chat insert pattern).
@@ -1663,6 +1667,18 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
                 } else {
                     await saveChat();
                     await reloadCurrentChat();
+                    // Reload re-renders and scrolls to the bottom; bring the
+                    // user back to the image they just generated. Path lookup
+                    // (not a saved index) survives any index shift across the
+                    // reload. ponytail: if the insert sits above ST's lazy-render
+                    // fold ("Load more messages"), the element doesn't exist and
+                    // we stay at the bottom — hook showMoreMessages if it matters.
+                    if (firstInsertedPath != null) {
+                        const idx = (SillyTavern.getContext().chat ?? [])
+                            .findIndex(m => m.extra?.imaginePath === firstInsertedPath);
+                        const mesEl = idx !== -1 ? document.querySelector(`.mes[mesid="${idx}"]`) : null;
+                        mesEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
             } catch (err) {
                 toast(`Comfy Imagine: failed to refresh chat — ${err.message}`, 'error');
