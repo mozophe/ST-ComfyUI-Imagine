@@ -1430,11 +1430,12 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
         toast('Comfy Imagine: already generating.', 'error');
         return '';
     }
+
+    try {
+
     isGenerating = true;
 
     const chatIdAtStart = SillyTavern.getContext().getCurrentChatId();
-
-    try {
 
     const s = getSettings();
 
