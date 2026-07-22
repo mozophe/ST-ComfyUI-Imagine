@@ -31,8 +31,10 @@ message is inserted immediately after the clicked message.
   `.extraMesButtons` (fallback `.mes_buttons`).
 - `injectAllImagineButtons()` — walk current chat, inject on every eligible message.
   Called from init and `CHAT_CHANGED` (alongside `injectAllDebugButtons`).
-- New messages arriving during a session: hook the same events that currently refresh debug
-  buttons; a delegated click handler on the chat container (like the debug button's) means
+- New messages arriving during a session: subscribe `USER_MESSAGE_RENDERED` and
+  `CHARACTER_MESSAGE_RENDERED` (verified in `public/scripts/events.js`) and inject on the
+  reported mesid — `CHAT_CHANGED` alone would leave new messages buttonless until a chat
+  switch. A delegated click handler on the chat container (like the debug button's) means
   the handler itself needs no per-message binding.
 - Click resolves `mesid` from `closest('.mes')`, then calls the generation core with
   `targetIndex = Number(mesid)`.
@@ -56,9 +58,21 @@ Extract the body of `runImagine` into `generateImages({ targetIndex = null, sign
   `chat.splice(insertAt, 0, imageMessage)` where `insertAt = chat.indexOf(targetMsg) + 1 + i`
   (`targetMsg` captured at click time — object identity survives concurrent index shifts;
   multi-image keeps generation order via `i`). After all images: `await saveChat()` then
-  `await reloadCurrentChat()`. Debug/camera buttons re-injected by the `CHAT_CHANGED`
-  handler that `reloadCurrentChat` fires; if it does not fire `CHAT_CHANGED`, call
-  `injectAllDebugButtons()`/`injectAllImagineButtons()` explicitly after reload.
+  `await reloadCurrentChat()` — **order is a hard requirement**: reload re-fetches the chat
+  from the server (`script.js:7599` replaces the array wholesale), so unsaved splices would
+  be silently discarded. Verified: `reloadCurrentChat` → `getChat` → `getChatResult` emits
+  `CHAT_CHANGED` (`script.js:7641`) and is mutex-wrapped, so debug/camera buttons and
+  `knownImaginePaths` are rebuilt by the existing `CHAT_CHANGED` handler — no explicit
+  re-injection call needed.
+- **Partial failure:** save + reload run in a `finally` whenever ≥ 1 message was spliced,
+  so a failure on image 3 of 4 still persists and renders images 1–2 instead of losing
+  them in memory.
+- **Chat-switch guard:** capture `getCurrentChatId()` (exposed via `getContext()`,
+  `st-context.js:19`) at click time. Before each splice — and before the tail-path
+  `chat.push` too — compare against the current id; on mismatch discard the image and
+  toast ("chat changed, image discarded"), never insert into the now-active chat. This
+  also fixes the latent bug in the existing `/imagine` tail path (a chat switch during
+  generation would push the image into the wrong chat's array).
 - `runImagine` (slash command) becomes a thin wrapper: bridges ST abort controller →
   native `AbortController`, calls `generateImages({ signal })`.
 - Button path: plain `new AbortController()`, no stop-button integration (ST offers none
@@ -86,8 +100,10 @@ injection, settings — all untouched. Message shape identical, so `collectImagi
 
 Same toast-only policy. New case: target message deleted mid-generation (index shifted) —
 recompute insert index by object identity: capture `const targetMsg = chat[targetIndex]` at
-click time, at insert time `insertAt = chat.indexOf(targetMsg) + 1`; if `indexOf` returns
-`-1` (message deleted), append at end and toast a note.
+click time, at insert time `insertAt = chat.indexOf(targetMsg) + 1`. `indexOf === -1` with
+the **same chat id** means the target was deleted → append at end of the (correct) chat and
+toast a note. `indexOf === -1` because the **chat id changed** → discard (see chat-switch
+guard above).
 
 ## Testing
 
