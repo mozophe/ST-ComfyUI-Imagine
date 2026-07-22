@@ -1406,6 +1406,30 @@ function injectAllDebugButtons() {
     });
 }
 
+// Camera button: per-message "generate image for this scene". Injected into
+// the same three-dots row as the debug button, on every message except our
+// own generated-image messages.
+function injectImagineButtonOnMessage(mesid) {
+    const { chat } = SillyTavern.getContext();
+    const msg = chat[mesid];
+    if (!msg || msg.extra?.title === 'comfy-imagine') return;
+    const mesEl = document.querySelector(`.mes[mesid="${mesid}"]`);
+    if (!mesEl) return;
+    if (mesEl.querySelector('.comfy-imagine-gen-btn')) return;
+    const container = mesEl.querySelector('.extraMesButtons') ?? mesEl.querySelector('.mes_buttons');
+    if (!container) return;
+    const btn = document.createElement('div');
+    btn.className = 'mes_button comfy-imagine-gen-btn fa-solid fa-camera interactable';
+    btn.title = 'Generate image for this scene';
+    btn.tabIndex = 0;
+    container.prepend(btn);
+}
+
+function injectAllImagineButtons() {
+    const { chat } = SillyTavern.getContext();
+    chat.forEach((_msg, i) => injectImagineButtonOnMessage(i));
+}
+
 // ── /imagine Slash Command ──────────────────────────────────────────────────
 
 async function runImagine(args) {
@@ -1694,17 +1718,30 @@ export function onExtensionUpdate() {
         if (!isNaN(mesid)) showDebugModal(mesid);
     });
 
+    // Delegated click for camera buttons. mesid is resolved at click time, so
+    // buttons injected after any re-render keep working.
+    $(document).on('click', '.comfy-imagine-gen-btn', e => {
+        const mesid = parseInt($(e.currentTarget).closest('.mes').attr('mesid'));
+        if (!isNaN(mesid)) generateImages({ targetIndex: mesid });
+    });
+
     // Inject debug buttons on chat load/switch and at startup
     const { eventSource, event_types } = SillyTavern.getContext();
     eventSource.on(event_types.CHAT_CHANGED, () => {
         injectAllDebugButtons();
+        injectAllImagineButtons();
         populateCharacterLoraUI();
         // Rebuild the baseline for the newly-opened chat. No deletion here:
         // switching chats is not deleting.
         knownImaginePaths = collectImaginePaths();
     });
     eventSource.on(event_types.MESSAGE_DELETED, () => { reconcileImagineOrphans(); });
+    // New messages during a session: CHAT_CHANGED doesn't fire for them, so
+    // hook the per-message render events.
+    eventSource.on(event_types.USER_MESSAGE_RENDERED, mesid => injectImagineButtonOnMessage(mesid));
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, mesid => injectImagineButtonOnMessage(mesid));
     injectAllDebugButtons();
+    injectAllImagineButtons();
     knownImaginePaths = collectImaginePaths();   // seed baseline at startup
 
     // Register /imagine slash command
