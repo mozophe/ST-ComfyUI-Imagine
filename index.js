@@ -1762,7 +1762,32 @@ export function onExtensionUpdate() {
     // buttons injected after any re-render keep working.
     $(document).on('click', '.comfy-imagine-gen-btn', e => {
         const mesid = parseInt($(e.currentTarget).closest('.mes').attr('mesid'));
-        if (!isNaN(mesid)) generateImages({ targetIndex: mesid }).catch(err => toast(`Comfy Imagine: ${err.message}`, 'error'));
+        if (isNaN(mesid)) return;
+
+        // Mirror the slash-command path's abort UX with ST's own stop button.
+        // ST's chat-input script pipeline (which shows its stop UI for /imagine)
+        // is not exposed via getContext(), so we drive #mes_stop directly:
+        // show it, wire a listener that aborts our native controller, hide it
+        // when done. ST's delegated .mes_stop handler (stopGeneration) fires on
+        // the same click but is harmless with no ST generation running.
+        // Only touch the button if it isn't already visible — if it is, an ST
+        // generation owns it and we must not hide it out from under that.
+        const nativeAbort = new AbortController();
+        const stopBtn = document.querySelector('#mes_stop');
+        const ownStopBtn = stopBtn && getComputedStyle(stopBtn).display === 'none';
+        const onStop = () => nativeAbort.abort();
+        if (ownStopBtn) {
+            stopBtn.addEventListener('click', onStop);
+            stopBtn.style.display = 'flex';
+        }
+        generateImages({ targetIndex: mesid, signal: nativeAbort.signal })
+            .catch(err => toast(`Comfy Imagine: ${err.message}`, 'error'))
+            .finally(() => {
+                if (ownStopBtn) {
+                    stopBtn.removeEventListener('click', onStop);
+                    stopBtn.style.display = 'none';
+                }
+            });
     });
 
     // Inject debug buttons on chat load/switch and at startup
