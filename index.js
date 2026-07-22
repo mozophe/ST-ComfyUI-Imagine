@@ -1,7 +1,7 @@
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
-import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning } from './image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning, selectChatWindow } from './image-helpers.js';
 
 const MODULE_NAME = 'comfy_imagine';
 // Capture everything after scripts/extensions/ up to index.js — this preserves
@@ -878,7 +878,7 @@ function bindSettingsEvents() {
 
 // ── Context Assembly ────────────────────────────────────────────────────────
 
-function assembleContext() {
+function assembleContext(uptoIndex = null) {
     const ctx = SillyTavern.getContext();
     const character = ctx.characters?.[ctx.characterId] ?? {};
     // ctx.persona is undefined in ST v1.18.0; use powerUserSettings from context
@@ -901,17 +901,19 @@ function assembleContext() {
 
     lines.push('');
     lines.push('[CHAT LOG]');
-    // Filter system messages first so the limit counts real dialogue, not hidden
-    // injected images. limit <= 0 means send the whole log.
+    // Cut at uptoIndex (inclusive) for per-message generation, filter system
+    // messages, then apply the history limit. limit <= 0 means the whole log.
     const limit = getSettings().chatHistoryLimit || 0;
-    let chatMsgs = (ctx.chat ?? []).filter(m => !m.is_system);
-    if (limit > 0) chatMsgs = chatMsgs.slice(-limit);
+    const chatMsgs = selectChatWindow(ctx.chat ?? [], uptoIndex, limit);
     for (const msg of chatMsgs) {
         const speaker = msg.is_user ? userName : (character.name ?? 'Character');
         lines.push(`${speaker}: ${msg.mes}`);
     }
 
-    const lastTrackerMsg = [...(ctx.chat ?? [])].reverse().find(
+    // Tracker snapshot must match the scene's point in time: search only up to
+    // the cutoff, not the whole chat.
+    const trackerScope = uptoIndex == null ? (ctx.chat ?? []) : (ctx.chat ?? []).slice(0, uptoIndex + 1);
+    const lastTrackerMsg = [...trackerScope].reverse().find(
         msg => msg.extra?.WTracker?.value != null
     );
     if (lastTrackerMsg) {
