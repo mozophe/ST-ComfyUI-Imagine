@@ -285,8 +285,6 @@ A worked example with two LoRAs is in [`workflows/Krea2_StyleLora_CLora.json`](w
 
 Updates are **manual by design** — `auto_update` is off, so nothing updates behind your back. Update when you choose to, from **Extensions → Manage Extensions**, by clicking the extension's update button.
 
-When you do, SillyTavern downloads the new files but does **not** reload the page on its own — it only shows a "reload to apply" toast, so the new code and any shipped prompt changes stay dormant until a refresh. This extension refreshes for you: it registers SillyTavern's `update` hook, which fires the moment your update finishes, and reloads the page so the update takes effect immediately. The reload only ever happens in response to *your* update action. (The very first update from a build without this hook still needs one manual reload — the auto-reload works from that point on.)
-
 ## 🔁 Migrating Legacy Chats
 
 New images are saved as files and only their path is stored in the chat, keeping the chat file small. Early versions instead embedded the full image (and debug info) as base64 directly in the message, which bloats the chat file and slows loading.
