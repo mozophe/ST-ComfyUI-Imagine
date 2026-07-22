@@ -1672,9 +1672,20 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
                     // return when auto_scroll_chat_to_bottom is off, so suppress
                     // it around the reload and restore it after that window; a
                     // plain scrollIntoView here would just be yanked back down.
+                    // CAUTION: power_user is serialised into settings.json by any
+                    // saveSettingsDebounced that fires while the flag is off (our
+                    // own timing-log saveSettings() a moment ago is debounced ~1s,
+                    // landing squarely inside the 2s window) — which persisted the
+                    // suppressed `false` and made every NEW chat open at the top.
+                    // So: stash a restore-pending marker (it rides along in the
+                    // same settings save), re-persist `true` after the restore,
+                    // and let init() heal the flag if the tab dies mid-window.
                     const pu = SillyTavern.getContext().powerUserSettings;
                     const hadAutoScroll = pu?.auto_scroll_chat_to_bottom === true;
-                    if (hadAutoScroll) pu.auto_scroll_chat_to_bottom = false;
+                    if (hadAutoScroll) {
+                        pu.auto_scroll_chat_to_bottom = false;
+                        getSettings().autoScrollRestorePending = true;
+                    }
                     try {
                         await saveChat();
                         await reloadCurrentChat();
@@ -1701,7 +1712,13 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
                     } finally {
                         // Restore only after ST's media-load scroll window has
                         // passed, or the deferred scrolls sneak back to bottom.
-                        if (hadAutoScroll) setTimeout(() => { pu.auto_scroll_chat_to_bottom = true; }, 2000);
+                        if (hadAutoScroll) setTimeout(() => {
+                            pu.auto_scroll_chat_to_bottom = true;
+                            delete getSettings().autoScrollRestorePending;
+                            // Re-persist: a debounced settings save very likely
+                            // fired during the false-window and wrote `false`.
+                            saveSettings();
+                        }, 2000);
                     }
                 }
             } catch (err) {
@@ -1744,6 +1761,17 @@ export function onExtensionUpdate() {
     delete settings.systemPromptPresets['Krea 2 Turbo (default)'];
     settings.systemPromptPresets[DEFAULT_PRESET_NAME] = DEFAULT_SYSTEM_PROMPT;
     settings.systemPromptPresets[ALT_PRESET_NAME] = ALT_SYSTEM_PROMPT;
+
+    // Heal auto-scroll if a previous session died inside the 2s suppression
+    // window around the mid-chat reload (see generateImages' finally): the
+    // pending marker means the user's flag was `true` before we flipped it,
+    // so restoring `true` here is always correct.
+    if (settings.autoScrollRestorePending) {
+        delete settings.autoScrollRestorePending;
+        const pu = SillyTavern.getContext().powerUserSettings;
+        if (pu) pu.auto_scroll_chat_to_bottom = true;
+        saveSettings();
+    }
 
     // Render settings panel
     const settingsHtml = await renderExtensionTemplateAsync(EXTENSION_FOLDER, 'settings');
