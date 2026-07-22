@@ -1437,6 +1437,12 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
 
     const chatIdAtStart = SillyTavern.getContext().getCurrentChatId();
 
+    // Per-message path: hold the target by object identity so concurrent
+    // inserts/deletes can't shift the index out from under us.
+    const targetMsg = targetIndex != null ? SillyTavern.getContext().chat[targetIndex] : null;
+    const isMidChat = targetMsg != null;
+    let insertedCount = 0;
+
     const s = getSettings();
 
     if (!s.activeWorkflow || !s.workflows?.[s.activeWorkflow]) {
@@ -1590,16 +1596,44 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
                 ...(debugPath ? { debugPath } : {}),
             },
         };
-        chat.push(imageMessage);
-        await addOneMessage(imageMessage, { scroll: true });
-        await saveChat();
-        injectDebugButtonOnMessage(chat.length - 1);
+        if (isMidChat) {
+            // Insert directly after the target message. indexOf === -1 with the
+            // same chat id means the target was deleted mid-generation → append
+            // at the end of the (correct) chat instead.
+            const at = chat.indexOf(targetMsg);
+            if (at === -1) toast('Comfy Imagine: original message was deleted — image appended at end.');
+            const insertAt = at === -1 ? chat.length : at + 1 + insertedCount;
+            chat.splice(insertAt, 0, imageMessage);
+            insertedCount++;
+            // No addOneMessage / per-image save here: the DOM would get stale
+            // mesid attributes. One saveChat + reloadCurrentChat in the finally
+            // renders everything consistently (ST's own mid-chat insert pattern).
+        } else {
+            chat.push(imageMessage);
+            await addOneMessage(imageMessage, { scroll: true });
+            await saveChat();
+            injectDebugButtonOnMessage(chat.length - 1);
+        }
         knownImaginePaths.add(path);
         if (debugPath) knownImaginePaths.add(debugPath);
     }
 
     } finally {
         isGenerating = false;
+        // Mid-chat inserts are in-memory only until saved; reloadCurrentChat
+        // re-fetches the chat from the server, so save MUST come first. Runs
+        // even after a mid-loop error/abort so images 1..k of n survive.
+        // reloadCurrentChat emits CHAT_CHANGED (script.js getChatResult), which
+        // re-injects debug/camera buttons and rebuilds knownImaginePaths.
+        if (insertedCount > 0) {
+            try {
+                const { saveChat, reloadCurrentChat } = SillyTavern.getContext();
+                await saveChat();
+                await reloadCurrentChat();
+            } catch (err) {
+                toast(`Comfy Imagine: failed to refresh chat — ${err.message}`, 'error');
+            }
+        }
     }
 
     return '';
