@@ -1665,19 +1665,43 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
                 if (getCurrentChatId() !== chatIdAtStart) {
                     toast(`Comfy Imagine: chat changed — ${insertedCount} generated image(s) may not have been saved.`, 'error');
                 } else {
-                    await saveChat();
-                    await reloadCurrentChat();
-                    // Reload re-renders and scrolls to the bottom; bring the
-                    // user back to the image they just generated. Path lookup
-                    // (not a saved index) survives any index shift across the
-                    // reload. ponytail: if the insert sits above ST's lazy-render
-                    // fold ("Load more messages"), the element doesn't exist and
-                    // we stay at the bottom — hook showMoreMessages if it matters.
-                    if (firstInsertedPath != null) {
-                        const idx = (SillyTavern.getContext().chat ?? [])
-                            .findIndex(m => m.extra?.imaginePath === firstInsertedPath);
-                        const mesEl = idx !== -1 ? document.querySelector(`.mes[mesid="${idx}"]`) : null;
-                        mesEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // ST's printMessages schedules two delayed scroll-to-bottoms
+                    // after the reload (a rAF one, and scrollOnMediaLoad which
+                    // re-fires when the chat's images — including the one we just
+                    // generated — finish loading, up to ~1.4s later). Both early-
+                    // return when auto_scroll_chat_to_bottom is off, so suppress
+                    // it around the reload and restore it after that window; a
+                    // plain scrollIntoView here would just be yanked back down.
+                    const pu = SillyTavern.getContext().powerUserSettings;
+                    const hadAutoScroll = pu?.auto_scroll_chat_to_bottom === true;
+                    if (hadAutoScroll) pu.auto_scroll_chat_to_bottom = false;
+                    try {
+                        await saveChat();
+                        await reloadCurrentChat();
+                        // Bring the user back to the image they just generated.
+                        // Path lookup (not a saved index) survives any index
+                        // shift across the reload. ponytail: if the insert sits
+                        // above ST's lazy-render fold ("Load more messages"),
+                        // the element doesn't exist and we stay at the bottom —
+                        // hook showMoreMessages if it matters.
+                        if (firstInsertedPath != null) {
+                            const idx = (SillyTavern.getContext().chat ?? [])
+                                .findIndex(m => m.extra?.imaginePath === firstInsertedPath);
+                            const mesEl = idx !== -1 ? document.querySelector(`.mes[mesid="${idx}"]`) : null;
+                            if (mesEl) {
+                                mesEl.scrollIntoView({ block: 'center' });
+                                // The generated image loads async and shifts the
+                                // layout; re-center once it's actually in.
+                                const img = mesEl.querySelector('.mes_block img');
+                                if (img && !img.complete) {
+                                    img.addEventListener('load', () => mesEl.scrollIntoView({ block: 'center' }), { once: true });
+                                }
+                            }
+                        }
+                    } finally {
+                        // Restore only after ST's media-load scroll window has
+                        // passed, or the deferred scrolls sneak back to bottom.
+                        if (hadAutoScroll) setTimeout(() => { pu.auto_scroll_chat_to_bottom = true; }, 2000);
                     }
                 }
             } catch (err) {
