@@ -155,6 +155,8 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 > [!NOTE]
 > Use SillyTavern's built-in **Abort** button to cancel generation mid-flight.
 
+**Generate an image for any message.** Every message (not just the latest one) also gets a 📷 camera icon in its three-dots menu. Click it to generate an image for that specific point in the story: the prompt is built from the chat only up to that message, and the result is placed right after it — so you can add an illustration to an earlier scene without regenerating anything or losing your place in the conversation.
+
 Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing **generation timing**, the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
 > [!NOTE]
