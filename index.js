@@ -1659,7 +1659,7 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
                 // chat is current NOW. Skip and say so — the uploaded files
                 // stay on disk but unreferenced.
                 if (getCurrentChatId() !== chatIdAtStart) {
-                    toast(`Comfy Imagine: chat changed — ${insertedCount} generated image(s) could not be saved.`, 'error');
+                    toast(`Comfy Imagine: chat changed — ${insertedCount} generated image(s) may not have been saved.`, 'error');
                 } else {
                     await saveChat();
                     await reloadCurrentChat();
@@ -1722,7 +1722,7 @@ export function onExtensionUpdate() {
     // buttons injected after any re-render keep working.
     $(document).on('click', '.comfy-imagine-gen-btn', e => {
         const mesid = parseInt($(e.currentTarget).closest('.mes').attr('mesid'));
-        if (!isNaN(mesid)) generateImages({ targetIndex: mesid });
+        if (!isNaN(mesid)) generateImages({ targetIndex: mesid }).catch(err => toast(`Comfy Imagine: ${err.message}`, 'error'));
     });
 
     // Inject debug buttons on chat load/switch and at startup
@@ -1740,6 +1740,12 @@ export function onExtensionUpdate() {
     // hook the per-message render events.
     eventSource.on(event_types.USER_MESSAGE_RENDERED, mesid => injectImagineButtonOnMessage(mesid));
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, mesid => injectImagineButtonOnMessage(mesid));
+    // Older messages render lazily ("Load more messages"); walk again when a
+    // batch appears so they get their buttons too. Both walkers are idempotent.
+    eventSource.on(event_types.MORE_MESSAGES_LOADED, () => {
+        injectAllImagineButtons();
+        injectAllDebugButtons();
+    });
     injectAllDebugButtons();
     injectAllImagineButtons();
     knownImaginePaths = collectImaginePaths();   // seed baseline at startup
