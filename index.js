@@ -1431,11 +1431,13 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
         return '';
     }
 
+    let chatIdAtStart = null;
+
     try {
 
     isGenerating = true;
 
-    const chatIdAtStart = SillyTavern.getContext().getCurrentChatId();
+    chatIdAtStart = SillyTavern.getContext().getCurrentChatId();
 
     // Per-message path: hold the target by object identity so concurrent
     // inserts/deletes can't shift the index out from under us.
@@ -1601,7 +1603,7 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
             // same chat id means the target was deleted mid-generation → append
             // at the end of the (correct) chat instead.
             const at = chat.indexOf(targetMsg);
-            if (at === -1) toast('Comfy Imagine: original message was deleted — image appended at end.');
+            if (at === -1 && insertedCount === 0) toast('Comfy Imagine: original message was deleted — image appended at end.');
             const insertAt = at === -1 ? chat.length : at + 1 + insertedCount;
             chat.splice(insertAt, 0, imageMessage);
             insertedCount++;
@@ -1627,9 +1629,17 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
         // re-injects debug/camera buttons and rebuilds knownImaginePaths.
         if (insertedCount > 0) {
             try {
-                const { saveChat, reloadCurrentChat } = SillyTavern.getContext();
-                await saveChat();
-                await reloadCurrentChat();
+                const { saveChat, reloadCurrentChat, getCurrentChatId } = SillyTavern.getContext();
+                // Never persist into a different chat than we spliced into: a
+                // switch mid-generation means the save would target whatever
+                // chat is current NOW. Skip and say so — the uploaded files
+                // stay on disk but unreferenced.
+                if (getCurrentChatId() !== chatIdAtStart) {
+                    toast(`Comfy Imagine: chat changed — ${insertedCount} generated image(s) could not be saved.`, 'error');
+                } else {
+                    await saveChat();
+                    await reloadCurrentChat();
+                }
             } catch (err) {
                 toast(`Comfy Imagine: failed to refresh chat — ${err.message}`, 'error');
             }
