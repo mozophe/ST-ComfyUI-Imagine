@@ -49,7 +49,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 
 | Requirement | Details |
 |---|---|
-| **SillyTavern** | `release` v1.18.0+, on desktop or mobile (including Android via [Termux](https://github.com/SillyTavern/SillyTavern)) |
+| **SillyTavern** | `release` v1.18.0+, on desktop or mobile (including Android via [Termux](https://docs.sillytavern.app/installation/android-\(termux\)/)) |
 | **ComfyUI** | a running instance (local or on your LAN) |
 | **LLM API** | any OpenAI-compatible endpoint (OpenAI, a local Ollama server, etc.) |
 | **ComfyUI custom node** | [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver). **Optional but highly recommended.** Required only for the shipped example workflows (they save WebP); not needed if you bring your own workflow, but WebP keeps stored images far smaller. See [Using the Example Workflows](#using-the-example-workflows). |
