@@ -966,7 +966,18 @@ async function generatePromptViaLLM(contextString, signal) {
     // content, or a separate field (reasoning_content on DeepSeek, reasoning on
     // OpenRouter/others). Capture whichever exists so the debug modal can show it.
     const reasoning = (message.reasoning_content ?? message.reasoning ?? '').trim();
+    // ponytail: on any failure below, the reasoning/finish_reason is the whole
+    // debug story but there's no success message to hang a sidecar on — so just
+    // dump it to the console. Open devtools to see why it burned the budget.
+    const logFailure = () => console.error('[comfy-imagine] LLM produced no usable prompt', {
+        finish_reason: data.choices?.[0]?.finish_reason,
+        max_tokens: s.maxTokens,
+        reasoning,
+        content,
+        raw: data,
+    });
     if (!content) {
+        logFailure();
         // 200 OK but no text — the reason is usually buried in the body
         // (provider error object, content filter, or a stop with no output).
         const code = data.error?.code ?? data.error?.type;
@@ -986,7 +997,8 @@ async function generatePromptViaLLM(contextString, signal) {
     const { prompt, reasoning: inlineReasoning } = separateReasoning(content);
     const combinedReasoning = [reasoning, inlineReasoning].filter(Boolean).join('\n');
     if (!prompt) {
-        throw new Error(`LLM returned only reasoning, no prompt — it likely ran out of tokens mid-thought. Raise Max Tokens (currently ${s.maxTokens}).`);
+        logFailure();
+        throw new Error(`LLM returned only reasoning, no prompt — it likely ran out of tokens mid-thought. Raise Max Tokens (currently ${s.maxTokens}). Full reasoning in devtools console.`);
     }
     return { content: prompt, reasoning: combinedReasoning };
 }
