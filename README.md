@@ -218,7 +218,7 @@ Pick one as your starting point, but point the loaders at **your own** model fil
 > **These templates save with the `Image Saver Simple` node, a custom node, so install it first or the workflow won't load. It's optional but highly recommended.** In ComfyUI: **Manager → Custom Nodes Manager**, search **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI. Source: [alexopus/ComfyUI-Image-Saver](https://github.com/alexopus/ComfyUI-Image-Saver).
 >
 > **Why not the built-in `SaveImage`?** `SaveImage` only writes PNG. `Image Saver Simple` writes **WebP**, which is **dramatically smaller** than PNG for the same image with no visible loss. In practice a ~1.4 MB PNG drops to ~100 KB WebP, a **~93% reduction**. Because the extension downloads every generated image and stores it inside SillyTavern, that saving compounds fast:
-> - **Disk:** a chat with hundreds of images stays in megabytes, not gigabytes.
+> - **Disk:** a chat with hundreds of images stays in megabytes, not gigabytes. This matters most on mobile (e.g. a Termux install), where storage is tight.
 > - **Speed:** chats open and scroll faster, and each image loads near-instantly.
 > - **Backups & exports:** SillyTavern chat backups and exports stay small and quick to move.
 >
