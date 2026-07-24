@@ -1146,7 +1146,11 @@ async function submitAndPoll(workflowJson, signal) {
                     const images = nodeOut.images ?? [];
                     if (images.length > 0) {
                         const img = images[0];
-                        return `${comfyUrl}/view?filename=${encodeURIComponent(img.filename)}&subfolder=${encodeURIComponent(img.subfolder ?? '')}&type=output`;
+                        // Custom savers (e.g. Image Saver Simple) report images as
+                        // type "temp", not "output" — honour the reported type
+                        // instead of hardcoding, or /view 404s.
+                        const type = img.type ?? 'output';
+                        return `${comfyUrl}/view?filename=${encodeURIComponent(img.filename)}&subfolder=${encodeURIComponent(img.subfolder ?? '')}&type=${encodeURIComponent(type)}`;
                     }
                 }
             }
