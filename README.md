@@ -24,7 +24,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 - **Always-on LoRA:** stack a LoRA applied to every image (style, quality, detail, aesthetic, …), independent of the per-character one.
 - **Any ComfyUI workflow:** bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
 - **Compact WebP storage:** example workflows save WebP instead of PNG, the same image at a ~93% smaller file size, keeping chats, disk use, and backups small.
-- **First-person POV default:** ships with a Krea 2 Turbo–tuned system prompt and full preset management.
+- **First-person POV default:** ships with a system prompt tuned for Krea 2 Turbo and full preset management.
 - **Generation timing:** the debug modal shows how long each image took, split into LLM vs ComfyUI phases, plus a global rolling last-10 average.
 - **Desktop & mobile:** searchable LoRA picker on desktop, native picker on touch. Fully abortable; images are hidden from the main model.
 
@@ -98,7 +98,7 @@ python main.py --listen 0.0.0.0 --enable-cors-header
 
 ### 2. Install the Image Saver Node *(recommended)*
 
-The shipped example workflows save images as WebP using the [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver) custom node, which keeps stored images about 93% smaller than PNG. In ComfyUI, open **Manager → Custom Nodes Manager**, search for **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI.
+The shipped example workflows save images as WebP using the [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver) custom node, which keeps stored images ~93% smaller than PNG. In ComfyUI, open **Manager → Custom Nodes Manager**, search for **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI.
 
 Skip this only if you bring your own workflow that saves with the built-in `SaveImage` node instead. See [Using the Example Workflows](#using-the-example-workflows) for details.
 
@@ -215,7 +215,7 @@ The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagin
 Pick one as your starting point, but point the loaders at **your own** model files first. Both ship with placeholder filenames, so they won't run until you set the real ones. The steps below use `Krea2_CLora.json`; `Krea2_StyleLora_CLora.json` is identical apart from the extra always-on loader.
 
 > [!IMPORTANT]
-> **These example workflows save as WebP using the `Image Saver Simple` custom node, so install it before loading them or the graph won't open.** It isn't required by the extension itself (only these templates use it), but it's highly recommended for the reason below. To install, in ComfyUI open **Manager → Custom Nodes Manager**, search **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI. Source: [alexopus/ComfyUI-Image-Saver](https://github.com/alexopus/ComfyUI-Image-Saver).
+> **These example workflows save as WebP using the `Image Saver Simple` custom node, so install it before loading them or the graph won't open** (see [Setup step 2](#2-install-the-image-saver-node-recommended) for the install steps). It isn't required by the extension itself, only these templates use it, but it's highly recommended for the reason below.
 >
 > **Why not the built-in `SaveImage`?** `SaveImage` only writes PNG. `Image Saver Simple` writes **WebP**, which is **dramatically smaller** than PNG for the same image with no visible loss. In practice a ~1.4 MB PNG drops to ~100 KB WebP, a **~93% reduction**. Because the extension downloads every generated image and stores it inside SillyTavern, that saving compounds fast:
 > - **Disk:** a chat with hundreds of images stays in megabytes, not gigabytes. This matters most on mobile (e.g. a Termux install), where storage is tight.
