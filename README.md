@@ -18,11 +18,12 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 ## ✨ Features
 
 - **`/imagine` anywhere:** a slash command or one-click Quick Reply button that generates an image from the current scene.
+- **Generate on any message:** a 📷 camera button on every chat message generates an image for that moment, prompted from the story as it stood there and inserted right after it.
 - **Context-aware prompts:** a dedicated LLM turns the character card, your persona, and recent chat into a prompt for image generation.
 - **Per-character LoRAs:** bind a LoRA to each character; it loads automatically when they're active, with no settings changes on switch.
 - **Always-on LoRA:** stack a LoRA applied to every image (style, quality, detail, aesthetic, …), independent of the per-character one.
 - **Any ComfyUI workflow:** bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
-- **Compact WebP storage:** example workflows save WebP instead of PNG — the same image at roughly a tenth the size, keeping chats, disk use, and backups small.
+- **Compact WebP storage:** example workflows save WebP instead of PNG, the same image at a ~93% smaller file size, keeping chats, disk use, and backups small.
 - **First-person POV default:** ships with a Krea 2 Turbo–tuned system prompt and full preset management.
 - **Generation timing:** the debug modal shows how long each image took, split into LLM vs ComfyUI phases, plus a global rolling last-10 average.
 - **Desktop & mobile:** searchable LoRA picker on desktop, native picker on touch. Fully abortable; images are hidden from the main model.
@@ -51,7 +52,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 | **SillyTavern** | `release` v1.18.0+ |
 | **ComfyUI** | a running instance (local or on your LAN) |
 | **LLM API** | any OpenAI-compatible endpoint (OpenAI, a local Ollama server, etc.) |
-| **ComfyUI custom node** | [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver) — **optional but highly recommended.** Required only for the shipped example workflows (they save WebP); not needed if you bring your own workflow, but WebP keeps stored images far smaller. See [Using the Example Workflows](#using-the-example-workflows). |
+| **ComfyUI custom node** | [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver). **Optional but highly recommended.** Required only for the shipped example workflows (they save WebP); not needed if you bring your own workflow, but WebP keeps stored images far smaller. See [Using the Example Workflows](#using-the-example-workflows). |
 
 ## 📦 Installation
 
@@ -111,7 +112,7 @@ The base URL must be an **OpenAI-compatible** endpoint (the extension calls `/ch
 This is a separate LLM from your main chat model. Writing an image prompt is a simple task, so a smaller, cheaper model (e.g. Gemma 4 31B, `gemma-4-31B-it`) is usually good enough and keeps cost/latency down. Point it at a larger model if you prefer.
 
 > [!TIP]
-> **Create a separate API key just for this extension and give it a low spending limit**, rather than pasting your main key. Since a browser-only extension has no backend, the key is stored as plain text in `settings.json` — so a dedicated, low-cap key keeps the impact small in the unlikely event it's ever exposed. See [Security](#-security) for details.
+> **Create a separate API key just for this extension and give it a low spending limit**, rather than pasting your main key. Since a browser-only extension has no backend, the key is stored as plain text in `settings.json`, so a dedicated, low-cap key keeps the impact small in the unlikely event it's ever exposed. See [Security](#-security) for details.
 
 ### 4. System Prompt
 
@@ -122,7 +123,7 @@ The extension ships with a default system prompt (tuned for **Krea 2 Turbo**) th
 
 It's always available as the **`Krea 2 (default)`** entry in the **System Prompt Presets** dropdown. This entry is kept in sync with the shipped default (it resets on reload), so to customise, edit the textarea and use **Save As** to store your own named preset rather than overwriting the default. Switch between saved prompts via the dropdown, overwrite the selected (non-default) preset with **Save**, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
 
-The extension also ships a second built-in preset, **`Krea 2 - Intimate POV`** — a prompt writer tuned for close, intimate first-person POV scenes, with detailed pose, anatomy, and framing rules. It's available in the dropdown but **not** selected by default; pick it if you want it. Like the default, it's read-only and kept in sync on reload (Save is blocked; use **Save As** to keep an edited copy under your own name).
+The extension also ships a second built-in preset, **`Krea 2 - Intimate POV`**, a prompt writer tuned for close, intimate first-person POV scenes, with detailed pose, anatomy, and framing rules. It's available in the dropdown but **not** selected by default; pick it if you want it. Like the default, it's read-only and kept in sync on reload (Save is blocked; use **Save As** to keep an edited copy under your own name).
 
 > [!TIP]
 > **Once the rest of the setup works, this is the first thing to tailor.** The System Prompt is what shapes every image (its style, framing, and detail), so edit it to suit the look you want and the model you're using.
@@ -157,7 +158,7 @@ Type `/imagine` in the chat input or attach it to a Quick Reply button. The exte
 > [!NOTE]
 > Use SillyTavern's built-in **Abort** button to cancel generation mid-flight.
 
-**Generate an image for any message.** Every chat message (not just the latest one — only generated images themselves are skipped) gets a 📷 camera icon in its three-dots menu. Click it to generate an image for that specific point in the story: the prompt is built from the chat only up to that message, and the result is placed right after it — the view scrolls to the new image when it's done, so you can add an illustration to an earlier scene without regenerating anything or losing your place in the conversation. A stop button appears while generating, in case you want to cancel.
+**Generate an image for any message.** Every chat message (not just the latest one; only generated images themselves are skipped) gets a 📷 camera icon in its three-dots menu. Click it to generate an image for that specific point in the story: the prompt is built from the chat only up to that message, and the result is placed right after it. The view scrolls to the new image when it's done, so you can add an illustration to an earlier scene without regenerating anything or losing your place in the conversation. A stop button appears while generating, in case you want to cancel.
 
 Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing **generation timing**, the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
 
@@ -166,11 +167,11 @@ Each generated image message has a ⓘ button in the message action row. Click i
 
 > [!NOTE]
 > **Reasoning models.** Chain-of-thought is separated from the image prompt so it never reaches ComfyUI, and is shown in a dedicated **Model Reasoning** section in the debug modal. Separation works in this order:
-> 1. **Separate field** — `reasoning_content` (DeepSeek) or `reasoning` (OpenRouter and others), when the API returns one.
-> 2. **Tagged inline** — a `<think>…</think>` block or common variants (`<thinking>`, `<reason>`), including malformed cases: a missing opening tag, a reply truncated mid-thought, etc.
-> 3. **Untagged fallback** — if the model reasons in plain prose with no tags at all, the **last paragraph is treated as the prompt** and everything before it as reasoning.
+> 1. **Separate field:** `reasoning_content` (DeepSeek) or `reasoning` (OpenRouter and others), when the API returns one.
+> 2. **Tagged inline:** a `<think>…</think>` block or common variants (`<thinking>`, `<reason>`), including malformed cases such as a missing opening tag or a reply truncated mid-thought.
+> 3. **Untagged fallback:** if the model reasons in plain prose with no tags at all, the **last paragraph is treated as the prompt** and everything before it as reasoning.
 >
-> Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated from any preamble by a blank line. The bundled default does this. If your prompt and reasoning run together with only single line breaks, they can't be split — keep the prompt as a distinct last paragraph. Reasoning is captured on new generations only; regenerate with `/imagine` to see it for an existing image.
+> Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated from any preamble by a blank line. The bundled default does this. If your prompt and reasoning run together with only single line breaks, they can't be split, so keep the prompt as a distinct last paragraph. Reasoning is captured on new generations only; regenerate with `/imagine` to see it for an existing image.
 
 ### Quick Reply Setup
 
@@ -208,14 +209,14 @@ The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagin
 Pick one as your starting point, but point the loaders at **your own** model files first. Both ship with placeholder filenames, so they won't run until you set the real ones. The steps below use `Krea2_CLora.json`; `Krea2_StyleLora_CLora.json` is identical apart from the extra always-on loader.
 
 > [!IMPORTANT]
-> **These templates save with the `Image Saver Simple` node, a custom node — install it first or the workflow won't load. It's optional but highly recommended.** In ComfyUI: **Manager → Custom Nodes Manager**, search **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI. Source: [alexopus/ComfyUI-Image-Saver](https://github.com/alexopus/ComfyUI-Image-Saver).
+> **These templates save with the `Image Saver Simple` node, a custom node, so install it first or the workflow won't load. It's optional but highly recommended.** In ComfyUI: **Manager → Custom Nodes Manager**, search **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI. Source: [alexopus/ComfyUI-Image-Saver](https://github.com/alexopus/ComfyUI-Image-Saver).
 >
-> **Why not the built-in `SaveImage`?** `SaveImage` only writes PNG. `Image Saver Simple` writes **WebP**, which is **dramatically smaller** than PNG for the same image with no visible loss — in practice a ~1.4 MB PNG drops to ~100 KB WebP, a **~93% reduction**. Because the extension downloads every generated image and stores it inside SillyTavern, that saving compounds fast:
-> - **Disk** — a chat with hundreds of images stays in megabytes, not gigabytes.
-> - **Speed** — chats open and scroll faster; each image loads near-instantly.
-> - **Backups & exports** — SillyTavern chat backups and exports stay small and quick to move.
+> **Why not the built-in `SaveImage`?** `SaveImage` only writes PNG. `Image Saver Simple` writes **WebP**, which is **dramatically smaller** than PNG for the same image with no visible loss. In practice a ~1.4 MB PNG drops to ~100 KB WebP, a **~93% reduction**. Because the extension downloads every generated image and stores it inside SillyTavern, that saving compounds fast:
+> - **Disk:** a chat with hundreds of images stays in megabytes, not gigabytes.
+> - **Speed:** chats open and scroll faster, and each image loads near-instantly.
+> - **Backups & exports:** SillyTavern chat backups and exports stay small and quick to move.
 >
-> The templates set `extension: webp`; the extension already handles WebP end to end (fetch, upload, cleanup). If you'd rather keep PNG, just swap node 9 back to a `SaveImage` node — nothing else depends on it.
+> The templates set `extension: webp`; the extension already handles WebP end to end (fetch, upload, cleanup). If you'd rather keep PNG, just swap the save node back to a `SaveImage` node; nothing else depends on it.
 
 1. **Download** your chosen file from the repo.
 2. **Drag and drop** the file onto the ComfyUI canvas to load the graph.
@@ -295,7 +296,7 @@ A worked example with two LoRAs is in [`workflows/Krea2_StyleLora_CLora.json`](w
 
 ## 🔄 Updating
 
-Updates are **manual by design** — `auto_update` is off, so nothing updates behind your back. Update when you choose to, from **Extensions → Manage Extensions**, by clicking the extension's update button.
+Updates are **manual by design:** `auto_update` is off, so nothing updates behind your back. Update when you choose to, from **Extensions → Manage Extensions**, by clicking the extension's update button.
 
 ## 🔁 Migrating Legacy Chats
 
@@ -309,7 +310,7 @@ If you have chats from those early versions, open the extension settings, find t
 
 ## 🔒 Security
 
-This extension stores the LLM API key as plain text in your `data/<user>/settings.json`. A browser-only extension has no backend, so it can't use SillyTavern's server-side key store (`secrets.json`) the way SillyTavern's own connections do — `settings.json` is the only place it can persist the key.
+This extension stores the LLM API key as plain text in your `data/<user>/settings.json`. A browser-only extension has no backend, so it can't use SillyTavern's server-side key store (`secrets.json`) the way SillyTavern's own connections do, leaving `settings.json` as the only place it can persist the key.
 
 One easy habit keeps this a non-issue: **use a dedicated API key with a low spending limit** for this extension (see [Setup step 3](#3-llm-prompt-generator)), and don't share your `settings.json` (including in screenshots or copies posted for help). That way even if the key is ever exposed, the impact is capped.
 
