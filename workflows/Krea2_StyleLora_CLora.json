@@ -1,15 +1,25 @@
 {
   "9": {
     "inputs": {
-      "filename_prefix": "imagine/image",
+      "filename": "imagine/image_%time",
+      "path": "",
+      "extension": "webp",
+      "lossless_webp": false,
+      "quality_jpeg_or_webp": 80,
+      "optimize_png": false,
+      "embed_workflow": false,
+      "save_workflow_as_json": false,
+      "counter": 0,
+      "time_format": "%Y-%m-%d-%H%M%S",
+      "show_preview": true,
       "images": [
         "43",
         0
       ]
     },
-    "class_type": "SaveImage",
+    "class_type": "Image Saver Simple",
     "_meta": {
-      "title": "Save Image"
+      "title": "Image Saver Simple"
     }
   },
   "42": {

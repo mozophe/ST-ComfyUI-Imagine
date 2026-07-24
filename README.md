@@ -22,6 +22,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 - **Per-character LoRAs:** bind a LoRA to each character; it loads automatically when they're active, with no settings changes on switch.
 - **Always-on LoRA:** stack a LoRA applied to every image (style, quality, detail, aesthetic, …), independent of the per-character one.
 - **Any ComfyUI workflow:** bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
+- **Compact WebP storage:** example workflows save WebP instead of PNG — the same image at roughly a tenth the size, keeping chats, disk use, and backups small.
 - **First-person POV default:** ships with a Krea 2 Turbo–tuned system prompt and full preset management.
 - **Generation timing:** the debug modal shows how long each image took, split into LLM vs ComfyUI phases, plus a global rolling last-10 average.
 - **Desktop & mobile:** searchable LoRA picker on desktop, native picker on touch. Fully abortable; images are hidden from the main model.
@@ -50,6 +51,7 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 | **SillyTavern** | `release` v1.18.0+ |
 | **ComfyUI** | a running instance (local or on your LAN) |
 | **LLM API** | any OpenAI-compatible endpoint (OpenAI, a local Ollama server, etc.) |
+| **ComfyUI custom node** | [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver) — **optional but highly recommended.** Required only for the shipped example workflows (they save WebP); not needed if you bring your own workflow, but WebP keeps stored images far smaller. See [Using the Example Workflows](#using-the-example-workflows). |
 
 ## 📦 Installation
 
@@ -204,6 +206,16 @@ The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagin
 | [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | an always-on `Load LoRA` **feeding** the per-character `IMAGINE_LORA` | you also want a style/quality/detail/aesthetic LoRA on **every** image (see [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora)) |
 
 Pick one as your starting point, but point the loaders at **your own** model files first. Both ship with placeholder filenames, so they won't run until you set the real ones. The steps below use `Krea2_CLora.json`; `Krea2_StyleLora_CLora.json` is identical apart from the extra always-on loader.
+
+> [!IMPORTANT]
+> **These templates save with the `Image Saver Simple` node, a custom node — install it first or the workflow won't load. It's optional but highly recommended.** In ComfyUI: **Manager → Custom Nodes Manager**, search **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI. Source: [alexopus/ComfyUI-Image-Saver](https://github.com/alexopus/ComfyUI-Image-Saver).
+>
+> **Why not the built-in `SaveImage`?** `SaveImage` only writes PNG. `Image Saver Simple` writes **WebP**, which is **dramatically smaller** than PNG for the same image with no visible loss — in practice a ~1.4 MB PNG drops to ~100 KB WebP, a **~93% reduction**. Because the extension downloads every generated image and stores it inside SillyTavern, that saving compounds fast:
+> - **Disk** — a chat with hundreds of images stays in megabytes, not gigabytes.
+> - **Speed** — chats open and scroll faster; each image loads near-instantly.
+> - **Backups & exports** — SillyTavern chat backups and exports stay small and quick to move.
+>
+> The templates set `extension: webp`; the extension already handles WebP end to end (fetch, upload, cleanup). If you'd rather keep PNG, just swap node 9 back to a `SaveImage` node — nothing else depends on it.
 
 1. **Download** your chosen file from the repo.
 2. **Drag and drop** the file onto the ComfyUI canvas to load the graph.
