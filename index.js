@@ -1150,7 +1150,18 @@ async function submitAndPoll(workflowJson, signal) {
                         // type "temp", not "output" — honour the reported type
                         // instead of hardcoding, or /view 404s.
                         const type = img.type ?? 'output';
-                        return `${comfyUrl}/view?filename=${encodeURIComponent(img.filename)}&subfolder=${encodeURIComponent(img.subfolder ?? '')}&type=${encodeURIComponent(type)}`;
+                        // Some savers embed the subfolder into filename with an OS
+                        // separator (e.g. "Krea2\image.webp") and leave subfolder
+                        // empty. /view needs them split, with forward-slash subfolder.
+                        let filename = String(img.filename).replace(/\\/g, '/');
+                        let subfolder = (img.subfolder ?? '').replace(/\\/g, '/');
+                        const slash = filename.lastIndexOf('/');
+                        if (slash !== -1) {
+                            const dir = filename.slice(0, slash);
+                            filename = filename.slice(slash + 1);
+                            subfolder = subfolder ? `${subfolder}/${dir}` : dir;
+                        }
+                        return `${comfyUrl}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=${encodeURIComponent(type)}`;
                     }
                 }
             }
