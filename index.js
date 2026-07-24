@@ -1037,7 +1037,14 @@ function injectPromptIntoWorkflow(workflow, positivePrompt, negativePrompt) {
     }
 
     if (!positiveTarget) {
-        if (clipNodes.length === 0) throw new Error('Workflow JSON is invalid or missing CLIPTextEncode node.');
+        if (clipNodes.length === 0) {
+            // UI-export format has a `nodes` array (type/title) instead of the
+            // API format's node-id → {class_type, inputs} map the injector needs.
+            if (Array.isArray(workflow.nodes)) {
+                throw new Error('Workflow looks like a UI export, not API format. In ComfyUI use "Export (API)" (or enable Dev Mode → "Save (API Format)") and upload that JSON.');
+            }
+            throw new Error('Workflow JSON is invalid or missing CLIPTextEncode node.');
+        }
         positiveTarget = clipNodes[0];
     }
 
