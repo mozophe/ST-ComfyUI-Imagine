@@ -47,9 +47,9 @@ Reads your chat context, asks an LLM to write an image prompt, renders it in Com
 
 ## 📋 Requirements
 
-| | |
+| Requirement | Details |
 |---|---|
-| **SillyTavern** | `release` v1.18.0+ |
+| **SillyTavern** | `release` v1.18.0+, on desktop or mobile (including Android via [Termux](https://github.com/SillyTavern/SillyTavern)) |
 | **ComfyUI** | a running instance (local or on your LAN) |
 | **LLM API** | any OpenAI-compatible endpoint (OpenAI, a local Ollama server, etc.) |
 | **ComfyUI custom node** | [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver). **Optional but highly recommended.** Required only for the shipped example workflows (they save WebP); not needed if you bring your own workflow, but WebP keeps stored images far smaller. See [Using the Example Workflows](#using-the-example-workflows). |
@@ -74,7 +74,7 @@ Pick the command for your setup:
 python main.py --enable-cors-header
 ```
 
-**Different machines** (e.g. SillyTavern on a Raspberry Pi, ComfyUI on a desktop):
+**Different machines** (e.g. SillyTavern on a phone via Termux or a Raspberry Pi, ComfyUI on a desktop):
 
 ```bash
 python main.py --listen 0.0.0.0 --enable-cors-header
