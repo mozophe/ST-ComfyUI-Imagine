@@ -896,7 +896,7 @@ function assembleContext(uptoIndex = null) {
     lines.push(`Name: ${character.name ?? 'Unknown'}`);
     if (character.description) lines.push(`Description: ${character.description}`);
     if (character.personality) lines.push(`Personality: ${character.personality}`);
-    if (character.scenario)    lines.push(`Scenario: ${character.scenario}`);
+    if (character.scenario) lines.push(`Scenario: ${character.scenario}`);
 
     lines.push('');
     lines.push('[USER PERSONA]');
@@ -1200,7 +1200,10 @@ async function uploadImageToST(rawB64, format, chName, filename) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'upload_failed');
     }
-    return (await res.json()).path;
+    // ST's upload endpoint does not return a path that is URL encoded,
+    // which would break displaying images for characters that have spaces or special characters in their name
+    // Returning the href parameter of a temporary URL object should encode the URL correctly (ie. %20 in place of whitespace)
+    return new URL((await res.json()).path).href;
 }
 
 // Stores a debug JSON blob as a file on the ST server (POST /api/files/upload,
@@ -1254,7 +1257,7 @@ async function deleteOwnedFile(path) {
         method: 'POST',
         headers: getRequestHeaders(),
         body: JSON.stringify({ path }),
-    }).catch(() => {});
+    }).catch(() => { });
 }
 
 // On message deletion, delete files whose messages are gone. MESSAGE_DELETED
@@ -1387,8 +1390,8 @@ async function showDebugModal(mesid) {
     const thisMs = msg.extra?.elapsedMs;
     const timing = typeof thisMs === 'number'
         ? `This image — total ${secs(thisMs)}s`
-            + (typeof msg.extra?.llmMs === 'number' ? ` &nbsp;(LLM ${secs(msg.extra.llmMs)}s · ComfyUI ${secs(msg.extra.comfyMs)}s)` : '')
-            + `<br>Global last-10 avg — total ${secs(avg10(gs.genTimes))}s · LLM ${secs(avg10(gs.llmTimes))}s · ComfyUI ${secs(avg10(gs.comfyTimes))}s`
+        + (typeof msg.extra?.llmMs === 'number' ? ` &nbsp;(LLM ${secs(msg.extra.llmMs)}s · ComfyUI ${secs(msg.extra.comfyMs)}s)` : '')
+        + `<br>Global last-10 avg — total ${secs(avg10(gs.genTimes))}s · LLM ${secs(avg10(gs.llmTimes))}s · ComfyUI ${secs(avg10(gs.comfyTimes))}s`
         : 'Not recorded (generate a new image with /imagine to capture timing)';
 
     const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1497,190 +1500,190 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
 
     try {
 
-    isGenerating = true;
+        isGenerating = true;
 
-    chatIdAtStart = SillyTavern.getContext().getCurrentChatId();
+        chatIdAtStart = SillyTavern.getContext().getCurrentChatId();
 
-    // Per-message path: hold the target by object identity so concurrent
-    // inserts/deletes can't shift the index out from under us.
-    const targetMsg = targetIndex != null ? SillyTavern.getContext().chat[targetIndex] : null;
-    const isMidChat = targetMsg != null;
+        // Per-message path: hold the target by object identity so concurrent
+        // inserts/deletes can't shift the index out from under us.
+        const targetMsg = targetIndex != null ? SillyTavern.getContext().chat[targetIndex] : null;
+        const isMidChat = targetMsg != null;
 
-    const s = getSettings();
+        const s = getSettings();
 
-    if (!s.activeWorkflow || !s.workflows?.[s.activeWorkflow]) {
-        toast('Comfy Imagine: No workflow selected. Check extension settings.', 'error');
-        return '';
-    }
-
-    let workflowBase;
-    try {
-        workflowBase = JSON.parse(s.workflows[s.activeWorkflow]);
-    } catch {
-        toast('Comfy Imagine: Workflow JSON is invalid or missing CLIPTextEncode node.', 'error');
-        return '';
-    }
-
-    toast('Generating image…');
-
-    // Wall-clock start for generation timing (click → image saved). Stored per
-    // image as extra.elapsedMs; the debug modal shows it + a last-10 average.
-    // ponytail: single t0 → for imageCount>1 later images carry the shared LLM
-    // time cumulatively, not per-image. Fine for the 1-image camera quick-click.
-    const t0 = performance.now();
-
-    // Step 1 — gather context (cut at targetIndex for per-message generation)
-    const contextString = assembleContext(targetIndex);
-
-    // Step 2 — call LLM
-    let llmOutput, llmReasoning;
-    try {
-        ({ content: llmOutput, reasoning: llmReasoning } = await generatePromptViaLLM(contextString, signal));
-    } catch (err) {
-        if (err.name === 'AbortError') return '';
-        toast(`Comfy Imagine: LLM error — ${err.message}`, 'error');
-        return '';
-    }
-
-    // LLM phase time (t0 → prompt returned). Shared across all images in the call,
-    // so it's logged once, not per image.
-    const llmMs = Math.round(performance.now() - t0);
-    (s.llmTimes ??= []).push(llmMs);
-    if (s.llmTimes.length > 50) s.llmTimes.shift();
-
-    const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
-    toast('Prompt ready, submitting to ComfyUI…');
-
-    // Steps 3–N: for each image
-    const imageCount = Math.min(8, Math.max(1, s.imageCount || 1));
-    for (let i = 0; i < imageCount; i++) {
-        const workflow = JSON.parse(JSON.stringify(workflowBase)); // deep clone
-
-        try {
-            injectPromptIntoWorkflow(workflow, finalPrompt, s.negativePrompt);
-        } catch (err) {
-            toast(`Comfy Imagine: ${err.message}`, 'error');
+        if (!s.activeWorkflow || !s.workflows?.[s.activeWorkflow]) {
+            toast('Comfy Imagine: No workflow selected. Check extension settings.', 'error');
             return '';
         }
 
-        const loraErr = injectCharacterLora(workflow);
-        if (loraErr && i === 0) toast(`Comfy Imagine: ${loraErr}`, 'error');
-
-        if (imageCount > 1) randomiseSeed(workflow);
-
-        // ComfyUI phase start for THIS image (submit + poll + fetch + upload).
-        // Per-image, so multi-image calls get an accurate comfy time each.
-        const tComfyStart = performance.now();
-
-        let imageUrl;
+        let workflowBase;
         try {
-            imageUrl = await submitAndPoll(workflow, signal);
+            workflowBase = JSON.parse(s.workflows[s.activeWorkflow]);
+        } catch {
+            toast('Comfy Imagine: Workflow JSON is invalid or missing CLIPTextEncode node.', 'error');
+            return '';
+        }
+
+        toast('Generating image…');
+
+        // Wall-clock start for generation timing (click → image saved). Stored per
+        // image as extra.elapsedMs; the debug modal shows it + a last-10 average.
+        // ponytail: single t0 → for imageCount>1 later images carry the shared LLM
+        // time cumulatively, not per-image. Fine for the 1-image camera quick-click.
+        const t0 = performance.now();
+
+        // Step 1 — gather context (cut at targetIndex for per-message generation)
+        const contextString = assembleContext(targetIndex);
+
+        // Step 2 — call LLM
+        let llmOutput, llmReasoning;
+        try {
+            ({ content: llmOutput, reasoning: llmReasoning } = await generatePromptViaLLM(contextString, signal));
         } catch (err) {
             if (err.name === 'AbortError') return '';
-            if (err.message === 'timeout') {
-                toast('Comfy Imagine: Generation timed out.', 'error');
-            } else {
-                toast(err.message, 'error');
+            toast(`Comfy Imagine: LLM error — ${err.message}`, 'error');
+            return '';
+        }
+
+        // LLM phase time (t0 → prompt returned). Shared across all images in the call,
+        // so it's logged once, not per image.
+        const llmMs = Math.round(performance.now() - t0);
+        (s.llmTimes ??= []).push(llmMs);
+        if (s.llmTimes.length > 50) s.llmTimes.shift();
+
+        const finalPrompt = (s.promptPrefix ?? '') + llmOutput + (s.promptSuffix ?? '');
+        toast('Prompt ready, submitting to ComfyUI…');
+
+        // Steps 3–N: for each image
+        const imageCount = Math.min(8, Math.max(1, s.imageCount || 1));
+        for (let i = 0; i < imageCount; i++) {
+            const workflow = JSON.parse(JSON.stringify(workflowBase)); // deep clone
+
+            try {
+                injectPromptIntoWorkflow(workflow, finalPrompt, s.negativePrompt);
+            } catch (err) {
+                toast(`Comfy Imagine: ${err.message}`, 'error');
+                return '';
             }
-            return '';
+
+            const loraErr = injectCharacterLora(workflow);
+            if (loraErr && i === 0) toast(`Comfy Imagine: ${loraErr}`, 'error');
+
+            if (imageCount > 1) randomiseSeed(workflow);
+
+            // ComfyUI phase start for THIS image (submit + poll + fetch + upload).
+            // Per-image, so multi-image calls get an accurate comfy time each.
+            const tComfyStart = performance.now();
+
+            let imageUrl;
+            try {
+                imageUrl = await submitAndPoll(workflow, signal);
+            } catch (err) {
+                if (err.name === 'AbortError') return '';
+                if (err.message === 'timeout') {
+                    toast('Comfy Imagine: Generation timed out.', 'error');
+                } else {
+                    toast(err.message, 'error');
+                }
+                return '';
+            }
+
+            let dataUrl;
+            try {
+                dataUrl = await fetchImageAsDataUrl(imageUrl, signal);
+            } catch (err) {
+                if (err.name === 'AbortError') return '';
+                toast('Comfy Imagine: Image generated but could not be retrieved.', 'error');
+                return '';
+            }
+
+            const active = getActiveCharacter();
+            const chName = active?.name || 'comfy-imagine';
+            // _${i}: two images generated in the same millisecond would otherwise
+            // share a filename, and deleting one message would orphan-delete the
+            // file the other still uses.
+            const filename = `imagine_${Date.now()}_${i}`;
+
+            let path;
+            try {
+                const { format, rawB64 } = splitDataUrl(dataUrl);
+                path = await uploadImageToST(rawB64, format, chName, filename);
+            } catch (err) {
+                if (err.name === 'AbortError') return '';
+                toast('Comfy Imagine: Image generated but could not be saved to disk.', 'error');
+                return '';
+            }
+
+            // Store the debug info (LLM context + generated prompt) as a file on the
+            // server rather than inline in the chat, which would bloat the .jsonl with
+            // the whole context per image. Best-effort: on failure just skip it.
+            let debugPath = null;
+            try {
+                const debugJson = JSON.stringify({ context: contextString, prompt: llmOutput, reasoning: llmReasoning });
+                debugPath = await uploadDebugToST(debugFileName(chName, i), debugJson);
+            } catch { /* debug is optional; a missing sidecar just shows "not stored" */ }
+
+            // Timing: total (click → saved), plus this image's ComfyUI phase alone.
+            // All three phases keep a global rolling log in extensionSettings so the
+            // averages survive chat/character switches — the loaded chat only ever
+            // holds its own messages. llmTimes was already pushed once above.
+            const now = performance.now();
+            const elapsedMs = Math.round(now - t0);
+            const comfyMs = Math.round(now - tComfyStart);
+            (s.genTimes ??= []).push(elapsedMs);
+            (s.comfyTimes ??= []).push(comfyMs);
+            if (s.genTimes.length > 50) s.genTimes.shift();   // keep last 50; modal averages last 10
+            if (s.comfyTimes.length > 50) s.comfyTimes.shift();
+            saveSettings();
+
+            const { chat, addOneMessage, saveChat, getCurrentChatId } = SillyTavern.getContext();
+
+            // Chat-switch guard: the user may have opened another chat during the
+            // async generation. Inserting now would put the image into the wrong
+            // chat's array — discard instead. (The uploaded file stays on disk but
+            // is invisible; acceptable for a rare race.)
+            if (getCurrentChatId() !== chatIdAtStart) {
+                toast('Comfy Imagine: chat changed during generation — image discarded.', 'error');
+                return '';
+            }
+
+            const imageMessage = {
+                name: s.senderName || 'Camera',
+                is_user: false,
+                is_system: true,
+                send_date: new Date().toISOString(),
+                mes: `![generated image](${path})`,
+                extra: {
+                    title: 'comfy-imagine',
+                    imaginePath: path,
+                    elapsedMs,
+                    llmMs,
+                    comfyMs,
+                    ...(debugPath ? { debugPath } : {}),
+                },
+            };
+            if (isMidChat) {
+                // Insert directly after the target message. indexOf === -1 with the
+                // same chat id means the target was deleted mid-generation → append
+                // at the end of the (correct) chat instead.
+                const at = chat.indexOf(targetMsg);
+                if (at === -1 && insertedCount === 0) toast('Comfy Imagine: original message was deleted — image appended at end.');
+                const insertAt = at === -1 ? chat.length : at + 1 + insertedCount;
+                chat.splice(insertAt, 0, imageMessage);
+                insertedCount++;
+                if (firstInsertedPath == null) firstInsertedPath = path;
+                // No addOneMessage / per-image save here: the DOM would get stale
+                // mesid attributes. One saveChat + reloadCurrentChat in the finally
+                // renders everything consistently (ST's own mid-chat insert pattern).
+            } else {
+                chat.push(imageMessage);
+                await addOneMessage(imageMessage, { scroll: true });
+                await saveChat();
+                injectDebugButtonOnMessage(chat.length - 1);
+            }
+            knownImaginePaths.add(path);
+            if (debugPath) knownImaginePaths.add(debugPath);
         }
-
-        let dataUrl;
-        try {
-            dataUrl = await fetchImageAsDataUrl(imageUrl, signal);
-        } catch (err) {
-            if (err.name === 'AbortError') return '';
-            toast('Comfy Imagine: Image generated but could not be retrieved.', 'error');
-            return '';
-        }
-
-        const active = getActiveCharacter();
-        const chName = active?.name || 'comfy-imagine';
-        // _${i}: two images generated in the same millisecond would otherwise
-        // share a filename, and deleting one message would orphan-delete the
-        // file the other still uses.
-        const filename = `imagine_${Date.now()}_${i}`;
-
-        let path;
-        try {
-            const { format, rawB64 } = splitDataUrl(dataUrl);
-            path = await uploadImageToST(rawB64, format, chName, filename);
-        } catch (err) {
-            if (err.name === 'AbortError') return '';
-            toast('Comfy Imagine: Image generated but could not be saved to disk.', 'error');
-            return '';
-        }
-
-        // Store the debug info (LLM context + generated prompt) as a file on the
-        // server rather than inline in the chat, which would bloat the .jsonl with
-        // the whole context per image. Best-effort: on failure just skip it.
-        let debugPath = null;
-        try {
-            const debugJson = JSON.stringify({ context: contextString, prompt: llmOutput, reasoning: llmReasoning });
-            debugPath = await uploadDebugToST(debugFileName(chName, i), debugJson);
-        } catch { /* debug is optional; a missing sidecar just shows "not stored" */ }
-
-        // Timing: total (click → saved), plus this image's ComfyUI phase alone.
-        // All three phases keep a global rolling log in extensionSettings so the
-        // averages survive chat/character switches — the loaded chat only ever
-        // holds its own messages. llmTimes was already pushed once above.
-        const now = performance.now();
-        const elapsedMs = Math.round(now - t0);
-        const comfyMs = Math.round(now - tComfyStart);
-        (s.genTimes ??= []).push(elapsedMs);
-        (s.comfyTimes ??= []).push(comfyMs);
-        if (s.genTimes.length > 50) s.genTimes.shift();   // keep last 50; modal averages last 10
-        if (s.comfyTimes.length > 50) s.comfyTimes.shift();
-        saveSettings();
-
-        const { chat, addOneMessage, saveChat, getCurrentChatId } = SillyTavern.getContext();
-
-        // Chat-switch guard: the user may have opened another chat during the
-        // async generation. Inserting now would put the image into the wrong
-        // chat's array — discard instead. (The uploaded file stays on disk but
-        // is invisible; acceptable for a rare race.)
-        if (getCurrentChatId() !== chatIdAtStart) {
-            toast('Comfy Imagine: chat changed during generation — image discarded.', 'error');
-            return '';
-        }
-
-        const imageMessage = {
-            name: s.senderName || 'Camera',
-            is_user: false,
-            is_system: true,
-            send_date: new Date().toISOString(),
-            mes: `![generated image](${path})`,
-            extra: {
-                title: 'comfy-imagine',
-                imaginePath: path,
-                elapsedMs,
-                llmMs,
-                comfyMs,
-                ...(debugPath ? { debugPath } : {}),
-            },
-        };
-        if (isMidChat) {
-            // Insert directly after the target message. indexOf === -1 with the
-            // same chat id means the target was deleted mid-generation → append
-            // at the end of the (correct) chat instead.
-            const at = chat.indexOf(targetMsg);
-            if (at === -1 && insertedCount === 0) toast('Comfy Imagine: original message was deleted — image appended at end.');
-            const insertAt = at === -1 ? chat.length : at + 1 + insertedCount;
-            chat.splice(insertAt, 0, imageMessage);
-            insertedCount++;
-            if (firstInsertedPath == null) firstInsertedPath = path;
-            // No addOneMessage / per-image save here: the DOM would get stale
-            // mesid attributes. One saveChat + reloadCurrentChat in the finally
-            // renders everything consistently (ST's own mid-chat insert pattern).
-        } else {
-            chat.push(imageMessage);
-            await addOneMessage(imageMessage, { scroll: true });
-            await saveChat();
-            injectDebugButtonOnMessage(chat.length - 1);
-        }
-        knownImaginePaths.add(path);
-        if (debugPath) knownImaginePaths.add(debugPath);
-    }
 
     } finally {
         isGenerating = false;
