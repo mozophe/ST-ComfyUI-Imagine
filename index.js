@@ -948,7 +948,10 @@ async function generatePromptViaLLM(contextString, signal) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${s.llmApiKey}`,
+            // Omit the header entirely when no key is set, matching the Test API
+            // Connection path. A local server may reject `Bearer ` with an empty
+            // token while accepting no header at all.
+            ...(s.llmApiKey ? { 'Authorization': `Bearer ${s.llmApiKey}` } : {}),
         },
         body: JSON.stringify(body),
         signal,
