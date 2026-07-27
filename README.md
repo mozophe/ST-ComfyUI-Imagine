@@ -250,13 +250,15 @@ If you would rather not install it, delete the red node and wire the `IMAGE` out
 </details>
 
 <details>
-<summary><b>Uploading the workflow gives an "API format" error</b></summary>
+<summary><b>"Workflow looks like a UI export, not API format"</b></summary>
 
 <br>
 
-You exported the **UI** format instead of the **API** format. They are different files.
+You exported the **UI** format instead of the **API** format. They are different files: the API file has node IDs as top-level keys, the UI file has a `nodes` array.
 
-In ComfyUI: **Settings → Enable Dev Mode Options**, then use **Graph → Export (API)**, not plain **Export**. The API file has node IDs as top-level keys; the UI file has a `nodes` array. The extension detects this case and says so explicitly.
+Note this error appears when you **generate**, not when you upload. Upload only checks that the file is valid JSON, and a UI export is perfectly valid JSON, so it saves without complaint and fails on first use.
+
+In ComfyUI: **Settings → Enable Dev Mode Options**, then use **Graph → Export (API)**, not plain **Export**. Upload that file instead.
 
 </details>
 
@@ -309,7 +311,7 @@ Fix it in your system prompt: instruct the model to put the final image prompt i
 
 Open the browser console (F12). When the LLM produces no usable prompt, the extension logs the full API response there: `finish_reason`, any reasoning text, the content field, and the raw body.
 
-The usual causes are a token budget spent entirely on reasoning (`finish_reason: length`), or a model that refused. Try a larger token limit or a different model.
+The usual causes are a token budget spent entirely on reasoning (`finish_reason: length`), or a model that refused. Raise **Max Tokens** in the LLM settings, or switch model.
 
 </details>
 
@@ -387,7 +389,9 @@ Start from a workflow that already works for your model in ComfyUI, then:
 
 Titling a node in ComfyUI: right-click the node → **Title**.
 
-Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's built-in `PrimitiveNode`) are supported as prompt targets, so you can redirect injection into a string node feeding a concat, rather than straight into `CLIPTextEncode`. That is how you prepend a fixed keyword inside the workflow itself.
+Three kinds of text field are supported as targets: `inputs.text` (`CLIPTextEncode` and most custom string nodes), `inputs.value` (`PrimitiveString` and `PrimitiveStringMultiline`), and `widgets_values[0]` (the older `PrimitiveNode`). So you can redirect injection into a string node feeding a concat rather than straight into `CLIPTextEncode`, which is how you prepend a fixed keyword inside the workflow itself.
+
+The target must hold literal text. If the field is wired to another node's output, injection fails with an explicit "wired as link" error rather than silently doing nothing.
 
 > [!NOTE]
 > **Do not port the Krea 2 templates to another base model.** They are tuned end to end: model, sampler, scheduler, CFG, steps, and resolution. Porting means fixing every one of those node by node. Starting from a known-good workflow for your own model and adding the titles is far less work.
@@ -426,7 +430,7 @@ Pick them and they are saved against that character, applied on every generation
 
 Good to know:
 
-- The binding is keyed to the character card, so it survives renaming a character.
+- Renaming a character keeps its binding. The extension watches for renames and moves the binding across.
 - Switch to a character with **no LoRA set**, or to a group chat where no single character is active, and the LoRA is **neutralised**: strength is forced to `0` and the trigger node is cleared, so the workflow's built-in default LoRA never leaks in. (API-format workflows cannot express a true node bypass, so strength 0 is used instead. The loader still runs but has zero effect.)
 - Bindings live in your SillyTavern settings, not on the character card, so they do not travel if you export or share the card.
 
@@ -475,17 +479,21 @@ Two presets ship with the extension:
 | `Krea 2 (default)` | the active default, first-person POV, describe-only-what-is-visible |
 | `Krea 2 - Intimate POV` | tuned for close, intimate POV scenes with detailed pose, anatomy, and framing rules. Available in the dropdown but **not** selected by default |
 
-Both are **read-only** and re-sync to the shipped version on every reload, so extension updates reach you. To customise: edit the textarea and use **Save As** to store your own named preset. **Save** overwrites the selected preset and is blocked for the two shipped ones. Switch with the dropdown, delete with 🗑. Presets are stored in your SillyTavern settings.
+Both are **read-only** and re-sync to the shipped version on every reload, so extension updates reach you. Both **Save** (overwrite) and 🗑 (delete) are greyed out while a shipped preset is selected; deleting one would only bring it back on the next reload anyway.
+
+To customise, edit the textarea and use **Save As** to store your own named preset. Your own presets can be overwritten with **Save** and removed with 🗑 as normal. Switch between them with the dropdown. Presets are stored in your SillyTavern settings.
 
 ## Generation settings
 
 | Setting | Range | What it does |
 |---|---|---|
-| **Image count** | 1 to 8 | how many images per generation. Above 1, the seed is randomised per image |
+| **Image count** | 1 to 8, default `1` | how many images per generation. Above 1, the seed is randomised per image. At `1` the workflow's own seed is left alone |
 | **Chat history limit** | `0` or more, default `20` | how many of the latest chat messages are sent to the prompt LLM. `0` sends the entire chat |
-| **Sender name** | any text | the name on injected image messages, `Camera` by default |
-| **Prompt prefix / suffix** | any text | text pasted before and after every generated prompt |
+| **Sender name** | any text, default `Camera` | the name on injected image messages |
+| **Prompt prefix / suffix** | any text | pasted before and after every generated prompt |
 | **Negative prompt** | any text | goes to `IMAGINE_NEGATIVE`, or the second `CLIPTextEncode` |
+| **Max tokens** | default `8192` | ceiling for the prompt LLM's reply. Raise it if a reasoning model spends its whole budget thinking and returns no prompt |
+| **Temperature** | default `0.7` | prompt LLM sampling temperature. Lower for more literal, repeatable prompts |
 
 ## Updating
 
