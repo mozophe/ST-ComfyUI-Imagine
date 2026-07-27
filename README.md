@@ -155,17 +155,11 @@ Both are tuned end to end for **Krea 2 Turbo** (separate diffusion model, CLIP a
 > [!NOTE]
 > Not using Krea 2? **Do not adapt these templates.** Start from a workflow that already works for your model and add the `IMAGINE_*` titles to it instead. See [Adapting your own workflow](#adapting-your-own-workflow).
 
-### 7. Generate your first image
+### 7. Add the 📷 button to your chat bar
 
-Type `/imagine` in the chat input and press enter.
+This is how you will actually use the extension: one click, an image of the current scene. Set it up now, before your first test, so you never have to type a command.
 
-You should see the extension gather the scene, call your LLM, wait on ComfyUI, and then post the finished picture into the chat as a message from **Camera**. Click the **ⓘ** button on that message to see exactly what prompt was written and how long each stage took.
-
-If the image arrives, everything is wired correctly. One step left.
-
-### 8. Put it on a button
-
-Typing `/imagine` every time gets old. Attach it to a Quick Reply and you get a 📷 button on the chat bar, one click for an image of the current scene. This takes a minute and is the way most people end up using the extension.
+SillyTavern's **Quick Reply** extension provides the button.
 
 1. Open the **Quick Reply** extension settings, create or edit a Quick Reply set, then add a new reply.
 2. Set the **Message / Command** box to `/imagine`.
@@ -175,11 +169,22 @@ Typing `/imagine` every time gets old. Attach it to a Quick Reply and you get a 
 
 ![Quick Reply editor with the /imagine command](docs/images/quick-reply.png)
 
-The 📷 button now appears on the chat bar. Click it any time to illustrate the current scene:
+The 📷 button now sits on your chat bar:
 
 <img src="docs/images/after-setup.png" alt="SillyTavern chat bar with the /imagine Quick Reply button" width="320">
 
-That is the whole setup. From here you have three ways to generate: this button, `/imagine`, and the 📷 icon on any individual message ([details](#generating-images)).
+### 8. Generate your first image
+
+Open a chat and **click the 📷 button**.
+
+The extension gathers the scene, calls your LLM, waits on ComfyUI, and posts the finished picture into the chat as a message from **Camera**. Click the **ⓘ** button on that message to see exactly what prompt was written and how long each stage took.
+
+If the image arrives, you are done. Nothing above needs revisiting. If it does not, see [Troubleshooting](#troubleshooting).
+
+From here you have two ways to generate:
+
+- **📷 on the chat bar** illustrates the current scene, the button you just made.
+- **📷 in any message's three-dots menu** illustrates that moment instead, using only the story up to that point. Good for going back and adding a picture to an earlier scene. See [Generating images](#generating-images).
 
 Everything else is optional polish:
 
@@ -300,9 +305,9 @@ The usual causes are a token budget spent entirely on reasoning (`finish_reason:
 
 ## Generating images
 
-### The `/imagine` command
+### The 📷 button on the chat bar
 
-Type `/imagine` in the chat input. The extension:
+Illustrates the **current scene**. This is the Quick Reply button from [Quick Start step 7](#quick-start), and the way you will use the extension most of the time. On click, the extension:
 
 1. Gathers the character card, your persona, and recent chat history.
 2. Asks your configured LLM to write an image prompt.
@@ -310,6 +315,8 @@ Type `/imagine` in the chat input. The extension:
 4. Posts the image into the chat as a message from **Camera**, hidden from your main model.
 
 Use SillyTavern's **Abort** button to cancel mid-generation.
+
+The button runs the `/imagine` slash command, which you can also type into the chat input if you ever want to. There is no reason to in normal use; the button does the same thing without the typing.
 
 ### The 📷 button on any message
 
@@ -338,7 +345,7 @@ Chain-of-thought is stripped from the prompt so it never reaches ComfyUI, and is
 2. **Tagged inline:** a `<think>…</think>` block or a common variant (`<thinking>`, `<reason>`), including malformed cases such as a missing opening tag or a reply cut off mid-thought.
 3. **Untagged fallback:** if the model reasons in plain prose with no tags at all, the **last paragraph** is taken as the prompt and everything before it as reasoning.
 
-Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated by a blank line. The bundled default already does. If prompt and reasoning run together with only single line breaks they cannot be split. Reasoning is captured on new generations only; re-run `/imagine` to see it for an existing image.
+Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated by a blank line. The bundled default already does. If prompt and reasoning run together with only single line breaks they cannot be split. Reasoning is captured on new generations only; generate a fresh image to see it.
 
 ## Workflows
 
@@ -456,7 +463,7 @@ Both are **read-only** and re-sync to the shipped version on every reload, so ex
 
 | Setting | Range | What it does |
 |---|---|---|
-| **Image count** | 1 to 8 | how many images per `/imagine`. Above 1, the seed is randomised per image |
+| **Image count** | 1 to 8 | how many images per generation. Above 1, the seed is randomised per image |
 | **Chat history limit** | `0` or more, default `20` | how many of the latest chat messages are sent to the prompt LLM. `0` sends the entire chat |
 | **Sender name** | any text | the name on injected image messages, `Camera` by default |
 | **Prompt prefix / suffix** | any text | text pasted before and after every generated prompt |
