@@ -71,7 +71,7 @@ python main.py --listen 0.0.0.0 --enable-cors-header
 
 Download `ComfyUI_windows_portable` from the [ComfyUI releases page](https://github.com/comfyanonymous/ComfyUI/releases), extract it, and put your models under `ComfyUI\models\`. It bundles its own Python, so nothing needs installing.
 
-You do not run `python main.py` yourself with the portable build. You edit its launcher instead. Open **`run_nvidia_gpu.bat`** (or `run_cpu.bat`) in Notepad and add the flags to the line that is already there:
+Edit its launcher instead of running `python main.py` yourself. Open **`run_nvidia_gpu.bat`** (or `run_cpu.bat`) in Notepad and add the flags to the line that is already there:
 
 ```bat
 .\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --listen 0.0.0.0 --enable-cors-header
