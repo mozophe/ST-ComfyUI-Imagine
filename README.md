@@ -35,7 +35,7 @@ Images are hidden from your main chat model, so illustrating a scene never chang
 
 | You need | Details |
 |---|---|
-| **SillyTavern** | `release` v1.18.0 or newer, on desktop or mobile (including Android via [Termux](https://docs.sillytavern.app/installation/android-\(termux\)/)) |
+| **SillyTavern** | `release` v1.18.0 or newer, on desktop or mobile |
 | **ComfyUI** | a running instance, on the same computer or anywhere on your LAN |
 | **An LLM API** | any OpenAI-compatible endpoint: OpenAI, a local Ollama server, OpenRouter, anything exposing `/chat/completions` |
 | **A ComfyUI workflow** | your own, or one of the two [example templates](workflows/) in this repo |
@@ -46,7 +46,7 @@ Optional but recommended: the [`ComfyUI-Image-Saver`](https://github.com/alexopu
 
 ## Quick Start
 
-Seven steps. Steps 1 and 2 happen in **ComfyUI**, the rest in **SillyTavern**.
+Eight steps. Steps 1 and 2 happen in **ComfyUI**, the rest in **SillyTavern**.
 
 ### 1. Start ComfyUI with the right flags
 
@@ -115,7 +115,7 @@ The base URL must be the **`v1` base** of an OpenAI-compatible API:
 
 | Provider | Base URL | Model name looks like |
 |---|---|---|
-| [OpenRouter](https://openrouter.ai) | `https://openrouter.ai/api/v1` | `vendor/model`, for example `google/gemma-3-27b-it` |
+| [OpenRouter](https://openrouter.ai) | `https://openrouter.ai/api/v1` | `vendor/model`, for example `google/gemma-4-31b-it` |
 | OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
 | Ollama (local) | `http://localhost:11434/v1` | whatever `ollama list` shows |
 
@@ -123,7 +123,7 @@ Do **not** include `/chat/completions` in the URL; the extension adds that itsel
 
 **OpenRouter is the easiest starting point.** One key reaches hundreds of models from every vendor, you switch model by editing a single text field, and its catalogue includes free and near-free options that are more than good enough for this job. Copy the exact slug from the model's page on [openrouter.ai/models](https://openrouter.ai/models); the `vendor/` half is part of the name and is required.
 
-This is a **separate LLM from your chat model**. Writing an image prompt is an easy job, so a small cheap model is usually plenty and keeps cost and latency low.
+This is a **separate LLM from your chat model**. Writing an image prompt is an easy job, so a small cheap model is usually plenty and keeps cost and latency low. **Gemma 4 31B** (`google/gemma-4-31b-it` on OpenRouter) is a good default. Point it at something larger if you prefer.
 
 > [!TIP]
 > **Make a dedicated API key for this extension and give it a low spending limit.** A browser-only extension has no backend, so the key is stored as plain text in your settings file. A scoped, low-cap key means an exposed key costs you nothing. See [Security](#security).
@@ -161,9 +161,28 @@ Type `/imagine` in the chat input and press enter.
 
 You should see the extension gather the scene, call your LLM, wait on ComfyUI, and then post the finished picture into the chat as a message from **Camera**. Click the **ⓘ** button on that message to see exactly what prompt was written and how long each stage took.
 
-That is the whole setup. Everything else is optional polish:
+If the image arrives, everything is wired correctly. One step left.
 
-- Put `/imagine` on a one-click button: [Quick Reply setup](#quick-reply-button)
+### 8. Put it on a button
+
+Typing `/imagine` every time gets old. Attach it to a Quick Reply and you get a 📷 button on the chat bar, one click for an image of the current scene. This takes a minute and is the way most people end up using the extension.
+
+1. Open the **Quick Reply** extension settings, create or edit a Quick Reply set, then add a new reply.
+2. Set the **Message / Command** box to `/imagine`.
+3. Give it a **Label** (for example `📷`) or pick an icon so it shows on the chat bar.
+4. Leave the **Auto-Execute** options alone. `Don't trigger auto-execute` should stay checked so it only fires when you click it.
+5. Click **OK**, then enable the Quick Reply set.
+
+![Quick Reply editor with the /imagine command](docs/images/quick-reply.png)
+
+The 📷 button now appears on the chat bar. Click it any time to illustrate the current scene:
+
+<img src="docs/images/after-setup.png" alt="SillyTavern chat bar with the /imagine Quick Reply button" width="320">
+
+That is the whole setup. From here you have three ways to generate: this button, `/imagine`, and the 📷 icon on any individual message ([details](#generating-images)).
+
+Everything else is optional polish:
+
 - Give each character their own LoRA: [Per-character LoRAs](#per-character-loras)
 - Change the style of every image: [System prompt and presets](#system-prompt-and-presets)
 
@@ -199,11 +218,15 @@ Also check the URL you entered in the extension uses the ComfyUI machine's **LAN
 </details>
 
 <details>
-<summary><b>Dragging an example workflow into ComfyUI does nothing, or the graph will not open</b></summary>
+<summary><b>The example workflow loads with a red node and a "Missing Node Types" warning</b></summary>
 
 <br>
 
-The templates use the `Image Saver Simple` node from [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver). ComfyUI cannot load a graph containing a node it does not have installed. Install it (see [step 2](#2-install-the-image-saver-node)), restart ComfyUI, then try again.
+The templates save with `Image Saver Simple`, from [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver). ComfyUI loads the graph fine without it, but the node shows as a red placeholder and the workflow will not run until you install it.
+
+Easiest fix: **Manager → Install Missing Custom Nodes**, which picks it up straight from the loaded graph. Otherwise install it by hand (see [step 2](#2-install-the-image-saver-node)). Restart ComfyUI either way, then reload the workflow.
+
+If you would rather not install it, delete the red node and wire the `IMAGE` output of the VAE Decode into a built-in **Save Image** node instead. You get PNG rather than WebP; see [Why WebP](#why-webp) for what that costs you.
 
 </details>
 
@@ -316,22 +339,6 @@ Chain-of-thought is stripped from the prompt so it never reaches ComfyUI, and is
 3. **Untagged fallback:** if the model reasons in plain prose with no tags at all, the **last paragraph** is taken as the prompt and everything before it as reasoning.
 
 Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated by a blank line. The bundled default already does. If prompt and reasoning run together with only single line breaks they cannot be split. Reasoning is captured on new generations only; re-run `/imagine` to see it for an existing image.
-
-### Quick Reply button
-
-Put `/imagine` on the chat bar as a one-click button:
-
-1. Open the **Quick Reply** extension settings and create or edit a Quick Reply set, then add a new reply.
-2. Set the **Message / Command** box to `/imagine`.
-3. Give it a **Label** (for example `📷`) or pick an icon so it shows on the chat bar.
-4. Leave the **Auto-Execute** options alone. `Don't trigger auto-execute` should stay checked so it only fires when you click it.
-5. Click **OK**, then enable the Quick Reply set.
-
-![Quick Reply editor with the /imagine command](docs/images/quick-reply.png)
-
-The 📷 button then appears on the chat bar:
-
-<img src="docs/images/after-setup.png" alt="SillyTavern chat bar with the /imagine Quick Reply button" width="320">
 
 ## Workflows
 
