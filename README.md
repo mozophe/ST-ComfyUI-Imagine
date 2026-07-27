@@ -37,7 +37,7 @@ Images are hidden from your main chat model, so illustrating a scene never chang
 |---|---|
 | **SillyTavern** | `release` v1.18.0 or newer, on desktop or mobile |
 | **ComfyUI** | a running instance, on the same computer or anywhere on your LAN |
-| **An LLM API** | any OpenAI-compatible endpoint: OpenAI, a local Ollama server, OpenRouter, anything exposing `/chat/completions` |
+| **An LLM API** | any OpenAI-compatible endpoint: OpenRouter, OpenAI, a local KoboldCpp server, anything exposing `/chat/completions` |
 | **A ComfyUI workflow** | your own, or one of the two [example templates](workflows/) in this repo |
 
 Optional but recommended: the [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver) custom node. Step 2 below covers it.
@@ -111,19 +111,32 @@ Do not continue until this test passes. If it fails, see [Troubleshooting](#trou
 
 Enter the **API base URL**, **API key**, and **model name**, then click **Test API Connection**.
 
-The base URL must be the **`v1` base** of an OpenAI-compatible API:
+The base URL must be the **`v1` base** of an OpenAI-compatible API. Do **not** include `/chat/completions`; the extension adds that itself.
+
+**Hosted**
 
 | Provider | Base URL | Model name looks like |
 |---|---|---|
 | [OpenRouter](https://openrouter.ai) | `https://openrouter.ai/api/v1` | `vendor/model`, for example `google/gemma-4-31b-it` |
 | OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
-| Ollama (local) | `http://localhost:11434/v1` | whatever `ollama list` shows |
 
-Do **not** include `/chat/completions` in the URL; the extension adds that itself. Any other OpenAI-compatible provider works the same way.
+**Local**
+
+| Server | Base URL | Model name looks like |
+|---|---|---|
+| [KoboldCpp](https://github.com/LostRuins/koboldcpp) | `http://localhost:5001/v1` | the GGUF you loaded |
+| [LM Studio](https://lmstudio.ai) | `http://localhost:1234/v1` | the identifier shown in its server panel |
+| [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`) | `http://localhost:8080/v1` | the GGUF you loaded |
+
+Local servers usually need no API key; leave the field empty unless you started yours with one. If SillyTavern runs on a different machine from the LLM server, use that machine's LAN IP instead of `localhost` and start the server listening on all interfaces.
+
+Any other OpenAI-compatible provider or server works the same way.
 
 **OpenRouter is the easiest starting point.** One key reaches hundreds of models from every vendor, you switch model by editing a single text field, and its catalogue includes free and near-free options that are more than good enough for this job. Copy the exact slug from the model's page on [openrouter.ai/models](https://openrouter.ai/models); the `vendor/` half is part of the name and is required.
 
-This is a **separate LLM from your chat model**. Writing an image prompt is an easy job, so a small cheap model is usually plenty and keeps cost and latency low. **Gemma 4 31B** (`google/gemma-4-31b-it` on OpenRouter) is a good default. Point it at something larger if you prefer.
+**Going local costs you VRAM that ComfyUI wants.** The prompt model and the diffusion model compete for the same card, which can slow generation or fail to load outright. If you go local anyway, keep the prompt model small and limit how many layers you offload. Hosted keeps the GPU entirely for ComfyUI, which is the main argument for it here.
+
+Either way, this is a **separate LLM from your chat model**, and writing an image prompt is an easy job, so a small cheap model is usually plenty. **Gemma 4 31B** (`google/gemma-4-31b-it` on OpenRouter) is a good default. Point it at something larger if you prefer.
 
 > [!TIP]
 > **Make a dedicated API key for this extension and give it a low spending limit.** A browser-only extension has no backend, so the key is stored as plain text in your settings file. A scoped, low-cap key means an exposed key costs you nothing. See [Security](#security).
