@@ -136,7 +136,9 @@ Any other OpenAI-compatible provider or server works the same way.
 
 **Going local costs you VRAM that ComfyUI wants.** The prompt model and the diffusion model compete for the same card, which can slow generation or fail to load outright. If you go local anyway, keep the prompt model small and limit how many layers you offload. Hosted keeps the GPU entirely for ComfyUI, which is the main argument for it here.
 
-Either way, this is a **separate LLM from your chat model**, and writing an image prompt is an easy job, so a small cheap model is usually plenty. **Gemma 4 31B** (`google/gemma-4-31b-it` on OpenRouter) is a good default. Point it at something larger if you prefer.
+Either way, this setting is **independent of the model SillyTavern uses for chat**. Nothing stops you pointing it at the same one, but it is usually a waste: writing an image prompt is a far easier job than roleplay, so a large model costs more per image without producing a better picture.
+
+A small cheap model is normally plenty. **Gemma 4 31B** (`google/gemma-4-31b-it` on OpenRouter) is a good default. Go larger only if the prompts you get are not detailed enough.
 
 > [!TIP]
 > **Make a dedicated API key for this extension and give it a low spending limit.** A browser-only extension has no backend, so the key is stored as plain text in your settings file. A scoped, low-cap key means an exposed key costs you nothing. See [Security](#security).
