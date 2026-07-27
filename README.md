@@ -111,9 +111,19 @@ Do not continue until this test passes. If it fails, see [Troubleshooting](#trou
 
 Enter the **API base URL**, **API key**, and **model name**, then click **Test API Connection**.
 
-The base URL must be the **`v1` base** of an OpenAI-compatible API, for example `https://api.openai.com/v1` or `http://localhost:11434/v1` for Ollama. Do **not** include `/chat/completions`; the extension adds that itself.
+The base URL must be the **`v1` base** of an OpenAI-compatible API:
 
-This is a **separate LLM from your chat model**. Writing an image prompt is an easy job, so a small cheap model (Gemma 4 31B, `gemma-4-31B-it`, for example) is usually plenty and keeps cost and latency low.
+| Provider | Base URL | Model name looks like |
+|---|---|---|
+| [OpenRouter](https://openrouter.ai) | `https://openrouter.ai/api/v1` | `vendor/model`, for example `google/gemma-3-27b-it` |
+| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
+| Ollama (local) | `http://localhost:11434/v1` | whatever `ollama list` shows |
+
+Do **not** include `/chat/completions` in the URL; the extension adds that itself. Any other OpenAI-compatible provider works the same way.
+
+**OpenRouter is the easiest starting point.** One key reaches hundreds of models from every vendor, you switch model by editing a single text field, and its catalogue includes free and near-free options that are more than good enough for this job. Copy the exact slug from the model's page on [openrouter.ai/models](https://openrouter.ai/models); the `vendor/` half is part of the name and is required.
+
+This is a **separate LLM from your chat model**. Writing an image prompt is an easy job, so a small cheap model is usually plenty and keeps cost and latency low.
 
 > [!TIP]
 > **Make a dedicated API key for this extension and give it a low spending limit.** A browser-only extension has no backend, so the key is stored as plain text in your settings file. A scoped, low-cap key means an exposed key costs you nothing. See [Security](#security).
