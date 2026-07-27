@@ -148,7 +148,7 @@ The extension needs a ComfyUI workflow exported in **API format**. If you alread
 | Template | Use when |
 |---|---|
 | [`Krea2_CLora.json`](workflows/Krea2_CLora.json) | you want per-character LoRAs only |
-| [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | you also want one style/quality LoRA on **every** image |
+| [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | you also want a second LoRA applied to **every** image |
 
 Both are tuned end to end for **Krea 2 Turbo** (separate diffusion model, CLIP and VAE; 8 steps; cfg 1; euler/simple) and both ship with **placeholder file paths**, so they will not run until you point them at your own models.
 
@@ -201,8 +201,9 @@ From here you have two ways to generate:
 
 Everything else is optional polish:
 
-- Give each character their own LoRA: [Per-character LoRAs](#per-character-loras)
-- Change the style of every image: [System prompt and presets](#system-prompt-and-presets)
+- Bind a LoRA to each character: [Per-character LoRAs](#per-character-loras)
+- Keep a LoRA on for every image: [Always-on LoRA](#adding-an-always-on-lora)
+- Change how prompts are written, their POV, framing, style, and detail: [System prompt and presets](#system-prompt-and-presets)
 
 ---
 
@@ -431,7 +432,7 @@ Good to know:
 
 ### Adding an always-on LoRA
 
-Want a style, quality, or detail LoRA on **every** image regardless of character, alongside the per-character one? Add a second LoRA loader. The extension only ever touches `IMAGINE_LORA`, so any other loader stays exactly as you set it.
+Want a LoRA on **every** image regardless of character, alongside the per-character one? A style, a quality or detail booster, a concept, a lighting or anatomy LoRA, anything you want always on. Add a second LoRA loader. The extension only ever touches `IMAGINE_LORA`, so any other loader stays exactly as you set it.
 
 <details>
 <summary><b>Step-by-step: insert an always-on loader into the model chain</b></summary>
@@ -456,7 +457,11 @@ A worked two-LoRA example is [`workflows/Krea2_StyleLora_CLora.json`](workflows/
 
 ## System prompt and presets
 
-The system prompt is what shapes every image: its style, framing, and level of detail. **Once the rest works, this is the first thing worth tailoring.**
+The system prompt is the instruction given to the prompt-writing LLM, and it decides everything about the prompt it produces: the point of view, the framing, the art style, the level of detail, which parts of the scene get described and which are left out.
+
+It works through words, so it reaches anything you can put into words. What words cannot reliably pin down, a particular face, an art style the checkpoint does not know, a quality or detail boost, is what [LoRAs](#per-character-loras) are for. The two stack.
+
+**Once the rest works, this is the first thing worth tailoring.** It is the difference between a prompt that describes your character from across the room and one that describes what you are seeing through their eyes.
 
 The shipped default is tuned for **Krea 2 Turbo**. It frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what is visible in frame**.
 
