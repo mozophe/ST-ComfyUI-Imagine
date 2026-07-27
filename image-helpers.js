@@ -23,6 +23,25 @@ export function isOwnImaginePath(path) {
     return /^\/?user\/images\/(?!\.\.?\/)[^/]+\/imagine_[^/]+\.(png|jpe?g|webp|bmp|jfif)$/i.test(path ?? '');
 }
 
+// Percent-encodes the four characters that break a markdown link destination,
+// for use ONLY inside `![...](here)`. ST saves images under a folder named after
+// the character (sanitize-filename keeps spaces, parens and #), and showdown —
+// ST's markdown renderer — fails to parse a destination containing any of them:
+//   "/user/images/My Char/x.png"   -> literal text, no <img>
+//   "/user/images/Char (v2)/x.png" -> literal text, no <img>
+//   "/user/images/Char#2/x.png"    -> parses, but the browser reads #2/x.png as a fragment
+// Everything else markdown cares about is already stripped server-side by
+// sanitize-filename, so a full encodeURI/encodeURIComponent is not needed (and
+// would not be enough anyway: both leave "(" and ")" untouched).
+//
+// The stored path must stay RAW. `extra.imaginePath` is the key for the delete
+// gate above and for ST's /api/images/delete, which does a literal
+// path.join(root, path) — a percent-encoded path would miss the file on disk
+// and orphan it silently.
+export function toMarkdownImagePath(path) {
+    return String(path ?? '').replace(/[ ()#]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
+
 // Reasoning models fold their chain-of-thought into the reply as a tagged
 // block. It comes back malformed often enough that a single <tag>...</tag>
 // regex isn't enough: the opening tag gets eaten, only a closing </think>

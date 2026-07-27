@@ -1,7 +1,7 @@
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
-import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning, selectChatWindow } from './image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning, selectChatWindow, toMarkdownImagePath } from './image-helpers.js';
 
 const MODULE_NAME = 'comfy_imagine';
 // Capture everything after scripts/extensions/ up to index.js — this preserves
@@ -1295,7 +1295,7 @@ async function migrateCurrentChat() {
         const { format, rawB64 } = splitDataUrl(m[1]);
         const path = await uploadImageToST(rawB64, format, chName, `imagine_migrated_${Date.now()}_${tag}`);
         knownImaginePaths.add(path);
-        return { path, mes: `![generated image](${path})` };
+        return { path, mes: `![generated image](${toMarkdownImagePath(path)})` };
     };
 
     // Inline debug info on an extra-like object -> file. Mutates the object
@@ -1649,7 +1649,9 @@ async function generateImages({ targetIndex = null, signal = null } = {}) {
             is_user: false,
             is_system: true,
             send_date: new Date().toISOString(),
-            mes: `![generated image](${path})`,
+            // Encoded for markdown only; imaginePath below stays raw so the
+            // delete gate and /api/images/delete still match the file on disk.
+            mes: `![generated image](${toMarkdownImagePath(path)})`,
             extra: {
                 title: 'comfy-imagine',
                 imaginePath: path,

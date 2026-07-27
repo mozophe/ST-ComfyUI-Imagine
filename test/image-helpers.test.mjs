@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning, selectChatWindow } from '../image-helpers.js';
+import { splitDataUrl, isOwnImaginePath, isOwnDebugPath, separateReasoning, selectChatWindow, toMarkdownImagePath } from '../image-helpers.js';
 
 // splitDataUrl
 {
@@ -169,6 +169,33 @@ assert.equal(isOwnImaginePath('/user/files/imagine_debug_1.json'), false);
     selectChatWindow(msgs, 2, 1);
     assert.strictEqual(msgs.length, before);
     console.log('selectChatWindow tests passed');
+}
+
+// toMarkdownImagePath — the four chars showdown chokes on, and nothing else.
+// Expected values verified against showdown 2.1.0 with ST's converter options.
+{
+    // untouched when the character name is plain
+    assert.equal(toMarkdownImagePath('/user/images/Alice/imagine_1_0.png'), '/user/images/Alice/imagine_1_0.png');
+
+    // space, parens and # are what break the markdown link destination
+    assert.equal(toMarkdownImagePath('/user/images/My Char/imagine_1_0.png'), '/user/images/My%20Char/imagine_1_0.png');
+    assert.equal(toMarkdownImagePath('/user/images/Char (v2)/x.png'), '/user/images/Char%20%28v2%29/x.png');
+    assert.equal(toMarkdownImagePath('/user/images/Char#2/x.png'), '/user/images/Char%232/x.png');
+
+    // apostrophes render fine in showdown — leave them alone
+    assert.equal(toMarkdownImagePath("/user/images/O'Neil/x.png"), "/user/images/O'Neil/x.png");
+
+    // slashes must survive: the result is still a path, not a component
+    assert.equal(toMarkdownImagePath('/user/images/A B/c d.png').split('/').length, 5);
+
+    // encoding must not break the delete gate's shape, and must be one-way only:
+    // the stored path stays raw, so isOwnImaginePath keeps seeing the real name
+    assert.equal(isOwnImaginePath('/user/images/My Char/imagine_1_0.png'), true);
+
+    // null/undefined in, empty string out (never "undefined" in a src attribute)
+    assert.equal(toMarkdownImagePath(null), '');
+    assert.equal(toMarkdownImagePath(undefined), '');
+    console.log('toMarkdownImagePath tests passed');
 }
 
 console.log('image-helpers: all checks passed');
