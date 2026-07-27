@@ -463,11 +463,11 @@ A worked two-LoRA example is [`workflows/Krea2_StyleLora_CLora.json`](workflows/
 
 ## System prompt and presets
 
-The system prompt is the instruction given to the prompt-writing LLM, and it decides everything about the prompt it produces: the point of view, the framing, the art style, the level of detail, which parts of the scene get described and which are left out.
+Image models are trained on captions, not on stories. Prose leaves most of a picture implicit: where people are standing, which way they face, what fills the frame, where the light comes from. A caption has to say all of it outright. Your chat is prose, so something has to do that conversion, and the system prompt is the instruction for doing it. It tells the LLM how to write a caption for a picture that does not exist yet.
 
-It works through words, so it reaches anything you can put into words. What words cannot reliably pin down, a particular face, an art style the checkpoint does not know, a quality or detail boost, is what [LoRAs](#per-character-loras) are for. The two stack.
+Working in words, it reaches anything words can express: point of view, framing, art style, level of detail, and which parts of a scene survive into the prompt at all. What words cannot reliably pin down, a particular face, an art style the checkpoint does not know, a quality or detail boost, is what [LoRAs](#per-character-loras) are for. The two stack.
 
-**Once the rest works, this is the first thing worth tailoring.** It is the difference between a prompt that describes your character from across the room and one that describes what you are seeing through their eyes.
+**Once the rest works, this is the first thing worth tailoring.** An untuned prompt writer leaves out precisely what the image model needs stated, and no amount of workflow tweaking puts it back.
 
 The shipped default is tuned for **Krea 2 Turbo**. It frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what is visible in frame**.
 
