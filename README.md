@@ -428,7 +428,7 @@ Pick them and they are saved against that character, applied on every generation
 **Trigger words.** Many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, then in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt, typically through a `StringConcatenate` node ahead of `CLIPTextEncode`. The active character's trigger is written into that node on each generation.
 
 > [!TIP]
-> Set the concat delimiter to empty (`""`) and end each trigger with its own separator, for example `aliceface woman, `. A character with no trigger then produces a clean prompt with nothing prepended.
+> **Put the separator inside the trigger.** The example workflows join the two with a `StringConcatenate` node titled **Concatenate Text**, whose `delimiter` widget ships empty so that nothing is inserted between trigger and prompt. Leave it empty, and give each trigger its own trailing separator: type `aliceface woman, `, comma and trailing space included. Characters with no trigger then get a clean prompt with nothing stuck on the front.
 
 Good to know:
 
