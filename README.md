@@ -467,12 +467,13 @@ Image models are trained on captions, not on stories. Prose leaves most of a pic
 
 Working in words, it reaches anything words can express: point of view, framing, art style, level of detail, and which parts of a scene survive into the prompt at all. What words cannot reliably pin down, a particular face, an art style the checkpoint does not know, a quality or detail boost, is what [LoRAs](#per-character-loras) are for. The two stack.
 
-**Once the rest works, this is the first thing worth tailoring.** An untuned prompt writer leaves out precisely what the image model needs stated, and no amount of workflow tweaking puts it back.
-
 The shipped default is tuned for **Krea 2 Turbo**. It frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what is visible in frame**.
 
 > [!NOTE]
 > The default is a **work in progress**: a reasonable starting point, not a finished one-size-fits-all prompt. Expect to iterate on it, and expect it to change between updates.
+
+> [!TIP]
+> **Once your first images generate, this is the thing to change next.** The default commits to one particular look, and if your images come out framed or styled wrong for what you wanted, this is what to edit, not the workflow. Use **Save As** so your version is not overwritten when the extension updates.
 
 Two presets ship with the extension:
 
