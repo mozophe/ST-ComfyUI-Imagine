@@ -1865,6 +1865,20 @@ export function onExtensionUpdate() {
         knownImaginePaths = collectImaginePaths();
     });
     eventSource.on(event_types.MESSAGE_DELETED, () => { reconcileImagineOrphans(); });
+    // A character rename CHANGES the avatar filename: ST derives it from the new
+    // name (getPngName -> sanitize(name) + uniqueness suffix) and unlinks the old
+    // file (src/endpoints/characters.js, POST /characters/rename). So characterLoras,
+    // keyed by avatar, loses its entry on rename and the LoRA silently neutralises.
+    // ST core has the same problem with its own avatar-keyed data and solves it the
+    // same way — renameTagKey/charLore/charNote are remapped immediately before this
+    // event is emitted (script.js, renameCharacter).
+    eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => {
+        const loras = getSettings().characterLoras;
+        if (!oldAvatar || !newAvatar || oldAvatar === newAvatar || !loras?.[oldAvatar]) return;
+        loras[newAvatar] = loras[oldAvatar];
+        delete loras[oldAvatar];
+        saveSettings();
+    });
     // New messages during a session: CHAT_CHANGED doesn't fire for them, so
     // hook the per-message render events.
     eventSource.on(event_types.USER_MESSAGE_RENDERED, mesid => injectImagineButtonOnMessage(mesid));
