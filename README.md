@@ -2,326 +2,482 @@
 
 # 📷 ComfyUI-Imagine
 
-**On-demand image generation for [SillyTavern](https://github.com/SillyTavern/SillyTavern), powered by [ComfyUI](https://github.com/comfyanonymous/ComfyUI).**
+**Illustrate your chat, one click at a time.**
 
-Reads your chat context, asks an LLM to write an image prompt, renders it in ComfyUI, and drops the result straight into the conversation.
+A [SillyTavern](https://github.com/SillyTavern/SillyTavern) extension that reads the scene you are in, writes an image prompt for it, renders it in [ComfyUI](https://github.com/comfyanonymous/ComfyUI), and drops the picture into the conversation.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![SillyTavern](https://img.shields.io/badge/SillyTavern-v1.18.0%2B-blueviolet)
 ![ComfyUI](https://img.shields.io/badge/ComfyUI-required-222222)
 ![Platform](https://img.shields.io/badge/desktop%20%26%20mobile-supported-brightgreen)
 
+<!-- TODO: hero demo goes here. Capture a short GIF (or screenshot) of clicking the 📷
+     button on a message and the generated image appearing in chat, save it as
+     docs/images/demo.gif, then uncomment the line below.
+
+<img src="docs/images/demo.gif" alt="Generating an image from a chat message" width="640">
+-->
+
 </div>
 
 ---
 
-## ✨ Features
+## What it does
 
-- **`/imagine` anywhere:** a slash command or one-click Quick Reply button that generates an image from the current scene.
-- **Generate on any message:** a 📷 camera button on every chat message generates an image for that moment, prompted from the story as it stood there and inserted right after it.
-- **Context-aware prompts:** a dedicated LLM turns the character card, your persona, and recent chat into a prompt for image generation.
-- **Per-character LoRAs:** bind a LoRA to each character; it loads automatically when they're active, with no settings changes on switch.
-- **Always-on LoRA:** stack a LoRA applied to every image (style, quality, detail, aesthetic, …), independent of the per-character one.
-- **Any ComfyUI workflow:** bring your own API-format workflow; the extension targets nodes by title, not by graph shape.
-- **Compact WebP storage:** example workflows save WebP instead of PNG, the same image at a ~93% smaller file size, keeping chats, disk use, and backups small.
-- **First-person POV default:** ships with a system prompt tuned for Krea 2 Turbo and full preset management.
-- **Generation timing:** the debug modal shows how long each image took, split into LLM vs ComfyUI phases, plus a global rolling last-10 average.
-- **Desktop & mobile:** searchable LoRA picker on desktop, native picker on touch. Fully abortable; images are hidden from the main model.
+- **Click 📷 on any message** and get an image of that moment in the story. Not just the latest message: pick any point in the chat, and the picture is inserted right there.
+- **Writes the prompt for you.** A small LLM reads the character card, your persona, and the recent chat, and turns them into an image prompt. You never write one by hand.
+- **Uses your ComfyUI, your models, your workflow.** Bring any API-format workflow. The extension finds nodes by title, so it does not care what your graph looks like.
+- **Remembers a LoRA per character.** Bind a LoRA to a character once and it loads automatically whenever they are active. No settings to change when you switch.
 
-## 📑 Table of Contents
+Images are hidden from your main chat model, so illustrating a scene never changes how the character responds.
 
-- [Requirements](#-requirements)
-- [Installation](#-installation)
-- [Setup](#-setup)
-- [Usage](#-usage)
-  - [Quick Reply Setup](#quick-reply-setup)
-- [Workflows](#-workflows)
-  - [Using the Example Workflows](#using-the-example-workflows)
-  - [Custom Prompt Target Nodes](#custom-prompt-target-nodes)
-  - [Per-Character LoRAs](#per-character-loras)
-  - [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora)
-- [Updating](#-updating)
-- [Migrating Legacy Chats](#-migrating-legacy-chats)
-- [Security](#-security)
-- [License](#-license)
+## Requirements
 
-## 📋 Requirements
-
-| Requirement | Details |
+| You need | Details |
 |---|---|
-| **SillyTavern** | `release` v1.18.0+, on desktop or mobile (including Android via [Termux](https://docs.sillytavern.app/installation/android-\(termux\)/)) |
-| **ComfyUI** | a running instance (local or on your LAN) |
-| **LLM API** | any OpenAI-compatible endpoint (OpenAI, a local Ollama server, etc.) |
-| **ComfyUI custom node** | [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver). **Optional but highly recommended.** Required only for the shipped example workflows (they save WebP); not needed if you bring your own workflow, but WebP keeps stored images far smaller. See [Using the Example Workflows](#using-the-example-workflows). |
+| **SillyTavern** | `release` v1.18.0 or newer, on desktop or mobile (including Android via [Termux](https://docs.sillytavern.app/installation/android-\(termux\)/)) |
+| **ComfyUI** | a running instance, on the same computer or anywhere on your LAN |
+| **An LLM API** | any OpenAI-compatible endpoint: OpenAI, a local Ollama server, OpenRouter, anything exposing `/chat/completions` |
+| **A ComfyUI workflow** | your own, or one of the two [example templates](workflows/) in this repo |
 
-## 📦 Installation
+Optional but recommended: the [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver) custom node. Step 2 below covers it.
 
-In SillyTavern, open **Extensions → Install Extension**, paste the repo URL, and click **Install**:
+---
 
-```
-https://github.com/mozophe/ST-ComfyUI-Imagine
-```
+## Quick Start
 
-## 🔧 Setup
+Seven steps. Steps 1 and 2 happen in **ComfyUI**, the rest in **SillyTavern**.
 
-### 1. Start ComfyUI
+### 1. Start ComfyUI with the right flags
 
-Pick the command for your setup:
-
-**Same machine** (ComfyUI and SillyTavern on one computer):
+**Same computer** as SillyTavern:
 
 ```bash
 python main.py --enable-cors-header
 ```
 
-**Different machines** (e.g. SillyTavern on a phone via Termux or a Raspberry Pi, ComfyUI on a desktop):
+**Different computers** (for example SillyTavern on a phone or Raspberry Pi, ComfyUI on a desktop):
 
 ```bash
 python main.py --listen 0.0.0.0 --enable-cors-header
 ```
 
-- `--enable-cors-header`: needed in **both** cases. SillyTavern and ComfyUI run on different ports, so the browser treats them as different origins and blocks `fetch` without this header, even on the same machine, even when the port is reachable via `curl`.
-- `--listen 0.0.0.0`: **only** for the different-machines case; it makes ComfyUI accept connections from other computers on the network. Omit it for a same-machine setup.
-- `--port <number>`: add to either command if you don't want the default port `8188`.
+`--enable-cors-header` is required in **both** cases, including same-computer setups. Without it your browser refuses to talk to ComfyUI even though the port is reachable. Add `--port <number>` to either command if you do not want the default `8188`.
+
+<details>
+<summary><b>On Windows? Use the portable build (easiest setup)</b></summary>
+
+<br>
+
+Download `ComfyUI_windows_portable` from the [ComfyUI releases page](https://github.com/comfyanonymous/ComfyUI/releases), extract it, and put your models under `ComfyUI\models\`. It bundles its own Python, so nothing needs installing.
+
+You do not run `python main.py` yourself with the portable build. You edit its launcher instead. Open **`run_nvidia_gpu.bat`** (or `run_cpu.bat`) in Notepad and add the flags to the line that is already there:
+
+```bat
+.\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --listen 0.0.0.0 --enable-cors-header
+pause
+```
+
+Save, then double-click the `.bat` to start ComfyUI. Keep the existing `--windows-standalone-build` flag and just add the others. Drop `--listen 0.0.0.0` if ComfyUI and SillyTavern are on the same computer.
+
+</details>
+
+### 2. Install the Image Saver node
+
+In ComfyUI, open **Manager → Custom Nodes Manager**, search for **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI.
+
+The example workflows use it to save **WebP** instead of PNG, which is roughly **93% smaller** for the same picture with no visible loss. Since every generated image is stored inside SillyTavern, that adds up fast. Skip this step only if you are bringing your own workflow that uses the built-in `SaveImage` node. See [Why WebP](#why-webp) for the full reasoning.
+
+### 3. Install the extension
+
+In SillyTavern, open **Extensions → Install Extension**, paste this URL, and click **Install**:
+
+```
+https://github.com/mozophe/ST-ComfyUI-Imagine
+```
+
+Open the **ComfyUI-Imagine** panel in the extensions drawer. Everything below happens there.
+
+### 4. Connect to ComfyUI
+
+Enter the base URL, then click **Test ComfyUI Connection**.
+
+- **Same computer:** `http://localhost:8188`
+- **Different computer:** the ComfyUI machine's LAN IP and port, for example `http://192.168.1.50:8188`
+
+Do not continue until this test passes. If it fails, see [Troubleshooting](#troubleshooting).
+
+### 5. Connect your prompt LLM
+
+Enter the **API base URL**, **API key**, and **model name**, then click **Test API Connection**.
+
+The base URL must be the **`v1` base** of an OpenAI-compatible API, for example `https://api.openai.com/v1` or `http://localhost:11434/v1` for Ollama. Do **not** include `/chat/completions`; the extension adds that itself.
+
+This is a **separate LLM from your chat model**. Writing an image prompt is an easy job, so a small cheap model (Gemma 4 31B, `gemma-4-31B-it`, for example) is usually plenty and keeps cost and latency low.
 
 > [!TIP]
-> **Easiest way to run ComfyUI (Windows): the portable build.** Download `ComfyUI_windows_portable` from the [ComfyUI releases page](https://github.com/comfyanonymous/ComfyUI/releases), extract it, and put your models under `ComfyUI\models\`. It bundles its own Python and dependencies, so nothing needs installing.
->
-> You don't run `python main.py` yourself with the portable build. Instead, you edit its launcher: open **`run_nvidia_gpu.bat`** (or `run_cpu.bat`) in Notepad and append the flags to the command line that's already there:
->
-> ```bat
-> .\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --listen 0.0.0.0 --enable-cors-header
-> pause
-> ```
->
-> Save, then double-click the `.bat` to start ComfyUI. Keep the existing `--windows-standalone-build` flag; just add the others. Drop `--listen 0.0.0.0` for a same-machine setup, and add `--port <number>` if you don't want `8188`.
+> **Make a dedicated API key for this extension and give it a low spending limit.** A browser-only extension has no backend, so the key is stored as plain text in your settings file. A scoped, low-cap key means an exposed key costs you nothing. See [Security](#security).
 
-### 2. Install the Image Saver Node *(recommended)*
+### 6. Prepare and upload a workflow
 
-The shipped example workflows save images as WebP using the [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver) custom node, which keeps stored images ~93% smaller than PNG. In ComfyUI, open **Manager → Custom Nodes Manager**, search for **`ComfyUI-Image-Saver`** (by *alexopus*), click **Install**, then restart ComfyUI.
+The extension needs a ComfyUI workflow exported in **API format**. If you already have a workflow you like, jump to [Adapting your own workflow](#adapting-your-own-workflow). Otherwise start from a template:
 
-Skip this only if you bring your own workflow that saves with the built-in `SaveImage` node instead. See [Using the Example Workflows](#using-the-example-workflows) for details.
+| Template | Use when |
+|---|---|
+| [`Krea2_CLora.json`](workflows/Krea2_CLora.json) | you want per-character LoRAs only |
+| [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | you also want one style/quality LoRA on **every** image |
 
-### 3. ComfyUI Base URL
+Both are tuned end to end for **Krea 2 Turbo** (separate diffusion model, CLIP and VAE; 8 steps; cfg 1; euler/simple) and both ship with **placeholder file paths**, so they will not run until you point them at your own models.
 
-Point the extension at ComfyUI, then click **Test ComfyUI Connection** to verify:
+1. **Download** your chosen `.json` from the [`workflows/`](workflows/) folder.
+2. **Drag and drop** it onto the ComfyUI canvas to load the graph.
+3. **Point each loader at your own files:**
+   - **Load Diffusion Model** (`UNETLoader`) → your Krea 2 or other diffusion model
+   - **Load CLIP** (`CLIPLoader`) → your text encoder
+   - **Load VAE** (`VAELoader`) → your VAE
+   - **IMAGINE_LORA** (`LoraLoaderModelOnly`) → any **real, existing** LoRA file
+4. **Export it:** enable Dev Mode (**Settings → Enable Dev Mode Options**), then **Graph → Export (API)**.
+5. Back in SillyTavern: **Workflows → Upload Workflow**, pick the exported file, then select it as the **active workflow**.
 
-- **Same machine:** `http://localhost:8188`
-- **Different machine:** the ComfyUI computer's LAN IP and port, e.g. `http://192.168.1.50:8188`
-
-### 4. LLM (Prompt Generator)
-
-Enter your API base URL, API key, and model name, then click **Test API Connection** to verify.
-
-The base URL must be an **OpenAI-compatible** endpoint (the extension calls `/chat/completions` and `/models`), so give the `v1` base, e.g. `https://api.openai.com/v1`, `http://localhost:11434/v1` for Ollama, or any other provider exposing that API. **Don't** include the `/chat/completions` path; the extension appends it.
-
-This is a separate LLM from your main chat model. Writing an image prompt is a simple task, so a smaller, cheaper model (e.g. Gemma 4 31B, `gemma-4-31B-it`) is usually good enough and keeps cost/latency down. Point it at a larger model if you prefer.
-
-> [!TIP]
-> **Create a separate API key just for this extension and give it a low spending limit**, rather than pasting your main key. Since a browser-only extension has no backend, the key is stored as plain text in `settings.json`, so a dedicated, low-cap key keeps the impact small in the unlikely event it's ever exposed. See [Security](#-security) for details.
-
-### 5. System Prompt
+> [!IMPORTANT]
+> **`IMAGINE_LORA` must point at a real LoRA file** even though per-character settings override it. When no character LoRA is set the node still loads that file (at strength 0, so it has no effect), and a filename that does not exist makes ComfyUI throw an error. Any valid LoRA works as the fallback.
 
 > [!NOTE]
-> The shipped default is a **work in progress**: a reasonable starting point tuned for Krea 2 Turbo's first-person POV style, not a finished one-size-fits-all prompt. Expect to iterate on it, and don't be surprised if it changes between updates.
+> Not using Krea 2? **Do not adapt these templates.** Start from a workflow that already works for your model and add the `IMAGINE_*` titles to it instead. See [Adapting your own workflow](#adapting-your-own-workflow).
 
-The extension ships with a default system prompt (tuned for **Krea 2 Turbo**) that tells the LLM how to write the image prompt. The default frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what's visible in frame**.
+### 7. Generate your first image
 
-It's always available as the **`Krea 2 (default)`** entry in the **System Prompt Presets** dropdown. This entry is kept in sync with the shipped default (it resets on reload), so to customise, edit the textarea and use **Save As** to store your own named preset rather than overwriting the default. Switch between saved prompts via the dropdown, overwrite the selected (non-default) preset with **Save**, and remove one with the 🗑 button. Presets are stored in your SillyTavern settings.
+Type `/imagine` in the chat input and press enter.
 
-The extension also ships a second built-in preset, **`Krea 2 - Intimate POV`**, a prompt writer tuned for close, intimate first-person POV scenes, with detailed pose, anatomy, and framing rules. It's available in the dropdown but **not** selected by default; pick it if you want it. Like the default, it's read-only and kept in sync on reload (Save is blocked; use **Save As** to keep an edited copy under your own name).
+You should see the extension gather the scene, call your LLM, wait on ComfyUI, and then post the finished picture into the chat as a message from **Camera**. Click the **ⓘ** button on that message to see exactly what prompt was written and how long each stage took.
 
-> [!TIP]
-> **Once the rest of the setup works, this is the first thing to tailor.** The System Prompt is what shapes every image (its style, framing, and detail), so edit it to suit the look you want and the model you're using.
+That is the whole setup. Everything else is optional polish:
 
-### 6. Upload a Workflow
+- Put `/imagine` on a one-click button: [Quick Reply setup](#quick-reply-button)
+- Give each character their own LoRA: [Per-character LoRAs](#per-character-loras)
+- Change the style of every image: [System prompt and presets](#system-prompt-and-presets)
 
-Export your ComfyUI workflow in **API format** (enable Dev Mode in ComfyUI, then **Graph → Export (API)**) and upload it here. Workflows are stored in your SillyTavern settings; no files are written to the server.
+---
 
-Two example workflows are provided in [`workflows/`](workflows/), both wired for the required `IMAGINE_PROMPT` / `IMAGINE_LORA` / `IMAGINE_LORA_TRIGGER` node titles; pick whichever matches your setup. They're **templates**, not drop-in defaults: the model, VAE, CLIP, and LoRA paths are machine-specific, so adapt them before uploading. See [Using the Example Workflows](#using-the-example-workflows) for step-by-step instructions.
+## Troubleshooting
 
-### 7. Select Active Workflow
+<details>
+<summary><b>"Test ComfyUI Connection" fails, or images never arrive</b></summary>
 
-Choose the workflow to use. Use the 🗑 button to delete workflows you no longer need.
+<br>
 
-### 8. Character LoRAs *(optional)*
+Almost always a missing `--enable-cors-header` on ComfyUI. Your browser blocks the request before it leaves the page, so the extension sees a generic network failure.
 
-Attach a LoRA to the active character so it loads automatically whenever that character is active. See [Per-Character LoRAs](#per-character-loras).
+It is needed **even when ComfyUI and SillyTavern run on the same computer**, because they use different ports and the browser treats different ports as different origins.
 
-### 9. Generation Settings
+Telltale sign: `curl http://<host>:8188/system_stats` works from the command line, but the extension still fails. `curl` ignores CORS; browsers do not. Restart ComfyUI with the flag and test again. Check the browser console (F12) for a message mentioning CORS to confirm.
 
-Image count (1–8), chat history limit (how many of the latest chat messages are sent to the prompt LLM; `0` = entire chat, default `20`), and the sender name for injected messages.
+</details>
 
-## 🚀 Usage
+<details>
+<summary><b>ComfyUI is on another computer and nothing connects at all</b></summary>
 
-Type `/imagine` in the chat input or attach it to a Quick Reply button. The extension will:
+<br>
 
-1. Gather the current character card, user persona, and chat history.
-2. Ask the configured LLM to write a prompt for ComfyUI.
-3. Post the prompt to ComfyUI and wait for the result.
-4. Inject the generated image into chat as a message from "Camera" (hidden from the main model).
+Two separate flags, both needed:
 
-> [!NOTE]
-> Use SillyTavern's built-in **Abort** button to cancel generation mid-flight.
+- `--listen 0.0.0.0` makes ComfyUI accept connections from other machines. Without it, it only answers on `localhost`.
+- `--enable-cors-header` lets the browser use the connection.
 
-**Generate an image for any message.** Every chat message (not just the latest one; only generated images themselves are skipped) gets a 📷 camera icon in its three-dots menu. Click it to generate an image for that specific point in the story: the prompt is built from the chat only up to that message, and the result is placed right after it. The view scrolls to the new image when it's done, so you can add an illustration to an earlier scene without regenerating anything or losing your place in the conversation. A stop button appears while generating, in case you want to cancel.
+Also check the URL you entered in the extension uses the ComfyUI machine's **LAN IP**, not `localhost`, and that a firewall is not blocking the port.
 
-Each generated image message has a ⓘ button in the message action row. Click it to open a debug modal showing **generation timing**, the system prompt, the full LLM context (character + persona + chat log), and the generated image prompt.
+</details>
 
-> [!NOTE]
-> **Generation timing.** The debug modal reports how long the image took, split into the two phases: **LLM** (writing the prompt) and **ComfyUI** (rendering), plus the total. It shows *this* image's times and a **global rolling average of the last 10 generations** for each phase. The average is global (kept in your SillyTavern settings), so it persists across reloads and carries over when you switch characters or chats. Only images generated after this feature shipped are timed; older ones show no timing.
+<details>
+<summary><b>Dragging an example workflow into ComfyUI does nothing, or the graph will not open</b></summary>
 
-> [!NOTE]
-> **Reasoning models.** Chain-of-thought is separated from the image prompt so it never reaches ComfyUI, and is shown in a dedicated **Model Reasoning** section in the debug modal. Separation works in this order:
-> 1. **Separate field:** `reasoning_content` (DeepSeek) or `reasoning` (OpenRouter and others), when the API returns one.
-> 2. **Tagged inline:** a `<think>…</think>` block or common variants (`<thinking>`, `<reason>`), including malformed cases such as a missing opening tag or a reply truncated mid-thought.
-> 3. **Untagged fallback:** if the model reasons in plain prose with no tags at all, the **last paragraph is treated as the prompt** and everything before it as reasoning.
->
-> Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated from any preamble by a blank line. The bundled default does this. If your prompt and reasoning run together with only single line breaks, they can't be split, so keep the prompt as a distinct last paragraph. Reasoning is captured on new generations only; regenerate with `/imagine` to see it for an existing image.
+<br>
 
-### Quick Reply Setup
+The templates use the `Image Saver Simple` node from [`ComfyUI-Image-Saver`](https://github.com/alexopus/ComfyUI-Image-Saver). ComfyUI cannot load a graph containing a node it does not have installed. Install it (see [step 2](#2-install-the-image-saver-node)), restart ComfyUI, then try again.
 
-Add a one-click image button to the chat bar:
+</details>
 
-1. Open the **Quick Reply** extension settings and create (or edit) a Quick Reply set, then add a new reply.
-2. In the reply editor, set the **Message / Command** box to `/imagine`.
-3. Give it a **Label** (e.g. `📷`) or pick an icon so it shows on the chat bar.
-4. Leave the **Auto-Execute** options at their defaults. `Don't trigger auto-execute` should stay checked so it only fires when you click it.
-5. Click **OK**, then enable the Quick Reply set so the button appears.
+<details>
+<summary><b>Uploading the workflow gives an "API format" error</b></summary>
 
-Clicking the button now runs `/imagine` exactly as typing it would.
+<br>
 
-![Quick Reply editor with /imagine command](docs/images/quick-reply.png)
+You exported the **UI** format instead of the **API** format. They are different files.
 
-Once enabled, the 📷 button appears on the chat bar (highlighted below). Click it any time to generate an image from the current scene:
+In ComfyUI: **Settings → Enable Dev Mode Options**, then use **Graph → Export (API)**, not plain **Export**. The API file has node IDs as top-level keys; the UI file has a `nodes` array. The extension detects this case and says so explicitly.
+
+</details>
+
+<details>
+<summary><b>The LoRA dropdown is empty</b></summary>
+
+<br>
+
+The list is fetched live from ComfyUI (`/object_info/LoraLoader`), so ComfyUI must be reachable when you open the panel. Fix the connection first ([step 4](#4-connect-to-comfyui)), then press the **🔁** button next to the dropdown to reload the list.
+
+Same button after installing new LoRAs in ComfyUI: the list is cached until you refresh it.
+
+</details>
+
+<details>
+<summary><b>"No IMAGINE_LORA node found" when generating</b></summary>
+
+<br>
+
+You have set a LoRA for this character but the active workflow has no node **titled** `IMAGINE_LORA`. The extension matches by node title, not node type.
+
+In ComfyUI, right-click your Load LoRA node → **Title**, set it to exactly `IMAGINE_LORA`, re-export in API format, and upload again. See [Per-character LoRAs](#per-character-loras).
+
+</details>
+
+<details>
+<summary><b>ComfyUI errors about a missing LoRA file</b></summary>
+
+<br>
+
+The `IMAGINE_LORA` node's `lora_name` points at a file that does not exist, usually the placeholder left in the template. Even with no character LoRA set, the node still loads whatever file it names. Point it at any real LoRA in your `models/loras` folder.
+
+</details>
+
+<details>
+<summary><b>The image prompt contains the model's thinking out loud</b></summary>
+
+<br>
+
+Happens with reasoning models that write their thoughts in plain prose with no `<think>` tags and no separate `reasoning` field. The fallback rule treats the **last paragraph** as the prompt.
+
+Fix it in your system prompt: instruct the model to put the final image prompt in its **own last paragraph**, separated by a blank line. The bundled default does this. See [Reasoning models](#reasoning-models).
+
+</details>
+
+<details>
+<summary><b>Generation finishes but no image appears / the LLM returned nothing</b></summary>
+
+<br>
+
+Open the browser console (F12). When the LLM produces no usable prompt, the extension logs the full API response there: `finish_reason`, any reasoning text, the content field, and the raw body.
+
+The usual causes are a token budget spent entirely on reasoning (`finish_reason: length`), or a model that refused. Try a larger token limit or a different model.
+
+</details>
+
+---
+
+# Reference
+
+## Generating images
+
+### The `/imagine` command
+
+Type `/imagine` in the chat input. The extension:
+
+1. Gathers the character card, your persona, and recent chat history.
+2. Asks your configured LLM to write an image prompt.
+3. Sends the prompt to ComfyUI and waits.
+4. Posts the image into the chat as a message from **Camera**, hidden from your main model.
+
+Use SillyTavern's **Abort** button to cancel mid-generation.
+
+### The 📷 button on any message
+
+Every chat message gets a 📷 icon in its three-dots menu (generated images themselves are skipped). Click it to illustrate that specific point in the story:
+
+- The prompt is built from the chat **only up to that message**, so an image added to an earlier scene is not contaminated by what happened later.
+- The picture is inserted **directly after** that message.
+- The view scrolls to the new image when it is done, so you do not lose your place.
+- A stop button appears while it works, in case you want to cancel.
+
+### The ⓘ debug panel
+
+Every generated image has an **ⓘ** button in its action row. It opens a panel showing:
+
+- **Generation timing:** how long this image took, split into **LLM** (writing the prompt) and **ComfyUI** (rendering), plus the total. Alongside it, a **rolling average of your last 10 generations** for each stage. That average is global and lives in your SillyTavern settings, so it survives reloads and follows you across characters and chats. Images generated before this feature shipped show no timing.
+- The **system prompt** used.
+- The full **LLM context**: character, persona, chat log.
+- The model's **reasoning**, if any.
+- The final **image prompt** sent to ComfyUI.
+
+### Reasoning models
+
+Chain-of-thought is stripped from the prompt so it never reaches ComfyUI, and is shown in the panel's **Model Reasoning** section instead. Separation is attempted in this order:
+
+1. **A separate field:** `reasoning_content` (DeepSeek) or `reasoning` (OpenRouter and others), when the API returns one.
+2. **Tagged inline:** a `<think>…</think>` block or a common variant (`<thinking>`, `<reason>`), including malformed cases such as a missing opening tag or a reply cut off mid-thought.
+3. **Untagged fallback:** if the model reasons in plain prose with no tags at all, the **last paragraph** is taken as the prompt and everything before it as reasoning.
+
+Because of rule 3, **write your system prompt so the image prompt is its own final paragraph**, separated by a blank line. The bundled default already does. If prompt and reasoning run together with only single line breaks they cannot be split. Reasoning is captured on new generations only; re-run `/imagine` to see it for an existing image.
+
+### Quick Reply button
+
+Put `/imagine` on the chat bar as a one-click button:
+
+1. Open the **Quick Reply** extension settings and create or edit a Quick Reply set, then add a new reply.
+2. Set the **Message / Command** box to `/imagine`.
+3. Give it a **Label** (for example `📷`) or pick an icon so it shows on the chat bar.
+4. Leave the **Auto-Execute** options alone. `Don't trigger auto-execute` should stay checked so it only fires when you click it.
+5. Click **OK**, then enable the Quick Reply set.
+
+![Quick Reply editor with the /imagine command](docs/images/quick-reply.png)
+
+The 📷 button then appears on the chat bar:
 
 <img src="docs/images/after-setup.png" alt="SillyTavern chat bar with the /imagine Quick Reply button" width="320">
 
-## 🧩 Workflows
+## Workflows
 
-- Workflows must be in **ComfyUI API export format** (not the standard UI format).
-- The prompt is injected into the first `CLIPTextEncode` node (positive conditioning) and the negative prompt (if set) into the second, **unless** nodes titled `IMAGINE_PROMPT` / `IMAGINE_NEGATIVE` are present, which take precedence (see [Custom Prompt Target Nodes](#custom-prompt-target-nodes)).
-- If image count > 1, the KSampler seed is randomised for each job.
+The extension targets nodes by **title**, never by graph shape, so any workflow works once the titles are set.
 
-### Using the Example Workflows
-
-The repo ships **two** ready-made templates, both wired for the **ComfyUI-Imagine** node titles (`IMAGINE_PROMPT`, `IMAGINE_LORA`, `IMAGINE_LORA_TRIGGER`) plus the empty-delimiter trigger convention, and both targeting a **Krea 2 Turbo** setup (separate diffusion model + CLIP + VAE, 8 steps, cfg 1, euler/simple):
-
-| File | LoRA chain | Use when |
+| Title | Receives | Falls back to |
 |---|---|---|
-| [`Krea2_CLora.json`](workflows/Krea2_CLora.json) | one loader (`IMAGINE_LORA`) for the per-character LoRA | you only want per-character LoRAs |
-| [`Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json) | an always-on `Load LoRA` **feeding** the per-character `IMAGINE_LORA` | you also want a style/quality/detail/aesthetic LoRA on **every** image (see [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora)) |
+| `IMAGINE_PROMPT` | the generated image prompt | the first `CLIPTextEncode` node |
+| `IMAGINE_NEGATIVE` | your negative prompt, if set | the second `CLIPTextEncode` node |
+| `IMAGINE_LORA` | the active character's LoRA and strength | nothing, this one is required for per-character LoRAs |
+| `IMAGINE_LORA_TRIGGER` | the active character's trigger word(s) | nothing, optional |
 
-Pick one as your starting point, but point the loaders at **your own** model files first. Both ship with placeholder filenames, so they won't run until you set the real ones. The steps below use `Krea2_CLora.json`; `Krea2_StyleLora_CLora.json` is identical apart from the extra always-on loader.
+Workflows must be in **API export format** and are stored in your SillyTavern settings; no files are written to the server. Use the 🗑 button to delete workflows you no longer need.
 
-> [!IMPORTANT]
-> **These example workflows save as WebP using the `Image Saver Simple` custom node, so install it before loading them or the graph won't open** (see [Setup step 2](#2-install-the-image-saver-node-recommended) for the install steps). It isn't required by the extension itself, only these templates use it, but it's highly recommended for the reason below.
->
-> **Why not the built-in `SaveImage`?** `SaveImage` only writes PNG. `Image Saver Simple` writes **WebP**, which is **dramatically smaller** than PNG for the same image with no visible loss. In practice a ~1.4 MB PNG drops to ~100 KB WebP, a **~93% reduction**. Because the extension downloads every generated image and stores it inside SillyTavern, that saving compounds fast:
-> - **Disk:** a chat with hundreds of images stays in megabytes, not gigabytes. This matters most on mobile (e.g. a Termux install), where storage is tight.
-> - **Speed:** chats open and scroll faster, and each image loads near-instantly.
-> - **Backups & exports:** SillyTavern chat backups and exports stay small and quick to move.
->
-> The templates set `extension: webp`; the extension already handles WebP end to end (fetch, upload, cleanup). If you'd rather keep PNG, just swap the save node back to a `SaveImage` node; nothing else depends on it.
+If image count is above 1, the KSampler seed is randomised for each job.
 
-1. **Download** your chosen file from the repo.
-2. **Drag and drop** the file onto the ComfyUI canvas to load the graph.
-3. Set the **right files** in each loader's dropdown:
-   - **Load Diffusion Model** (`UNETLoader`) → your Krea 2/diffusion model
-   - **Load CLIP** (`CLIPLoader`) → your text-encoder/CLIP
-   - **Load VAE** (`VAELoader`) → your VAE
-   - **IMAGINE_LORA** (`LoraLoaderModelOnly`) → any **real** LoRA file (see note below)
-4. *(Optional)* Add an **always-on LoRA** (a style/quality/detail LoRA applied to every image, separate from the per-character one); see [Adding an Always-On (Second) LoRA](#adding-an-always-on-second-lora).
-5. **Export as API format** (enable Dev Mode in ComfyUI → Settings → Enable Dev Mode Options, then **Graph → Export (API)**).
-6. **Upload** the exported file via Settings → Workflows → **Upload Workflow**, then select it as the active workflow.
+### Adapting your own workflow
 
-> [!IMPORTANT]
-> **The `IMAGINE_LORA` node must point at a real, existing LoRA file**, even though per-character settings override it. `LoraLoaderModelOnly` still loads the file when no character LoRA is set (it's just applied at strength 0), so a non-existent filename makes ComfyUI error. Point it at any valid LoRA as the fallback.
+Start from a workflow that already works for your model in ComfyUI, then:
+
+1. Title your prompt-receiving node `IMAGINE_PROMPT`. This is the only required title. Skip it if your workflow's first `CLIPTextEncode` should receive the prompt.
+2. Optionally title your negative-prompt node `IMAGINE_NEGATIVE`.
+3. Optionally add the LoRA titles, covered in [Per-character LoRAs](#per-character-loras).
+4. Export in API format and upload.
+
+Titling a node in ComfyUI: right-click the node → **Title**.
+
+Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's built-in `PrimitiveNode`) are supported as prompt targets, so you can redirect injection into a string node feeding a concat, rather than straight into `CLIPTextEncode`. That is how you prepend a fixed keyword inside the workflow itself.
 
 > [!NOTE]
-> **Using a different base model (not Krea 2)?** Don't adapt these files. They're tuned end-to-end for Krea 2 Turbo: not just the model, but the sampler, scheduler, CFG, steps, and resolution. Porting to another model means fixing every one of those, node by node. Instead, **start from a known-good workflow for _your_ model** (the one you already use in ComfyUI, or a reference workflow for that model, which already has the right sampler settings), then just apply the `IMAGINE_*` node titles, export in API format, and upload. The extension only cares about the node titles, not the graph; any workflow works once the titles are set.
->
-> Applying the titles is covered per feature: **`IMAGINE_PROMPT`** / **`IMAGINE_NEGATIVE`** in [Custom Prompt Target Nodes](#custom-prompt-target-nodes), and **`IMAGINE_LORA`** / **`IMAGINE_LORA_TRIGGER`** in [Per-Character LoRAs](#per-character-loras). At minimum, `IMAGINE_PROMPT` (or a first `CLIPTextEncode`) must receive the prompt; the LoRA titles are only needed if you want per-character LoRAs.
+> **Do not port the Krea 2 templates to another base model.** They are tuned end to end: model, sampler, scheduler, CFG, steps, and resolution. Porting means fixing every one of those node by node. Starting from a known-good workflow for your own model and adding the titles is far less work.
 
-### Custom Prompt Target Nodes
+### Why WebP
 
-If you want to prepend a fixed keyword or prefix inside the workflow itself (e.g. using a string concat node), you can redirect injection away from `CLIPTextEncode` using node titles:
+The built-in `SaveImage` node only writes PNG. `Image Saver Simple` writes **WebP**, which is dramatically smaller for the same picture with no visible loss: a ~1.4 MB PNG becomes a ~100 KB WebP, a **~93% reduction**.
 
-1. In ComfyUI, set the title of your **prompt-receiver** string node to `IMAGINE_PROMPT`.
-2. Optionally, title your negative-prompt string node `IMAGINE_NEGATIVE`.
-3. Export the workflow in API format and upload it.
+Because every generated image is downloaded and stored inside SillyTavern, that compounds:
 
-The extension will inject into those titled nodes instead of the first/second `CLIPTextEncode`. Fallback to `CLIPTextEncode` order applies when no titled nodes are found (existing workflows are unaffected).
+- **Disk:** a chat with hundreds of images stays in megabytes instead of gigabytes. This matters most on mobile, where a Termux install has little room to spare.
+- **Speed:** chats open and scroll faster, and each image loads near-instantly.
+- **Backups:** SillyTavern chat backups and exports stay small and quick to move.
 
-Both `inputs.text` (most custom string nodes) and `widgets_values[0]` (ComfyUI's built-in `PrimitiveNode`) are supported.
+The templates set `extension: webp`, and the extension handles WebP end to end. To go back to PNG, swap the save node for a `SaveImage` node; nothing else depends on it.
 
-### Per-Character LoRAs
+## Per-character LoRAs
 
-Bind a different LoRA to each SillyTavern character so the right one loads automatically, with no settings change when you switch characters. The workflow stays the same; only the LoRA filename (and strength) swaps based on who is active.
+Bind a different LoRA to each character so the right one loads automatically. The workflow never changes; only the LoRA filename, strength, and trigger swap based on who is active.
 
-**One-time workflow setup:** in ComfyUI, add a **Load LoRA** node (display name for `LoraLoaderModelOnly`; or **Load LoRA (Model and CLIP)** = `LoraLoader` if your model's LoRA also needs CLIP, both are accepted) and set its **title** to `IMAGINE_LORA`, then export and upload the workflow. The extension acts **only** on that titled node (and the `IMAGINE_LORA_TRIGGER` node). Any other LoRA loaders in your workflow are left untouched. If a character has a LoRA set but no `IMAGINE_LORA` node exists, `/imagine` shows an error telling you to title it.
+**One-time workflow setup.** In ComfyUI, add a **Load LoRA** node (`LoraLoaderModelOnly`, or **Load LoRA (Model and CLIP)** = `LoraLoader` if your model's LoRA also needs CLIP; both work) and set its **title** to `IMAGINE_LORA`. Export and upload. The extension touches **only** that node and `IMAGINE_LORA_TRIGGER`, so any other LoRA loader in your graph is left exactly as you set it.
 
-**Per character:** with a character active, open the extension's **Character LoRAs** section. It shows the active character's name, a LoRA dropdown pulled live from ComfyUI (handles thousands of LoRAs: on **desktop** it's searchable, just start typing to filter; on **mobile** it falls back to your device's native picker, matching how SillyTavern's own model dropdowns behave on touch), a strength field, and an optional **trigger word(s)** field. Pick a LoRA, strength, and trigger, and it's saved against that character and applied on every `/imagine` for them. Use the 🔁 button to refresh the LoRA list after installing new LoRAs in ComfyUI.
+**Per character.** With a character active, open the **Character LoRAs** section. It shows:
 
-**Trigger words (optional):** many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, and in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt (e.g. via a `StringConcatenate` node ahead of `CLIPTextEncode`). The active character's trigger is written into that node on each generation.
+- the active character's name
+- a **LoRA dropdown** pulled live from ComfyUI, handling thousands of entries. On **desktop** it is searchable: start typing to filter. On **mobile** it falls back to your device's native picker, matching how SillyTavern's own model dropdowns behave on touch.
+- a **strength** field
+- an optional **trigger word(s)** field
+
+Pick them and they are saved against that character, applied on every generation for them. Use **🔁** to refresh the LoRA list after installing new LoRAs.
+
+**Trigger words.** Many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, then in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt, typically through a `StringConcatenate` node ahead of `CLIPTextEncode`. The active character's trigger is written into that node on each generation.
 
 > [!TIP]
-> **Set the concat delimiter to empty (`""`) and end each trigger with its own separator** (e.g. `aliceface woman, `); that way a character with no trigger produces a clean prompt with nothing prepended. Leave the field blank for LoRAs that need no trigger.
+> Set the concat delimiter to empty (`""`) and end each trigger with its own separator, for example `aliceface woman, `. A character with no trigger then produces a clean prompt with nothing prepended.
 
-Notes:
+Good to know:
 
-- The binding is keyed by the character card's avatar filename, so it survives renames.
-- Switch to a character with **no LoRA set** (or no character active, e.g. a group chat) → the LoRA is neutralised: its strength is forced to `0` (image identical to no-LoRA) and the trigger node is cleared. The workflow's baked-in default LoRA does **not** leak in. (API-format workflows can't express a true node bypass, so strength 0 is used instead; the loader still runs but has zero effect.)
-- The list is fetched from ComfyUI (`/object_info/LoraLoader`); ComfyUI must be reachable to populate the dropdown.
-- Stored in your SillyTavern settings (not on the character card), so the binding does not travel if you export/share the card.
+- The binding is keyed to the character card, so it survives renaming a character.
+- Switch to a character with **no LoRA set**, or to a group chat where no single character is active, and the LoRA is **neutralised**: strength is forced to `0` and the trigger node is cleared, so the workflow's built-in default LoRA never leaks in. (API-format workflows cannot express a true node bypass, so strength 0 is used instead. The loader still runs but has zero effect.)
+- Bindings live in your SillyTavern settings, not on the character card, so they do not travel if you export or share the card.
 
-### Adding an Always-On (Second) LoRA
+### Adding an always-on LoRA
 
-Want a LoRA applied to **every** image regardless of character (a style, quality, detail, or aesthetic LoRA) alongside the per-character one? Add a second LoRA loader to the workflow. The extension only ever touches the node titled `IMAGINE_LORA`, so **any other loader you add is left exactly as you set it** and stays on for every generation.
+Want a style, quality, or detail LoRA on **every** image regardless of character, alongside the per-character one? Add a second LoRA loader. The extension only ever touches `IMAGINE_LORA`, so any other loader stays exactly as you set it.
 
 <details>
 <summary><b>Step-by-step: insert an always-on loader into the model chain</b></summary>
 
 <br>
 
-LoRA loaders chain through the `model` connection. In the example workflow the chain is `UNETLoader → IMAGINE_LORA → KSampler`; you insert your extra loader into that chain:
+LoRA loaders chain through the `model` connection. In the example workflow the chain is `UNETLoader → IMAGINE_LORA → KSampler`, and you insert your extra loader into it:
 
-1. In ComfyUI, **double-click an empty spot on the canvas** to open node search and type `Load LoRA`, then pick **Load LoRA** (the model-only loader, `class_type` `LoraLoaderModelOnly`). This Krea 2 setup loads CLIP separately, so model-only is correct; pick **Load LoRA (Model and CLIP)** (`LoraLoader`) only if your model's LoRA also needs the CLIP. Tip: you can also drag a link off the `IMAGINE_LORA` **MODEL** output onto empty canvas and release, and ComfyUI then lists only nodes that accept a MODEL input.
-2. **Rewire** so the new node sits in the model chain. Either order works, e.g. put it after `IMAGINE_LORA`:
-   - connect `IMAGINE_LORA`'s **MODEL** output → the new node's **model** input
-   - connect the new node's **MODEL** output → **KSampler**'s **model** input
-3. On the new node, pick its **lora_name** and **strength_model**.
-4. **Do not** title it `IMAGINE_LORA` (or `IMAGINE_LORA_TRIGGER`); leave its default title or name it something like `Style LoRA`. That keeps the extension from touching it.
-5. Export as API format and upload as usual.
+1. **Double-click empty canvas** to open node search, type `Load LoRA`, and pick **Load LoRA** (the model-only loader, `LoraLoaderModelOnly`). The Krea 2 setup loads CLIP separately, so model-only is correct. Pick **Load LoRA (Model and CLIP)** (`LoraLoader`) only if your model's LoRA also needs CLIP. Tip: dragging a link off the `IMAGINE_LORA` **MODEL** output onto empty canvas and releasing makes ComfyUI list only nodes that accept a MODEL input.
+2. **Rewire** so the new node sits in the chain. Either order works. To put it after `IMAGINE_LORA`:
+   - `IMAGINE_LORA` **MODEL** output → new node's **model** input
+   - new node's **MODEL** output → **KSampler**'s **model** input
+3. Pick its **lora_name** and **strength_model**.
+4. **Do not** title it `IMAGINE_LORA` or `IMAGINE_LORA_TRIGGER`. Leave the default title or call it something like `Style LoRA`. That is what keeps the extension away from it.
+5. Export as API format and upload.
 
-Repeat to stack more always-on LoRAs, just keep chaining `MODEL` out → next loader's `model` in, ending at the `KSampler`. If such a LoRA needs a trigger word in the prompt, bake it into the **Prompt Prefix/Suffix** fields in the extension's LLM settings since the per-character trigger field is reserved for `IMAGINE_LORA_TRIGGER`.
+Repeat to stack more, chaining `MODEL` out to the next loader's `model` in, ending at the `KSampler`. If such a LoRA needs a trigger word, put it in the **Prompt Prefix/Suffix** fields in the extension's LLM settings; the per-character trigger field is reserved for `IMAGINE_LORA_TRIGGER`.
 
 </details>
 
-A worked example with two LoRAs is in [`workflows/Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json): an always-on style loader (`Load LoRA`) feeds the per-character loader (`IMAGINE_LORA`), chained `UNETLoader → Load LoRA → IMAGINE_LORA → KSampler`. Only `IMAGINE_LORA` is touched by the extension; `Load LoRA` stays on for every image. (Same placeholder-path caveat as the single-LoRA template: adapt the model/LoRA files to your setup.)
+A worked two-LoRA example is [`workflows/Krea2_StyleLora_CLora.json`](workflows/Krea2_StyleLora_CLora.json), chained `UNETLoader → Load LoRA → IMAGINE_LORA → KSampler`. Only `IMAGINE_LORA` is touched; `Load LoRA` stays on for every image. Same placeholder-path caveat as the other template.
 
-## 🔄 Updating
+## System prompt and presets
 
-Updates are **manual by design:** `auto_update` is off, so nothing updates behind your back. Update when you choose to, from **Extensions → Manage Extensions**, by clicking the extension's update button.
+The system prompt is what shapes every image: its style, framing, and level of detail. **Once the rest works, this is the first thing worth tailoring.**
 
-## 🔁 Migrating Legacy Chats
+The shipped default is tuned for **Krea 2 Turbo**. It frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what is visible in frame**.
 
-New images are saved as files and only their path is stored in the chat, keeping the chat file small. Early versions instead embedded the full image (and debug info) as base64 directly in the message, which bloats the chat file and slows loading.
+> [!NOTE]
+> The default is a **work in progress**: a reasonable starting point, not a finished one-size-fits-all prompt. Expect to iterate on it, and expect it to change between updates.
 
-If you have chats from those early versions, open the extension settings, find the **Image Storage** section, and click **Migrate embedded images to files (legacy)**. It converts the embedded images in the **currently open chat** to files and rewrites the messages to point at them.
+Two presets ship with the extension:
 
-- Acts only on the chat you have open, so switch to each old chat and run it once.
-- **Safe to re-run** and non-destructive: an already-migrated message is left alone, and if an upload fails that message keeps its embedded image.
-- New chats need nothing; they already store images as files.
+| Preset | Notes |
+|---|---|
+| `Krea 2 (default)` | the active default, first-person POV, describe-only-what-is-visible |
+| `Krea 2 - Intimate POV` | tuned for close, intimate POV scenes with detailed pose, anatomy, and framing rules. Available in the dropdown but **not** selected by default |
 
-## 🔒 Security
+Both are **read-only** and re-sync to the shipped version on every reload, so extension updates reach you. To customise: edit the textarea and use **Save As** to store your own named preset. **Save** overwrites the selected preset and is blocked for the two shipped ones. Switch with the dropdown, delete with 🗑. Presets are stored in your SillyTavern settings.
 
-This extension stores the LLM API key as plain text in your `data/<user>/settings.json`. A browser-only extension has no backend, so it can't use SillyTavern's server-side key store (`secrets.json`) the way SillyTavern's own connections do, leaving `settings.json` as the only place it can persist the key.
+## Generation settings
 
-One easy habit keeps this a non-issue: **use a dedicated API key with a low spending limit** for this extension (see [Setup step 4](#4-llm-prompt-generator)), and don't share your `settings.json` (including in screenshots or copies posted for help). That way even if the key is ever exposed, the impact is capped.
+| Setting | Range | What it does |
+|---|---|---|
+| **Image count** | 1 to 8 | how many images per `/imagine`. Above 1, the seed is randomised per image |
+| **Chat history limit** | `0` or more, default `20` | how many of the latest chat messages are sent to the prompt LLM. `0` sends the entire chat |
+| **Sender name** | any text | the name on injected image messages, `Camera` by default |
+| **Prompt prefix / suffix** | any text | text pasted before and after every generated prompt |
+| **Negative prompt** | any text | goes to `IMAGINE_NEGATIVE`, or the second `CLIPTextEncode` |
 
-For completeness, the key can be read either from the `settings.json` file itself or, at runtime, by anything else running in the SillyTavern page (another extension, a character-card script, or an XSS bug). Leaving SillyTavern's `allowKeysExposure` flag off keeps your `secrets.json` keys out of the browser; a scoped, low-cap key covers this one.
+## Updating
 
-## 📄 License
+Updates are **manual by design**. `auto_update` is off, so nothing changes behind your back. Update when you choose, from **Extensions → Manage Extensions**, using the extension's update button. SillyTavern reloads afterwards so the new version takes effect immediately.
+
+## Migrating legacy chats
+
+New images are saved as files, with only the path stored in the chat, keeping chat files small. Early versions embedded the whole image as base64 directly in the message, which bloats the chat file and slows loading.
+
+If you have chats from those versions, open the extension settings, find the **Image Storage** section, and click **Migrate embedded images to files (legacy)**.
+
+- It acts only on the **currently open chat**, so switch to each old chat and run it once.
+- It is **safe to re-run** and non-destructive: an already-migrated message is left alone, and a failed upload leaves that message's embedded image untouched.
+- New chats need nothing.
+
+## Security
+
+This extension stores your LLM API key as **plain text** in `data/<user>/settings.json`. A browser-only extension has no backend, so it cannot use SillyTavern's server-side key store (`secrets.json`) the way SillyTavern's own connections do. `settings.json` is the only place it can persist the key.
+
+One habit makes this a non-issue: **use a dedicated API key with a low spending limit** for this extension, and do not share your `settings.json`, including in screenshots or copies posted when asking for help. Even if the key is exposed, the damage is capped.
+
+For completeness: the key can be read from the `settings.json` file itself, or at runtime by anything else running in the SillyTavern page (another extension, a character-card script, an XSS bug). Leaving SillyTavern's `allowKeysExposure` flag off keeps your `secrets.json` keys out of the browser; a scoped, low-cap key covers this one.
+
+## Support
+
+Found a bug? Open an [issue](https://github.com/mozophe/ST-ComfyUI-Imagine/issues). Please include:
+
+- what you expected and what happened instead
+- **browser console output** (F12 → Console), where the extension logs failure details
+- **ComfyUI console output**, if generation reached ComfyUI
+- your SillyTavern version and whether ComfyUI runs on the same machine
+
+Redact your API key from anything you paste.
+
+## License
 
 [MIT](LICENSE) © mozophe
