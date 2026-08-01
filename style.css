@@ -253,7 +253,9 @@
     color: var(--SmartThemeBodyColor, inherit);
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 6px;
+    /* Tracks --ci-radius so the chip nests inside the strip's corner rather
+       than sitting at an unrelated 6px while the cards use 8px. */
+    border-radius: calc(var(--ci-radius) - 3px);
     cursor: pointer;
     transition: background 0.15s;
 }
@@ -293,11 +295,19 @@
    contrast depends on a user-chosen hue. */
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a,
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a:hover {
-    /* 22% measured out at luminance 40 against cards at 37 — the same value,
-       so the chip read as one more card rather than the selected tab. 34% over
-       the deeper trough puts a clear step between them. */
-    background: color-mix(in srgb, var(--ci-accent) 34%, transparent);
-    border-color: color-mix(in srgb, var(--ci-accent) 65%, transparent);
+    /* Neutral fill, not accent. Measured against a live install, every other
+       surface in the panel is chroma 0 — background 21, trough 15, inputs 26,
+       cards 37 — and the accent appears only as icon-sized glyphs. An
+       accent-filled chip was the single large coloured area in the panel and
+       read as a different design language.
+
+       An accent fill was only reached for because a neutral chip used to be
+       value-identical to the cards. With the trough deepened that no longer
+       holds: 18% body over the trough lands near 50, a clear step above 37.
+       Selection is marked by that step plus the accent border and icon, which
+       keeps the accent at the same glyph-and-line scale as the rest. */
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 18%, transparent);
+    border-color: color-mix(in srgb, var(--ci-accent) 70%, transparent);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a i {
