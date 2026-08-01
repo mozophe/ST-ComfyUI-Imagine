@@ -636,7 +636,16 @@ function bindSettingsEvents() {
     // Tabs. jQuery UI is bundled by ST, which uses it for its own background
     // tabs (backgrounds.js). bindSettingsEvents runs once, from init(), after
     // the template has been rendered into the DOM, so no re-init guard needed.
-    $('#comfy-imagine-tabs').tabs();
+    // Guarded: a throw here would abort the function before any binding below
+    // runs, leaving every field silently read-only. Worst case without the
+    // widget, jQuery UI never hides the inactive panels, so all four tabs
+    // render stacked instead of tabbed — ugly but fully functional, and far
+    // better than a settings panel that looks fine but can't be edited.
+    try {
+        $('#comfy-imagine-tabs').tabs();
+    } catch (err) {
+        console.error('[comfy-imagine] tabs widget failed to initialise', err);
+    }
 
     const bind = (id, key, transform) => {
         const el = document.getElementById(id);

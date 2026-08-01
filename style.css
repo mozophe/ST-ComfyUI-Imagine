@@ -11,25 +11,6 @@
     --ci-radius: 8px;
 }
 
-/* Sections separated by a subtle border */
-#comfy-imagine-settings .comfy-imagine-section {
-    padding: 0.75em 0;
-    border-top: 1px solid var(--ci-border);
-}
-
-#comfy-imagine-settings .comfy-imagine-section:first-child {
-    border-top: none;
-    padding-top: 0;
-}
-
-/* Section headers — bold, readable, not uppercase */
-#comfy-imagine-settings h5 {
-    margin: 0 0 0.6em 0;
-    color: var(--SmartThemeBodyColor, inherit);
-    font-size: 1em;
-    font-weight: bold;
-}
-
 /* Default row: label above input (column) */
 #comfy-imagine-settings .comfy-imagine-row {
     display: flex;
