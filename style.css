@@ -160,7 +160,10 @@
     background: var(--ci-surface-strong);
     padding: 0.1em 0.35em;
     border-radius: 3px;
-    word-break: break-all;
+    /* anywhere, not break-all: break-all splits every code span at the line
+       edge, which chopped LoraLoader into "Lo raLoader". This breaks only
+       tokens that genuinely cannot fit, such as the python main.py line. */
+    overflow-wrap: anywhere;
 }
 
 /* Popup system-prompt textarea fills the dialog */

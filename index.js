@@ -523,7 +523,12 @@ function refreshLoraSelect2(select) {
         placeholder: 'Select a LoRA',
         searchInputPlaceholder: 'Search LoRAs…',
         searchInputCssClass: 'text_pole',
-        allowClear: true,
+        // No allowClear: its × is absolutely positioned over the right edge of
+        // the control, where it collides with the dropdown caret and the
+        // ellipsis once a LoRA path is long enough to truncate. The panel has
+        // its own clear button next to the dropdown, which also works on
+        // mobile, where select2 is never applied at all.
+        allowClear: false,
     });
 }
 
