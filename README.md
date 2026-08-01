@@ -100,7 +100,7 @@ Open the **ComfyUI-Imagine** panel in the extensions drawer. Everything below ha
 
 ### 4. Connect to ComfyUI
 
-Enter the base URL, then click **Test ComfyUI Connection**.
+In the **Connection** tab, enter the base URL, then click **Test ComfyUI Connection**.
 
 - **Same computer:** `http://localhost:8188`
 - **Different computer:** the ComfyUI machine's LAN IP and port, for example `http://192.168.1.50:8188`
@@ -109,7 +109,7 @@ Do not continue until this test passes. If it fails, see [Troubleshooting](#trou
 
 ### 5. Connect your prompt LLM
 
-Enter the **API base URL**, **API key**, and **model name**, then click **Test API Connection**.
+Still in the **Connection** tab, enter the **API base URL**, **API key**, and **model name**, then click **Test API Connection**.
 
 The base URL must be the **`v1` base** of an OpenAI-compatible API. Do **not** include `/chat/completions`; the extension adds that itself.
 
@@ -162,7 +162,7 @@ Both are tuned end to end for **Krea 2 Turbo** (separate diffusion model, CLIP a
    - **Load VAE** (`VAELoader`) → your VAE
    - **IMAGINE_LORA** (`LoraLoaderModelOnly`) → any **real, existing** LoRA file
 4. **Export it:** enable Dev Mode (**Settings → Enable Dev Mode Options**), then **Graph → Export (API)**.
-5. Back in SillyTavern: **Workflows → Upload Workflow**, pick the exported file, then select it as the **active workflow**.
+5. Back in SillyTavern: in the **Generate** tab, click **Upload Workflow**, pick the exported file, then select it as the **active workflow**.
 
 > [!IMPORTANT]
 > **`IMAGINE_LORA` must point at a real LoRA file** even though per-character settings override it. When no character LoRA is set the node still loads that file (at strength 0, so it has no effect), and a filename that does not exist makes ComfyUI throw an error. Any valid LoRA works as the fallback.
@@ -416,7 +416,7 @@ Bind a different LoRA to each character so the right one loads automatically. Th
 
 **One-time workflow setup.** In ComfyUI, add a **Load LoRA** node (`LoraLoaderModelOnly`, or **Load LoRA (Model and CLIP)** = `LoraLoader` if your model's LoRA also needs CLIP; both work) and set its **title** to `IMAGINE_LORA`. Export and upload. The extension touches **only** that node and `IMAGINE_LORA_TRIGGER`, so any other LoRA loader in your graph is left exactly as you set it.
 
-**Per character.** With a character active, open the **Character LoRAs** section. It shows:
+**Per character.** With a character active, open the **Character** tab. It shows:
 
 - the active character's name
 - a **LoRA dropdown** pulled live from ComfyUI, handling thousands of entries. On **desktop** it is searchable: start typing to filter. On **mobile** it falls back to your device's native picker, matching how SillyTavern's own model dropdowns behave on touch.
@@ -488,15 +488,15 @@ To customise, edit the textarea and use **Save As** to store your own named pres
 
 ## Generation settings
 
-| Setting | Range | What it does |
-|---|---|---|
-| **Image count** | 1 to 8, default `1` | how many images per generation. Above 1, the seed is randomised per image. At `1` the workflow's own seed is left alone |
-| **Chat history limit** | `0` or more, default `20` | how many of the latest chat messages are sent to the prompt LLM. `0` sends the entire chat |
-| **Sender name** | any text, default `Camera` | the name on injected image messages |
-| **Prompt prefix / suffix** | any text | pasted before and after every generated prompt |
-| **Negative prompt** | any text | goes to `IMAGINE_NEGATIVE`, or the second `CLIPTextEncode` |
-| **Max tokens** | default `8192` | ceiling for the prompt LLM's reply. Raise it if a reasoning model spends its whole budget thinking and returns no prompt |
-| **Temperature** | default `0.7` | prompt LLM sampling temperature. Lower for more literal, repeatable prompts |
+| Setting | Tab | Range | What it does |
+|---|---|---|---|
+| **Image count** | Generate | 1 to 8, default `1` | how many images per generation. Above 1, the seed is randomised per image. At `1` the workflow's own seed is left alone |
+| **Sender name** | Generate | any text, default `Camera` | the name on injected image messages |
+| **Chat history limit** | Prompt | `0` or more, default `20` | how many of the latest chat messages are sent to the prompt LLM. `0` sends the entire chat |
+| **Prompt prefix / suffix** | Prompt | any text | pasted before and after every generated prompt |
+| **Negative prompt** | Prompt | any text | goes to `IMAGINE_NEGATIVE`, or the second `CLIPTextEncode` |
+| **Max tokens** | Connection | default `8192` | ceiling for the prompt LLM's reply. Raise it if a reasoning model spends its whole budget thinking and returns no prompt |
+| **Temperature** | Connection | default `0.7` | prompt LLM sampling temperature. Lower for more literal, repeatable prompts |
 
 ## Updating
 
@@ -506,7 +506,7 @@ Updates are **manual by design**. `auto_update` is off, so nothing changes behin
 
 New images are saved as files, with only the path stored in the chat, keeping chat files small. Early versions embedded the whole image as base64 directly in the message, which bloats the chat file and slows loading.
 
-If you have chats from those versions, open the extension settings, find the **Image Storage** section, and click **Migrate embedded images to files (legacy)**.
+If you have chats from those versions, open the extension settings, open the **Connection** tab and find the **Maintenance** block, and click **Migrate embedded images to files (legacy)**.
 
 - It acts only on the **currently open chat**, so switch to each old chat and run it once.
 - It is **safe to re-run** and non-destructive: an already-migrated message is left alone, and a failed upload leaves that message's embedded image untouched.
