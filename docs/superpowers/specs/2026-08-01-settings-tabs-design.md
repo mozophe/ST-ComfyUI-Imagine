@@ -10,9 +10,10 @@ blocks, every control visible at once. Reaching the Character LoRA or the active
 workflow means scrolling past the ComfyUI URL, the LLM credentials and two info
 boxes that are set once and never touched again.
 
-The panel renders into `#extensions_settings`, which ST styles as
-`class="flex1 wide50p"` inside `.drawer-content` — roughly half the drawer width.
-Vertical space is the scarce resource.
+The panel renders into `#extensions_settings`. On desktop ST styles it
+`class="flex1 wide50p"` inside `.drawer-content` — roughly half the drawer width. On
+mobile that is overridden to full viewport width (see constraint 6). Vertical space is
+the scarce resource in both cases.
 
 ## Approach
 
@@ -87,6 +88,26 @@ Checked against `SillyTavern/SillyTavern` at time of writing.
 5. **`bindSettingsEvents()` is called exactly once**, from `init()` at `index.js:1820`,
    after the template renders. `.tabs()` can be initialised there with no re-init guard.
 
+6. **Mobile gets a full-width panel, not a half-width one.** Under
+   `@media screen and (max-width: 1000px)`, `mobile-styles.css:260` sets
+   `.drawer-content { width: 100dvw; min-width: unset }` and `mobile-styles.css:180` sets
+   `#extensions_settings { width: 100% !important }`. The available bar width is therefore
+   the viewport minus about 12px (the drawer's 5px padding and 1px border per side).
+
+   Four tabs at `minmax(74px, 1fr)` with a 3px gap need `4×74 + 3×3` = **305px**.
+
+   | Context | Bar width | Result |
+   |---|---|---|
+   | iPhone SE, 375pt | 363px | one row, 87px per tab |
+   | iPhone 16 / 16 Pro, 393–402pt | 381–390px | one row, 93–95px per tab |
+   | Pro Max, 440pt | 428px | one row, 105px per tab |
+   | Desktop 1920px wide | ~474px | roomy |
+   | Desktop 1280px wide | ~315px | one row, barely |
+   | Desktop ~1000px wide | ~244px | drops to 3 columns, fourth tab wraps |
+
+   Desktop maths: `--sheldWidth: 50vw` (`style.css:92`), `.drawer-content` takes that with
+   `min-width: 450px`, and `wide50p` halves it.
+
 ## Changes by file
 
 ### `settings.html`
@@ -154,11 +175,17 @@ logic for `test/image-helpers.test.mjs` to cover. Manual checks on the Pi instal
    panel is safe.
 4. Tab bar stays pinned while the panel scrolls, and scrolls away with it.
 5. Every control still saves: change one field per tab, reload ST, confirm it persisted.
-6. Labels do not wrap in the half-width panel.
+6. Labels do not wrap. Check on a narrow desktop window, not on the phone — per
+   constraint 6, mobile has the most room, not the least.
 
 ## Known risk
 
-Tab label width in a `wide50p` container cannot be verified from source. If
-"Character" wraps despite the stacked icon, drop the grid minimum from 74px to
-about 64px. Do not shorten the labels — abbreviating is what makes a tab bar hard
-to scan, and the stacked layout exists precisely to avoid it.
+Tab labels are safe on every phone and on a maximised desktop window. The failure case
+is a **narrow desktop browser window**, roughly 1100px or less, where the half-width
+panel falls under 305px and `auto-fit` drops to three columns, wrapping Connection onto
+a second row.
+
+A two-row bar is not broken, just less tidy, so the first response is to accept it. If
+it grates, drop the grid minimum from 74px to about 64px. Do not shorten the labels —
+abbreviating is what makes a tab bar hard to scan, and the stacked icon layout exists
+precisely so full words fit.
