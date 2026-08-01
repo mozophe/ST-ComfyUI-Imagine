@@ -37,6 +37,20 @@
     width: 100%;
 }
 
+/* select2 hides the original <select> and inserts its own container as a
+   sibling. That container has no .text_pole class, so the rule above never
+   reaches it: it falls back to flex: 0 1 auto and its inline width: 100%
+   claims the whole row, pushing the adjacent button outside the panel.
+   ST solves the same problem the same way for its world-info select
+   (public/css/world-info.css: #world_editor_select~.select2-container).
+   flex: 1 sets flex-basis: 0%, which takes precedence over the inline width
+   for main-axis sizing, so no !important is needed. */
+#comfy-imagine-settings .comfy-imagine-row--inline .select2-container {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
 /* Allow the system-prompt textarea to be resized vertically */
 #comfy-imagine-settings textarea#comfy-imagine-system-prompt {
     resize: vertical;
