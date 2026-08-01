@@ -1,7 +1,20 @@
+/* Token layer. Alias SillyTavern's theme variables once, then style through
+   these. Nothing here is a fixed colour: the panel follows whatever theme the
+   user picked. Surface tints derive from the body colour rather than a
+   hardcoded white overlay, so they stay visible on light themes too. */
+#comfy-imagine-settings {
+    --ci-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.16));
+    --ci-field: var(--SmartThemeBlurTintColor, rgba(18, 18, 24, 0.86));
+    --ci-accent: var(--SmartThemeQuoteColor, #66b2ff);
+    --ci-surface: color-mix(in srgb, var(--SmartThemeBodyColor) 6%, transparent);
+    --ci-surface-strong: color-mix(in srgb, var(--SmartThemeBodyColor) 10%, transparent);
+    --ci-radius: 8px;
+}
+
 /* Sections separated by a subtle border */
 #comfy-imagine-settings .comfy-imagine-section {
     padding: 0.75em 0;
-    border-top: 1px solid var(--SmartThemeBorderColor, rgba(255,255,255,0.1));
+    border-top: 1px solid var(--ci-border);
 }
 
 #comfy-imagine-settings .comfy-imagine-section:first-child {
@@ -85,16 +98,17 @@
 /* Info boxes */
 #comfy-imagine-settings .comfy-imagine-info {
     font-size: 0.82em;
-    opacity: 0.75;
+    opacity: 0.8;
     padding: 0.4em 0.6em;
-    background: var(--SmartThemeBlurTintColor, rgba(255,255,255,0.04));
-    border-radius: 4px;
+    background: var(--ci-surface);
+    border-left: 2px solid var(--ci-accent);
+    border-radius: 0 var(--ci-radius) var(--ci-radius) 0;
     margin-bottom: 0.5em;
 }
 
 #comfy-imagine-settings .comfy-imagine-info code {
     font-family: monospace;
-    background: var(--SmartThemeBlurTintColor, rgba(255,255,255,0.1));
+    background: var(--ci-surface-strong);
     padding: 0.1em 0.35em;
     border-radius: 3px;
 }
