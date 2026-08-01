@@ -265,20 +265,38 @@
     outline-offset: 1px;
 }
 
-/* Accent on icons only, never on body text. */
+/* Icons muted while inactive so the accent itself means "this is the selected
+   tab". With every icon accented, selection rested on a 4% tint step and a
+   faint border, which is not enough to read at a glance. */
 #comfy-imagine-settings .comfy-imagine-tab-list li a i {
-    color: var(--ci-accent);
+    color: color-mix(in srgb, var(--SmartThemeBodyColor) 55%, transparent);
     font-size: 1.05em;
+    transition: color 0.15s;
 }
 
-/* The lighter chip rising out of the trough. Deliberately neutral: an
-   accent-coloured fill here was tried and looked worse, because mixing into
-   --ci-field inherits the theme's blur-tint alpha (ST ships Azure at 0.61,
-   Dark V 1.0 at 0.9) and washes out. The accent stays on the icons. */
+#comfy-imagine-settings .comfy-imagine-tab-list li a:hover i {
+    color: color-mix(in srgb, var(--SmartThemeBodyColor) 80%, transparent);
+}
+
+/* The chip rising out of the trough. Its fill is accent-tinted rather than
+   neutral: a neutral chip landed within 4% of the cards' own tint, so it read
+   as one more card floating above the content instead of as the selected tab.
+
+   Mixed against transparent, never against --ci-field: --ci-field aliases
+   --SmartThemeBlurTintColor, which ST ships translucent (Azure 0.61, Dark V
+   1.0 0.9), and mixing into it inherits that alpha and washes the fill out.
+   Mixing against transparent gives a known alpha over a known ground.
+
+   The accent stays off the label, which keeps full body colour, so no text
+   contrast depends on a user-chosen hue. */
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a,
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a:hover {
-    background: var(--ci-surface-strong);
-    border-color: var(--ci-border);
+    background: color-mix(in srgb, var(--ci-accent) 22%, transparent);
+    border-color: color-mix(in srgb, var(--ci-accent) 55%, transparent);
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a i {
+    color: var(--ci-accent);
 }
 
 
