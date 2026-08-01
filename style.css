@@ -213,7 +213,11 @@
     padding: 3px;
     border: 1px solid var(--ci-border);
     border-radius: var(--ci-radius);
-    background: var(--SmartThemeBlurTintColor, transparent);
+    /* One solid strip with the tabs as segments inside it. --ci-field (the
+       input fill) rather than the cards' --ci-surface: navigation has to
+       outrank the content it switches between, and sharing the cards' tint
+       flattens the two into one block. */
+    background: var(--ci-field);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li {
@@ -236,22 +240,21 @@
     width: 100%;
     padding: 5px 3px;
     float: none;
-    font-size: 0.78em;
-    font-weight: 600;
+    font-size: 0.82em;
+    font-weight: bold;
     text-align: center;
-    color: var(--SmartThemeBodyColor, inherit);
-    /* Transparent, not --ci-surface: the cards below use that tint, and tabs
-       sharing it flattens the two into one undifferentiated block. */
+    /* Muted via color-mix rather than opacity: opacity would dim the accent
+       icons too, which is what made the whole bar recede behind the cards. */
+    color: color-mix(in srgb, var(--SmartThemeBodyColor) 72%, transparent);
     background: transparent;
     border: 1px solid transparent;
     border-radius: calc(var(--ci-radius) - 3px);
     cursor: pointer;
-    opacity: 0.72;
-    transition: opacity 0.15s, background 0.15s;
+    transition: background 0.15s, color 0.15s;
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li a:hover {
-    opacity: 1;
+    color: var(--SmartThemeBodyColor, inherit);
     background: var(--ci-surface);
 }
 
@@ -267,10 +270,11 @@
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a {
-    opacity: 1;
-    border-color: var(--ci-border);
-    /* Same treatment ST uses for its own active tab. */
-    background: color-mix(in srgb, var(--ci-accent) 33%, var(--ci-field) 66%);
+    color: var(--SmartThemeBodyColor, inherit);
+    border-color: var(--ci-accent);
+    /* Same treatment ST uses for its own active tab (css/backgrounds.css),
+       mixed harder so the selected segment is unmistakable against the strip. */
+    background: color-mix(in srgb, var(--ci-accent) 45%, var(--ci-field) 55%);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a i {
