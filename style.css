@@ -216,11 +216,13 @@
     padding: 3px;
     border: 1px solid var(--ci-border);
     border-radius: var(--ci-radius);
-    /* A recessed trough, darker than the surrounding panel. The active tab is
-       then a lighter chip rising out of it, and that trough-to-chip step is
-       what carries the selected state — not accent saturation. Ported from
-       Summaryception's .sc-tab-list, which solves this exact problem. */
-    background: color-mix(in srgb, var(--ci-field) 88%, black);
+    /* A recessed trough, distinctly darker than the panel, so the bar reads as
+       a defined strip rather than tabs floating on nothing. 88% was measured
+       against a real install and landed 3 luminance below the panel background
+       (20 vs 23) — invisible — because --ci-field is close to the panel tint to
+       begin with. 65% opens a real gap while staying a plain recess on light
+       themes too. */
+    background: color-mix(in srgb, var(--ci-field) 65%, black);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li {
@@ -291,8 +293,11 @@
    contrast depends on a user-chosen hue. */
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a,
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a:hover {
-    background: color-mix(in srgb, var(--ci-accent) 22%, transparent);
-    border-color: color-mix(in srgb, var(--ci-accent) 55%, transparent);
+    /* 22% measured out at luminance 40 against cards at 37 — the same value,
+       so the chip read as one more card rather than the selected tab. 34% over
+       the deeper trough puts a clear step between them. */
+    background: color-mix(in srgb, var(--ci-accent) 34%, transparent);
+    border-color: color-mix(in srgb, var(--ci-accent) 65%, transparent);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a i {
