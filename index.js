@@ -839,6 +839,14 @@ function bindSettingsEvents() {
     $('#comfy-imagine-lora-select').on('change', saveCharacterLora);
     document.getElementById('comfy-imagine-lora-strength')?.addEventListener('input', saveCharacterLora);
     document.getElementById('comfy-imagine-lora-trigger')?.addEventListener('input', saveCharacterLora);
+    // Clear reuses the handler above rather than saving directly, so there is
+    // exactly one clear path: it is what picking the '— none —' option does.
+    // saveCharacterLora() reads '' and deletes the character's entry, which
+    // injectCharacterLora() then treats as "neutralise" — strength 0 and an
+    // empty trigger. Needed because select2's clear affordance is desktop-only.
+    document.getElementById('comfy-imagine-lora-clear')?.addEventListener('click', () => {
+        $('#comfy-imagine-lora-select').val('').trigger('change');
+    });
     document.getElementById('comfy-imagine-lora-reload')?.addEventListener('click', () => {
         loraListCache = null;
         populateCharacterLoraUI();

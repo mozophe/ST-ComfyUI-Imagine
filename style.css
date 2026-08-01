@@ -11,12 +11,54 @@
     --ci-radius: 8px;
 }
 
+/* Card: the grouping unit inside a tab. Each tab holds two or three. Without
+   these the panel is an undifferentiated stack of rows, which is what the tab
+   restructure briefly left behind when it dropped the old section separators. */
+#comfy-imagine-settings .comfy-imagine-card {
+    margin: 0 0 7px;
+    padding: 7px;
+    border: 1px solid var(--ci-border);
+    border-radius: var(--ci-radius);
+    background: var(--ci-surface);
+}
+
+#comfy-imagine-settings .comfy-imagine-card:last-child {
+    margin-bottom: 0;
+}
+
+#comfy-imagine-settings .comfy-imagine-card-title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0 0 6px;
+    font-size: 0.84em;
+    font-weight: bold;
+    /* Character names can be long; ellipsis rather than widen the panel. */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#comfy-imagine-settings .comfy-imagine-card-title i {
+    color: var(--ci-accent);
+    flex: none;
+}
+
+#comfy-imagine-settings .comfy-imagine-card-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Default row: label above input (column) */
 #comfy-imagine-settings .comfy-imagine-row {
     display: flex;
     flex-direction: column;
-    margin-bottom: 0.6em;
-    gap: 0.3em;
+    margin-bottom: 6px;
+    gap: 3px;
+}
+
+#comfy-imagine-settings .comfy-imagine-row:last-child {
+    margin-bottom: 0;
 }
 
 /* Inline row: for button+status pairs only */
@@ -24,9 +66,20 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 0.5em;
+    gap: 4px;
     flex-wrap: nowrap;
-    margin-bottom: 0.4em;
+    margin-bottom: 6px;
+}
+
+#comfy-imagine-settings .comfy-imagine-row--inline:last-child,
+#comfy-imagine-settings .comfy-imagine-row .comfy-imagine-row--inline {
+    margin-bottom: 0;
+}
+
+/* Label that should take the free space in an inline row */
+#comfy-imagine-settings .comfy-imagine-grow {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Inputs fill available width */
@@ -57,10 +110,9 @@
 }
 
 #comfy-imagine-settings label {
-    font-size: 0.8em;
-    opacity: 0.7;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: 0.76em;
+    font-weight: bold;
+    opacity: 0.72;
 }
 
 /* Buttons: never wrap text */
@@ -90,15 +142,17 @@
     color: var(--red, #f44336);
 }
 
-/* Info boxes */
+/* Hint text. Inside a card the card itself supplies the boundary, so these are
+   plain subdued text — a bordered box per hint reads as noise once stacked. */
 #comfy-imagine-settings .comfy-imagine-info {
-    font-size: 0.82em;
-    opacity: 0.8;
-    padding: 0.4em 0.6em;
-    background: var(--ci-surface);
-    border-left: 2px solid var(--ci-accent);
-    border-radius: 0 var(--ci-radius) var(--ci-radius) 0;
-    margin-bottom: 0.5em;
+    font-size: 0.76em;
+    line-height: 1.3;
+    opacity: 0.66;
+    margin: 6px 0 0;
+}
+
+#comfy-imagine-settings .comfy-imagine-info + .comfy-imagine-info {
+    margin-top: 4px;
 }
 
 #comfy-imagine-settings .comfy-imagine-info code {
@@ -106,6 +160,7 @@
     background: var(--ci-surface-strong);
     padding: 0.1em 0.35em;
     border-radius: 3px;
+    word-break: break-all;
 }
 
 /* Popup system-prompt textarea fills the dialog */
@@ -181,21 +236,23 @@
     width: 100%;
     padding: 5px 3px;
     float: none;
-    font-size: 0.82em;
+    font-size: 0.78em;
     font-weight: 600;
     text-align: center;
     color: var(--SmartThemeBodyColor, inherit);
-    background: var(--ci-surface);
+    /* Transparent, not --ci-surface: the cards below use that tint, and tabs
+       sharing it flattens the two into one undifferentiated block. */
+    background: transparent;
     border: 1px solid transparent;
     border-radius: calc(var(--ci-radius) - 3px);
     cursor: pointer;
-    opacity: 0.75;
+    opacity: 0.72;
     transition: opacity 0.15s, background 0.15s;
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li a:hover {
     opacity: 1;
-    background: var(--ci-surface-strong);
+    background: var(--ci-surface);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li a:focus-visible {
@@ -224,18 +281,3 @@
     padding: 0;
 }
 
-/* Sub-headings inside the Connection panel */
-#comfy-imagine-settings .comfy-imagine-subhead {
-    font-size: 0.72em;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    font-weight: bold;
-    opacity: 0.55;
-    margin: 1em 0 0.4em 0;
-    padding-bottom: 0.2em;
-    border-bottom: 1px solid var(--ci-border);
-}
-
-#comfy-imagine-settings .comfy-imagine-subhead:first-child {
-    margin-top: 0;
-}

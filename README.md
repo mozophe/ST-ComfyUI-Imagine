@@ -423,7 +423,7 @@ Bind a different LoRA to each character so the right one loads automatically. Th
 - a **strength** field
 - an optional **trigger word(s)** field
 
-Pick them and they are saved against that character, applied on every generation for them. Use **🔁** to refresh the LoRA list after installing new LoRAs.
+Pick them and they are saved against that character, applied on every generation for them. Use **🔁** to refresh the LoRA list after installing new LoRAs, and **✕** to unbind the LoRA from this character.
 
 **Trigger words.** Many LoRAs need a trigger phrase in the prompt. Enter it in the trigger field, then in ComfyUI add a string node titled `IMAGINE_LORA_TRIGGER` and feed it into your prompt, typically through a `StringConcatenate` node ahead of `CLIPTextEncode`. The active character's trigger is written into that node on each generation.
 
@@ -506,7 +506,7 @@ Updates are **manual by design**. `auto_update` is off, so nothing changes behin
 
 New images are saved as files, with only the path stored in the chat, keeping chat files small. Early versions embedded the whole image as base64 directly in the message, which bloats the chat file and slows loading.
 
-If you have chats from those versions, open the extension settings, open the **Connection** tab and find the **Maintenance** block, and click **Migrate embedded images to files (legacy)**.
+If you have chats from those versions, open the extension settings, open the **Connection** tab and find the **Maintenance** block, and click **Migrate embedded images to files**.
 
 - It acts only on the **currently open chat**, so switch to each old chat and run it once.
 - It is **safe to re-run** and non-destructive: an already-migrated message is left alone, and a failed upload leaves that message's embedded image untouched.
