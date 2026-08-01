@@ -247,6 +247,10 @@
     float: none;
     min-height: 26px;
     font-size: 0.78em;
+    /* Bold to match the card titles. Unbolded 11px text anti-aliases so
+       heavily that its peak pixels reached only ~44% of the body colour,
+       which is much of why the bar looked washed out beside the content. */
+    font-weight: bold;
     text-align: center;
     /* Full body colour, not muted. Dimming inactive tabs is what made the bar
        recede behind the cards; the trough supplies the contrast instead. */
@@ -274,7 +278,11 @@
    faint border, which is not enough to read at a glance. */
 #comfy-imagine-settings .comfy-imagine-tab-list li a i {
     color: color-mix(in srgb, var(--SmartThemeBodyColor) 55%, transparent);
-    font-size: 1.05em;
+    /* 1.05em of the tab's own 0.78em rendered an ~11px glyph whose strokes
+       never reached full coverage, so even a fully opaque accent measured at
+       roughly half strength against the card icons. Larger strokes render the
+       same colour the content does. */
+    font-size: 1.3em;
     transition: color 0.15s;
 }
 
@@ -307,7 +315,11 @@
        Selection is marked by that step plus the accent border and icon, which
        keeps the accent at the same glyph-and-line scale as the rest. */
     background: color-mix(in srgb, var(--SmartThemeBodyColor) 18%, transparent);
-    border-color: color-mix(in srgb, var(--ci-accent) 70%, transparent);
+    /* Full accent, not a mix. At 70% this measured rgb(104,82,53) while the
+       card-title icons in the same view measured rgb(255,188,107): the same
+       hue at two different strengths, which reads as an inconsistency rather
+       than a hierarchy. Accent lines elsewhere in the panel are undiluted. */
+    border-color: var(--ci-accent);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a i {
