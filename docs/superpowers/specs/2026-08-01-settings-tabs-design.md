@@ -129,13 +129,44 @@ The seven `.comfy-imagine-section` divs become four panels inside a
 
 ### `style.css`
 
-Roughly 35 lines:
+**Token layer.** Alias ST's variables once on the root element, then style through the
+tokens. This is the technique that makes Summaryception's panel look considered
+(`style.css:1-9` there); it is not a private palette, and every value still follows the
+user's chosen ST theme.
+
+```css
+#comfy-imagine-settings {
+    --ci-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.16));
+    --ci-field: var(--SmartThemeBlurTintColor, rgba(18, 18, 24, 0.86));
+    --ci-accent: var(--SmartThemeQuoteColor, #66b2ff);
+    --ci-surface: color-mix(in srgb, var(--SmartThemeBodyColor) 6%, transparent);
+    --ci-surface-strong: color-mix(in srgb, var(--SmartThemeBodyColor) 10%, transparent);
+    --ci-radius: 8px;
+}
+```
+
+The surface tints deliberately diverge from Summaryception, which hardcodes
+`rgba(255, 255, 255, 0.045)` and therefore vanishes on a light ST theme. Deriving them
+from `--SmartThemeBodyColor` makes the tint light on dark grounds and dark on light ones
+with no branching, since the body colour is by definition legible against the ground.
+
+**No fixed theme.** A settings drawer sits inline with ST's own chrome, and CSS cannot
+detect which ST theme is active — `prefers-color-scheme` reports the OS preference, not
+the theme the user picked in ST. Any hardcoded palette would therefore be low-contrast
+for some users with no way to branch. Identity comes from structure instead: the accent
+on tab icons, consistent radius, layered surfaces.
+
+**Tab rules**, roughly 35 further lines:
 
 - `.comfy-imagine-tab-list` — `position: sticky; top: 0; z-index: 2;`
   `display: grid; grid-template-columns: repeat(auto-fit, minmax(74px, 1fr)); gap: 3px;`
+  plus `padding: 3px`, `border: 1px solid var(--ci-border)`, `border-radius: var(--ci-radius)`.
 - `.comfy-imagine-tab-list a` — `flex-direction: column` at **all** widths, so the icon
   stacks above the label. This is what lets a 74px track hold the word "Character".
-- Active state and borders from the theme variables in constraint 4.
+- Tab icons take `color: var(--ci-accent)`. Accent goes on icons, never on body text,
+  so no contrast requirement is riding on a user-chosen colour.
+- Active tab: `background: color-mix(in srgb, var(--ci-accent) 33%, var(--ci-field) 66%)`,
+  matching what ST does for its own tabs (`backgrounds.css:373`).
 - Strip jQuery UI's default chrome, mirroring what ST writes for its own tabs:
   `#comfy-imagine-tabs.ui-widget-content { border: none !important }` and hiding
   `.comfy-imagine-tab-list::before` / `::after`.
@@ -154,10 +185,25 @@ The "Settings Panel Pattern" section documents six flat sections and describes t
 structure being replaced. Rewrite it to the tab layout, including the note that
 chat history limit now lives under Prompt.
 
+### `README.md`
+
+Four places name the old sections or assume a flat panel:
+
+- `:103` and `:112` (Quick Start steps 4 and 5) — name the **Connection** tab so the
+  fields are findable.
+- `:419` — "open the **Character LoRAs** section" becomes the **Character** tab.
+- `:489` — the Generation settings table already mixes controls from several sections,
+  so give it a **Tab** column rather than restructuring it.
+- `:509` — "find the **Image Storage** section" becomes the Maintenance block at the
+  bottom of the **Connection** tab.
+
+Existing README conventions apply: no em-dashes anywhere in it.
+
 ## Non-goals
 
 - Tab persistence across reloads. Re-picking a tab is one click.
 - Summaryception's off/easy/advanced mode radio.
+- A fixed or opt-in custom palette. Considered and rejected above.
 - Hand-rolled ARIA or keyboard navigation. jQuery UI provides both.
 - Any change to generation logic, storage, or the LoRA injection path. This is a
   presentation change only.
