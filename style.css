@@ -213,11 +213,12 @@
     padding: 3px;
     border: 1px solid var(--ci-border);
     border-radius: var(--ci-radius);
-    /* One solid strip with the tabs as segments inside it. --ci-field (the
-       input fill) rather than the cards' --ci-surface: navigation has to
-       outrank the content it switches between, and sharing the cards' tint
-       flattens the two into one block. */
-    background: var(--ci-field);
+    /* One solid strip with the tabs as segments inside it, sitting a step
+       heavier than the cards (--ci-surface-strong is 10% body against their
+       6%) so navigation outranks the content it switches between. Body-derived
+       rather than --ci-field for the same reason as the active segment below:
+       --ci-field inherits the theme's blur-tint alpha and washes out. */
+    background: var(--ci-surface-strong);
 }
 
 #comfy-imagine-settings .comfy-imagine-tab-list li {
@@ -245,7 +246,7 @@
     text-align: center;
     /* Muted via color-mix rather than opacity: opacity would dim the accent
        icons too, which is what made the whole bar recede behind the cards. */
-    color: color-mix(in srgb, var(--SmartThemeBodyColor) 72%, transparent);
+    color: color-mix(in srgb, var(--SmartThemeBodyColor) 85%, transparent);
     background: transparent;
     border: 1px solid transparent;
     border-radius: calc(var(--ci-radius) - 3px);
@@ -269,17 +270,28 @@
     font-size: 1.05em;
 }
 
+/* The active segment must not be mixed into --ci-field. That aliases
+   --SmartThemeBlurTintColor, which ST's own themes ship with alpha well under 1
+   (Azure 0.61, Dark V 1.0 0.9, Cappuccino 0.95), so mixing into it both diluted
+   the accent and inherited the transparency: the fill washed out against the
+   panel behind it. Hover looked stronger only because --ci-surface layers on
+   top rather than mixing in.
+
+   The fill is therefore derived from the body colour, which contrasts with the
+   ground in every theme by definition, and the accent carries the selected
+   signal as a solid border plus an inset underline. That also keeps the accent
+   off anything text contrast depends on. */
 #comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a {
     color: var(--SmartThemeBodyColor, inherit);
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 16%, transparent);
     border-color: var(--ci-accent);
-    /* Same treatment ST uses for its own active tab (css/backgrounds.css),
-       mixed harder so the selected segment is unmistakable against the strip. */
-    background: color-mix(in srgb, var(--ci-accent) 45%, var(--ci-field) 55%);
+    box-shadow: inset 0 -2px 0 0 var(--ci-accent);
 }
 
-#comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a i {
-    color: inherit;
+#comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a:hover {
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 20%, transparent);
 }
+
 
 #comfy-imagine-settings .ui-tabs-panel {
     padding: 0;
