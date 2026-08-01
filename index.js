@@ -633,6 +633,11 @@ function loadSettingsIntoUI() {
 }
 
 function bindSettingsEvents() {
+    // Tabs. jQuery UI is bundled by ST, which uses it for its own background
+    // tabs (backgrounds.js). bindSettingsEvents runs once, from init(), after
+    // the template has been rendered into the DOM, so no re-init guard needed.
+    $('#comfy-imagine-tabs').tabs();
+
     const bind = (id, key, transform) => {
         const el = document.getElementById(id);
         if (!el) return;

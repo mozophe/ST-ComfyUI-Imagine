@@ -6,202 +6,197 @@
         </div>
         <div class="inline-drawer-content">
 
-            <!-- Section 1: ComfyUI Connection -->
-            <div class="comfy-imagine-section">
-                <h5>ComfyUI Connection</h5>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-url">Base URL</label>
-                    <input id="comfy-imagine-url" type="text" class="text_pole" placeholder="http://192.168.1.x:8188" />
-                </div>
-                <div class="comfy-imagine-info">
-                    Start ComfyUI with <code>--listen</code> so it accepts network connections:<br/>
-                    <code>python main.py --listen 0.0.0.0 --port 8188 --enable-cors-header</code>
-                </div>
-                <div class="comfy-imagine-info">
-                    If ComfyUI runs on a <strong>different machine</strong> than SillyTavern,
-                    <code>--enable-cors-header</code> is required — without it the browser blocks
-                    cross-origin requests even if the port is reachable.
-                </div>
-                <div class="comfy-imagine-row--inline">
-                    <button id="comfy-imagine-test-connection" class="menu_button"><i class="fa-solid fa-plug"></i> Test ComfyUI Connection</button>
-                    <span id="comfy-imagine-connection-status" class="comfy-imagine-status"></span>
-                </div>
-            </div>
+            <div id="comfy-imagine-tabs">
+                <ul class="comfy-imagine-tab-list">
+                    <li><a href="#comfy-imagine-tab-character">
+                        <i class="fa-solid fa-user"></i><span>Character</span></a></li>
+                    <li><a href="#comfy-imagine-tab-generate">
+                        <i class="fa-solid fa-image"></i><span>Generate</span></a></li>
+                    <li><a href="#comfy-imagine-tab-prompt">
+                        <i class="fa-solid fa-pen"></i><span>Prompt</span></a></li>
+                    <li><a href="#comfy-imagine-tab-connection">
+                        <i class="fa-solid fa-gear"></i><span>Connection</span></a></li>
+                </ul>
 
-            <!-- Section 2: LLM -->
-            <div class="comfy-imagine-section">
-                <h5>LLM (Prompt Generator)</h5>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-llm-url">API Base URL</label>
-                    <input id="comfy-imagine-llm-url" type="text" class="text_pole" placeholder="https://api.openai.com/v1" />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-llm-key">API Key</label>
-                    <input id="comfy-imagine-llm-key" type="password" class="text_pole" />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-llm-model">Model</label>
-                    <input id="comfy-imagine-llm-model" type="text" class="text_pole" placeholder="gpt-4o-mini" />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-max-tokens">Max Tokens</label>
-                    <input id="comfy-imagine-max-tokens" type="number" class="text_pole" min="1" max="32768" />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-temperature">Temperature</label>
-                    <input id="comfy-imagine-temperature" type="number" class="text_pole" min="0" max="2" step="0.1" />
-                </div>
-                <div class="comfy-imagine-row--inline">
-                    <button id="comfy-imagine-test-llm" class="menu_button"><i class="fa-solid fa-plug"></i> Test API Connection</button>
-                    <span id="comfy-imagine-llm-status" class="comfy-imagine-status"></span>
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-sp-preset">System Prompt Presets</label>
+                <div id="comfy-imagine-tab-character">
+                    <div class="comfy-imagine-info">
+                        Attach a LoRA to the <strong>active character</strong>. On <code>/imagine</code> the
+                        active character's LoRA is injected automatically — switch character and the LoRA
+                        follows, no settings change needed. In ComfyUI, title a <code>LoraLoader</code> node
+                        <code>IMAGINE_LORA</code> (otherwise the first LoraLoader is used). The list is pulled
+                        live from ComfyUI.
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label>Active Character</label>
+                        <span id="comfy-imagine-lora-charname" class="comfy-imagine-status">—</span>
+                    </div>
+                    <label for="comfy-imagine-lora-select">LoRA</label>
                     <div class="comfy-imagine-row--inline">
-                        <select id="comfy-imagine-sp-preset" class="text_pole">
-                            <option value="">— select preset —</option>
+                        <select id="comfy-imagine-lora-select" class="text_pole">
+                            <option value="">— none —</option>
                         </select>
-                        <button id="comfy-imagine-sp-preset-overwrite" class="menu_button" title="Overwrite the selected preset with the current system prompt">
-                            <i class="fa-solid fa-floppy-disk"></i> Save
+                        <button id="comfy-imagine-lora-reload" class="menu_button" title="Reload LoRA list from ComfyUI">
+                            <i class="fa-solid fa-rotate"></i>
                         </button>
-                        <button id="comfy-imagine-sp-preset-save" class="menu_button" title="Save current system prompt as a new preset">
-                            <i class="fa-regular fa-floppy-disk"></i> Save As
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-lora-strength">Strength</label>
+                        <input id="comfy-imagine-lora-strength" type="number" class="text_pole" min="-2" max="2" step="0.05" />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-lora-trigger">Trigger Word(s)</label>
+                        <input id="comfy-imagine-lora-trigger" type="text" class="text_pole" placeholder="e.g. aliceface woman" />
+                    </div>
+                    <div class="comfy-imagine-info">
+                        Injected into a node titled <code>IMAGINE_LORA_TRIGGER</code> (typically concatenated
+                        before the prompt). Leave blank if the LoRA needs no trigger.
+                    </div>
+                </div>
+
+                <div id="comfy-imagine-tab-generate">
+                    <div class="comfy-imagine-info">
+                        Upload a workflow exported from ComfyUI in <strong>API format</strong>.<br/>
+                        In ComfyUI: enable <em>Dev Mode</em> (Settings &rarr; Enable Dev Mode Options),
+                        then <em>Graph</em> menu &rarr; <em>Export (API)</em> to export the file.
+                    </div>
+                    <div class="comfy-imagine-row--inline">
+                        <button id="comfy-imagine-workflow-upload-btn" class="menu_button">
+                            <i class="fa-solid fa-upload"></i> Upload Workflow
                         </button>
-                        <button id="comfy-imagine-sp-preset-delete" class="menu_button" title="Delete selected preset">
+                        <input id="comfy-imagine-workflow-upload" type="file" accept=".json" style="display:none" />
+                        <span id="comfy-imagine-upload-status" class="comfy-imagine-status"></span>
+                    </div>
+                    <label for="comfy-imagine-active-workflow">Active Workflow</label>
+                    <div class="comfy-imagine-row--inline">
+                        <select id="comfy-imagine-active-workflow" class="text_pole">
+                            <option value="">— none —</option>
+                        </select>
+                        <button id="comfy-imagine-reload-workflows" class="menu_button" title="Reload list">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                        <button id="comfy-imagine-delete-workflow" class="menu_button" title="Delete selected workflow">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
-                </div>
-                <div class="comfy-imagine-row">
-                    <div class="comfy-imagine-row--inline">
-                        <label for="comfy-imagine-system-prompt">System Prompt</label>
-                        <button id="comfy-imagine-edit-system-prompt" class="menu_button" title="Open full-screen editor">
-                            <i class="fa-solid fa-expand"></i>
-                        </button>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-image-count">Image Count</label>
+                        <input id="comfy-imagine-image-count" type="number" class="text_pole" min="1" max="8" />
                     </div>
-                    <textarea id="comfy-imagine-system-prompt" class="text_pole" rows="6"></textarea>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-sender-name">Sender Name</label>
+                        <input id="comfy-imagine-sender-name" type="text" class="text_pole" placeholder="Camera" />
+                    </div>
                 </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-prompt-prefix">Prompt Prefix</label>
-                    <input id="comfy-imagine-prompt-prefix" type="text" class="text_pole" placeholder="masterpiece, best quality, " />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-prompt-suffix">Prompt Suffix</label>
-                    <input id="comfy-imagine-prompt-suffix" type="text" class="text_pole" placeholder=", sharp focus, 8k" />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-negative-prompt">Negative Prompt</label>
-                    <input id="comfy-imagine-negative-prompt" type="text" class="text_pole" placeholder="blurry, watermark, lowres" />
-                </div>
-            </div>
 
-            <!-- Section 3: Workflows -->
-            <div class="comfy-imagine-section">
-                <h5>Workflows</h5>
-                <div class="comfy-imagine-info">
-                    Upload a workflow exported from ComfyUI in <strong>API format</strong>.<br/>
-                    In ComfyUI: enable <em>Dev Mode</em> (Settings &rarr; Enable Dev Mode Options),
-                    then <em>Graph</em> menu &rarr; <em>Export (API)</em> to export the file.
+                <div id="comfy-imagine-tab-prompt">
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-sp-preset">System Prompt Presets</label>
+                        <div class="comfy-imagine-row--inline">
+                            <select id="comfy-imagine-sp-preset" class="text_pole">
+                                <option value="">— select preset —</option>
+                            </select>
+                            <button id="comfy-imagine-sp-preset-overwrite" class="menu_button" title="Overwrite the selected preset with the current system prompt">
+                                <i class="fa-solid fa-floppy-disk"></i> Save
+                            </button>
+                            <button id="comfy-imagine-sp-preset-save" class="menu_button" title="Save current system prompt as a new preset">
+                                <i class="fa-regular fa-floppy-disk"></i> Save As
+                            </button>
+                            <button id="comfy-imagine-sp-preset-delete" class="menu_button" title="Delete selected preset">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <div class="comfy-imagine-row--inline">
+                            <label for="comfy-imagine-system-prompt">System Prompt</label>
+                            <button id="comfy-imagine-edit-system-prompt" class="menu_button" title="Open full-screen editor">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                        </div>
+                        <textarea id="comfy-imagine-system-prompt" class="text_pole" rows="6"></textarea>
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-prompt-prefix">Prompt Prefix</label>
+                        <input id="comfy-imagine-prompt-prefix" type="text" class="text_pole" placeholder="masterpiece, best quality, " />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-prompt-suffix">Prompt Suffix</label>
+                        <input id="comfy-imagine-prompt-suffix" type="text" class="text_pole" placeholder=", sharp focus, 8k" />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-negative-prompt">Negative Prompt</label>
+                        <input id="comfy-imagine-negative-prompt" type="text" class="text_pole" placeholder="blurry, watermark, lowres" />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-chat-limit">Chat History Limit</label>
+                        <input id="comfy-imagine-chat-limit" type="number" class="text_pole" min="0" placeholder="0 = all" />
+                    </div>
+                    <div class="comfy-imagine-info">
+                        Latest messages sent to the prompt LLM. <code>0</code> sends the entire chat.
+                    </div>
                 </div>
-                <div class="comfy-imagine-row--inline">
-                    <button id="comfy-imagine-workflow-upload-btn" class="menu_button">
-                        <i class="fa-solid fa-upload"></i> Upload Workflow
-                    </button>
-                    <input id="comfy-imagine-workflow-upload" type="file" accept=".json" style="display:none" />
-                    <span id="comfy-imagine-upload-status" class="comfy-imagine-status"></span>
-                </div>
-                <label for="comfy-imagine-active-workflow">Active Workflow</label>
-                <div class="comfy-imagine-row--inline">
-                    <select id="comfy-imagine-active-workflow" class="text_pole">
-                        <option value="">— none —</option>
-                    </select>
-                    <button id="comfy-imagine-reload-workflows" class="menu_button" title="Reload list">
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
-                    <button id="comfy-imagine-delete-workflow" class="menu_button" title="Delete selected workflow">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </div>
 
-            <!-- Section 4: Character LoRAs -->
-            <div class="comfy-imagine-section">
-                <h5>Character LoRAs</h5>
-                <div class="comfy-imagine-info">
-                    Attach a LoRA to the <strong>active character</strong>. On <code>/imagine</code> the
-                    active character's LoRA is injected automatically — switch character and the LoRA
-                    follows, no settings change needed. In ComfyUI, title a <code>LoraLoader</code> node
-                    <code>IMAGINE_LORA</code> (otherwise the first LoraLoader is used). The list is pulled
-                    live from ComfyUI.
-                </div>
-                <div class="comfy-imagine-row">
-                    <label>Active Character</label>
-                    <span id="comfy-imagine-lora-charname" class="comfy-imagine-status">—</span>
-                </div>
-                <label for="comfy-imagine-lora-select">LoRA</label>
-                <div class="comfy-imagine-row--inline">
-                    <select id="comfy-imagine-lora-select" class="text_pole">
-                        <option value="">— none —</option>
-                    </select>
-                    <button id="comfy-imagine-lora-reload" class="menu_button" title="Reload LoRA list from ComfyUI">
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-lora-strength">Strength</label>
-                    <input id="comfy-imagine-lora-strength" type="number" class="text_pole" min="-2" max="2" step="0.05" />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-lora-trigger">Trigger Word(s)</label>
-                    <input id="comfy-imagine-lora-trigger" type="text" class="text_pole" placeholder="e.g. aliceface woman" />
-                </div>
-                <div class="comfy-imagine-info">
-                    Injected into a node titled <code>IMAGINE_LORA_TRIGGER</code> (typically concatenated
-                    before the prompt). Leave blank if the LoRA needs no trigger.
-                </div>
-            </div>
+                <div id="comfy-imagine-tab-connection">
+                    <div class="comfy-imagine-subhead">ComfyUI</div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-url">Base URL</label>
+                        <input id="comfy-imagine-url" type="text" class="text_pole" placeholder="http://192.168.1.x:8188" />
+                    </div>
+                    <div class="comfy-imagine-info">
+                        Start ComfyUI with <code>--listen</code> so it accepts network connections:<br/>
+                        <code>python main.py --listen 0.0.0.0 --port 8188 --enable-cors-header</code>
+                    </div>
+                    <div class="comfy-imagine-info">
+                        If ComfyUI runs on a <strong>different machine</strong> than SillyTavern,
+                        <code>--enable-cors-header</code> is required — without it the browser blocks
+                        cross-origin requests even if the port is reachable.
+                    </div>
+                    <div class="comfy-imagine-row--inline">
+                        <button id="comfy-imagine-test-connection" class="menu_button"><i class="fa-solid fa-plug"></i> Test ComfyUI Connection</button>
+                        <span id="comfy-imagine-connection-status" class="comfy-imagine-status"></span>
+                    </div>
 
-            <!-- Section 5: Generation Settings -->
-            <div class="comfy-imagine-section">
-                <h5>Generation Settings</h5>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-image-count">Image Count</label>
-                    <input id="comfy-imagine-image-count" type="number" class="text_pole" min="1" max="8" />
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-chat-limit">Chat History Limit</label>
-                    <input id="comfy-imagine-chat-limit" type="number" class="text_pole" min="0" placeholder="0 = all" />
-                </div>
-                <div class="comfy-imagine-info">
-                    Latest messages sent to the prompt LLM. <code>0</code> sends the entire chat.
-                </div>
-                <div class="comfy-imagine-row">
-                    <label for="comfy-imagine-sender-name">Sender Name</label>
-                    <input id="comfy-imagine-sender-name" type="text" class="text_pole" placeholder="Camera" />
-                </div>
-            </div>
+                    <div class="comfy-imagine-subhead">LLM (Prompt Generator)</div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-llm-url">API Base URL</label>
+                        <input id="comfy-imagine-llm-url" type="text" class="text_pole" placeholder="https://api.openai.com/v1" />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-llm-key">API Key</label>
+                        <input id="comfy-imagine-llm-key" type="password" class="text_pole" />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-llm-model">Model</label>
+                        <input id="comfy-imagine-llm-model" type="text" class="text_pole" placeholder="gpt-4o-mini" />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-max-tokens">Max Tokens</label>
+                        <input id="comfy-imagine-max-tokens" type="number" class="text_pole" min="1" max="32768" />
+                    </div>
+                    <div class="comfy-imagine-row">
+                        <label for="comfy-imagine-temperature">Temperature</label>
+                        <input id="comfy-imagine-temperature" type="number" class="text_pole" min="0" max="2" step="0.1" />
+                    </div>
+                    <div class="comfy-imagine-row--inline">
+                        <button id="comfy-imagine-test-llm" class="menu_button"><i class="fa-solid fa-plug"></i> Test API Connection</button>
+                        <span id="comfy-imagine-llm-status" class="comfy-imagine-status"></span>
+                    </div>
 
-            <!-- Section: Image Storage -->
-            <div class="comfy-imagine-section">
-                <h5>Image Storage</h5>
-                <div class="comfy-imagine-info">
-                    Older generated images and debug info stored directly in the chat can be
-                    moved to files to shrink the chat. Acts on the <strong>currently open chat</strong>.
-                    Safe to run more than once.
-                </div>
-                <div class="comfy-imagine-row--inline">
-                    <button id="comfy-imagine-migrate-btn" class="menu_button">
-                        <i class="fa-solid fa-file-arrow-down"></i> Migrate embedded images to files (legacy)
-                    </button>
-                    <span id="comfy-imagine-migrate-status" class="comfy-imagine-status"></span>
-                </div>
-            </div>
-
-            <!-- Section 6: Quick Reply Setup -->
-            <div class="comfy-imagine-section">
-                <h5>Quick Reply Setup</h5>
-                <div class="comfy-imagine-info">
-                    To trigger image generation from a Quick Reply button, create a Quick Reply with the command: <code>/imagine</code>
+                    <div class="comfy-imagine-subhead">Maintenance</div>
+                    <div class="comfy-imagine-info">
+                        Older generated images and debug info stored directly in the chat can be
+                        moved to files to shrink the chat. Acts on the <strong>currently open chat</strong>.
+                        Safe to run more than once.
+                    </div>
+                    <div class="comfy-imagine-row--inline">
+                        <button id="comfy-imagine-migrate-btn" class="menu_button">
+                            <i class="fa-solid fa-file-arrow-down"></i> Migrate embedded images to files (legacy)
+                        </button>
+                        <span id="comfy-imagine-migrate-status" class="comfy-imagine-status"></span>
+                    </div>
+                    <div class="comfy-imagine-info">
+                        To trigger image generation from a Quick Reply button, create a Quick Reply with the command: <code>/imagine</code>
+                    </div>
                 </div>
             </div>
 

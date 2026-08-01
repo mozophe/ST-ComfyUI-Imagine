@@ -128,3 +128,119 @@
     display: block;
     margin: 0 auto;
 }
+
+/* --- Tabs --------------------------------------------------------------- */
+
+/* Strip jQuery UI's own chrome. ST writes the same overrides for its
+   background tabs in css/backgrounds.css. */
+#comfy-imagine-tabs.ui-widget-content,
+#comfy-imagine-tabs.ui-widget {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list::before,
+#comfy-imagine-settings .comfy-imagine-tab-list::after {
+    display: none;
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: grid;
+    /* auto-fit reflows into rows instead of overflowing. Four tabs need
+       4*74 + 3*3 = 305px for a single row; every phone clears that, a desktop
+       window near 1000px does not and wraps to two rows. */
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+    gap: 3px;
+    list-style: none;
+    margin: 0 0 0.6em 0;
+    padding: 3px;
+    border: 1px solid var(--ci-border);
+    border-radius: var(--ci-radius);
+    background: var(--SmartThemeBlurTintColor, transparent);
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list li {
+    margin: 0;
+    list-style: none;
+    float: none;      /* jQuery UI floats tab <li>s; the grid handles layout */
+    border: none;
+    background: none;
+    white-space: normal;
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list li a {
+    display: flex;
+    /* Icon above label at every width, not just on mobile. This is what lets
+       a 74px track hold the word "Connection" without wrapping. */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    padding: 5px 3px;
+    float: none;
+    font-size: 0.82em;
+    font-weight: 600;
+    text-align: center;
+    color: var(--SmartThemeBodyColor, inherit);
+    background: var(--ci-surface);
+    border: 1px solid transparent;
+    border-radius: calc(var(--ci-radius) - 3px);
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list li a:hover {
+    opacity: 1;
+    background: var(--ci-surface-strong);
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list li a:focus-visible {
+    outline: 2px solid var(--ci-accent);
+    outline-offset: 1px;
+}
+
+/* Accent on icons only, never on body text. */
+#comfy-imagine-settings .comfy-imagine-tab-list li a i {
+    color: var(--ci-accent);
+    font-size: 1.05em;
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a {
+    opacity: 1;
+    border-color: var(--ci-border);
+    /* Same treatment ST uses for its own active tab. */
+    background: color-mix(in srgb, var(--ci-accent) 33%, var(--ci-field) 66%);
+}
+
+#comfy-imagine-settings .comfy-imagine-tab-list li.ui-tabs-active a i {
+    color: inherit;
+}
+
+#comfy-imagine-settings .ui-tabs-panel {
+    padding: 0;
+}
+
+/* Sub-headings inside the Connection panel */
+#comfy-imagine-settings .comfy-imagine-subhead {
+    font-size: 0.72em;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-weight: bold;
+    opacity: 0.55;
+    margin: 1em 0 0.4em 0;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid var(--ci-border);
+}
+
+#comfy-imagine-settings .comfy-imagine-subhead:first-child {
+    margin-top: 0;
+}
