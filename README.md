@@ -467,7 +467,7 @@ Image models are trained on captions, not on stories. Prose leaves most of a pic
 
 Working in words, it reaches anything words can express: point of view, framing, art style, level of detail, and which parts of a scene survive into the prompt at all. What words cannot reliably pin down, a particular face, an art style the checkpoint does not know, a quality or detail boost, is what [LoRAs](#per-character-loras) are for. The two stack.
 
-The shipped default is tuned for **Krea 2 Turbo**. It frames every image as a **first-person POV** photo from your persona's eyes and tells the LLM to describe **only what is visible in frame**.
+The shipped default puts **faithfulness first**: it depicts the moment in the latest chat message, takes appearance from the character card, and does not invent props, clothing or colours the chat does not support. It frames every image as a **first-person POV** candid photo from your persona's eyes and tells the LLM to describe **only what is visible in frame**.
 
 > [!NOTE]
 > The default is a **work in progress**: a reasonable starting point, not a finished one-size-fits-all prompt. Expect to iterate on it, and expect it to change between updates.
@@ -475,14 +475,7 @@ The shipped default is tuned for **Krea 2 Turbo**. It frames every image as a **
 > [!TIP]
 > **Once your first images generate, this is the thing to change next.** The default commits to one particular look, and if your images come out framed or styled wrong for what you wanted, this is what to edit, not the workflow. Use **Save As** so your version is not overwritten when the extension updates.
 
-Two presets ship with the extension:
-
-| Preset | Notes |
-|---|---|
-| `Krea 2 (default)` | the active default, first-person POV, describe-only-what-is-visible |
-| `Krea 2 - Intimate POV` | tuned for close, intimate POV scenes with detailed pose, anatomy, and framing rules. Available in the dropdown but **not** selected by default |
-
-Both are **read-only** and re-sync to the shipped version on every reload, so extension updates reach you. Both **Save** (overwrite) and 🗑 (delete) are greyed out while a shipped preset is selected; deleting one would only bring it back on the next reload anyway.
+The default ships as the `Krea 2 (default)` preset. It is **read-only** and re-syncs to the shipped version on every reload, so extension updates reach you. **Save** (overwrite) and 🗑 (delete) are greyed out while it is selected; deleting it would only bring it back on the next reload anyway.
 
 To customise, edit the textarea and use **Save As** to store your own named preset. Your own presets can be overwritten with **Save** and removed with 🗑 as normal. Switch between them with the dropdown. Presets are stored in your SillyTavern settings.
 
